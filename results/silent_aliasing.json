@@ -1,0 +1,10 @@
+{
+  "N": 23,
+  "omega_out": 27.0,
+  "fold_freq": 4.0,
+  "sample_rmse": 0.007605560871813821,
+  "spectral_error": 0.9930814635229376,
+  "diagnostic_out_of_band_frac": 0.14890712324907177,
+  "diagnostic_flag": true,
+  "note": "small sample RMSE but large spectral error at the predicted fold frequency"
+}
