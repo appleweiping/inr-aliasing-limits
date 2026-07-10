@@ -8,18 +8,21 @@
     "under": {
       "scale": 5.333333333333333,
       "sample_psnr": 47.559383727691376,
-      "full_psnr": 21.268330508465688
+      "full_psnr": 21.268330508465688,
+      "hf_psnr": 21.724350052868623
     },
     "matched": {
       "scale": 16.0,
       "sample_psnr": 54.24317276793521,
-      "full_psnr": 20.821288895938178
+      "full_psnr": 20.821288895938178,
+      "hf_psnr": 21.31872198890798
     },
     "over": {
       "scale": 53.333333333333336,
       "sample_psnr": 50.56279072597433,
-      "full_psnr": 16.378911202376898
+      "full_psnr": 16.378911202376898,
+      "hf_psnr": 17.84586282649548
     }
   },
-  "note": "2-D INR band mismatch: under-scaled blurs; over-scaled aliases (high sample-PSNR, low full-PSNR = silent aliasing); matched recovers"
+  "note": "2-D INR band vs sampling: an OVER-scaled band silently aliases under sparse pixels (high sample-PSNR ~50dB but low full/hf-PSNR, moire); a band matched to or below the sampling is safe (~21dB). Single seed, scipy ascent image."
 }

@@ -17,19 +17,20 @@ the manuscript.
 > in `Λ` and the (possibly nonuniform, noisy) samples form a frame for `Λ`, a
 > bandwidth-matched INR recovers it with a closed-form **noise gain** `κ = 1/σ_min(Φ)`
 > (*achievability*); and (2) any out-of-band energy is **folded** onto `Λ` with a sharp
-> **aliasing error floor** that no width-`W` INR can beat at that sampling density
+> **aliasing error floor** that no fixed-feature INR can beat at that sampling density
 > (*converse*) — and, strikingly, the global reconstruction error can look fine while the
 > recovered **spectrum** is silently corrupted (**silent aliasing**). A sharp phase
 > transition separates the two regimes, we give a matched estimator and a **ground-truth-free
-> aliasing diagnostic**, and we instantiate **both sides of the limit** on real audio,
-> scientific (astronomical / seismic) and RF signals.
+> aliasing diagnostic**, and we instantiate **both sides of the limit** on real audio and
+> scientific signals (speech, CO₂, sunspots) plus a 2-D image demo — the phenomenon persisting
+> for trained nonlinear and 2-D INRs.
 
 ## Status
 
 - [x] Sampling / frame machinery on a finite frequency dictionary (`src/inralias/sampling.py`, tested)
 - [x] Theorem 1 achievability — noise gain, recoverable MMSE (validated vs Monte-Carlo)
 - [x] Theorem 2 converse — aliasing bias, error floor, folded frequency, silent aliasing (validated)
-- [x] Theorem 3 statistical — aliasing-bias floor vs estimation variance (validated)
+- [x] Theorem 3 (average-case) — aliasing-variance floor vs estimation variance (validated)
 - [x] Trained nonlinear INRs (SIREN / Fourier-feature MLP) + bandwidth-matched estimator + data-only diagnostic
 - [x] E1 synthetic phase transition, E2 silent-aliasing spectrum
 - [x] Real data: audio (speech) and science (CO₂, sunspots) — both sides of the limit
@@ -42,7 +43,7 @@ All theorem ↔ Monte-Carlo checks pass (`python -m pytest -q`, 17 tests).
 
 An INR's representable set `Λ` is **not** a lowpass interval: it is a *structured* frequency
 dictionary (integer combinations of the network's feature/base frequencies, growing with
-width/depth; Yüce et al. 2021), and for SIREN / adaptive-frequency nets `Λ` is
+width/depth; Yüce et al. (CVPR 2022)), and for SIREN / adaptive-frequency nets `Λ` is
 **signal-adaptive**. Aliasing therefore folds out-of-band energy onto a *structured, learned*
 set rather than onto baseband. The classical uniform-lowpass folding law is recovered as a
 special case (a correctness check in the test suite), but the general phenomena — structured
@@ -89,7 +90,7 @@ vendored under `data/*.npz` so the experiments reproduce even offline.
   **converse / aliasing** side under the real signal-processing setting (misspecified,
   noisy, nonuniform, time-domain) plus real data.
 - The generalized-sampling / stable-sampling-rate machinery (Adcock–Hansen) and the
-  INR-as-structured-dictionary view (Yüce et al. 2021) are the foundations we build on.
+  INR-as-structured-dictionary view (Yüce et al. (CVPR 2022)) are the foundations we build on.
 
 ## 中文速览
 
@@ -98,10 +99,11 @@ vendored under `data/*.npz` so the experiments reproduce even offline.
 恢复）。本项目回答那些工作跳过的问题：**那些不是 INR 的信号（也就是所有真实信号）会怎样？**
 一个 INR 只能表示其结构化可表示频率集 `Λ` 内的频率。我们证明：(1) 若信号频谱落在 `Λ` 内且
 （可非均匀、含噪的）采样对 `Λ` 构成框架，带宽匹配的 INR 以闭式**噪声增益** `κ = 1/σ_min(Φ)`
-恢复它（可达性）；(2) 任何带外能量都会被**折叠**到 `Λ` 上，产生一个任何宽度 `W` 的 INR 在该
+恢复它（可达性）；(2) 任何带外能量都会被**折叠**到 `Λ` 上，产生一个任何固定特征 INR 在该
 采样密度下都无法突破的**混叠误差地板**（逆定理）——而且全局重建误差可能看起来正常，恢复出的
 **频谱**却被悄悄污染（**静默混叠**）。一个尖锐相变把两个区制分开；我们给出匹配估计器与一个
-**无需真值的混叠诊断**，并在真实音频、科学（天文/地震）与 RF 信号上展示**极限两侧**。
+**无需真值的混叠诊断**，并在真实音频与科学信号（语音、CO₂、太阳黑子）及一个 2-D 图像演示上展示
+**极限两侧**——该现象在训练的非线性 INR 与 2-D INR 上同样成立。
 
 ## Citation
 

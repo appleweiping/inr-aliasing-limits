@@ -88,7 +88,12 @@ def noise_gain(Phi: np.ndarray) -> float:
 
     This is the worst-case amplification of measurement noise into the recovered
     coefficients (Theorem 1): :math:`\lVert\hat c-c^\star\rVert\le\kappa\,\lVert\varepsilon\rVert`.
+    Requires full column rank (:math:`m\le N`); returns ``inf`` otherwise, since
+    :math:`(\Phi^\ast\Phi)^{-1}` then does not exist.
     """
+    N, m = Phi.shape
+    if m > N:
+        return np.inf
     s = np.linalg.svd(Phi, compute_uv=False)
     if s[-1] <= 0:
         return np.inf

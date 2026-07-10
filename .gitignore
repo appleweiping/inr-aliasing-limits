@@ -30,3 +30,7 @@ paper/*.fls
 # secrets / local
 .env
 *_secret*
+
+# rendered preview pngs
+paper/pg-*.png
+paper/rp*.png

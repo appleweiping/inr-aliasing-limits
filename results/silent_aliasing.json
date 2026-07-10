@@ -1,10 +1,21 @@
 {
-  "N": 23,
-  "omega_out": 27.0,
-  "fold_freq": 4.0,
-  "sample_rmse": 0.007605560871813821,
-  "spectral_error": 0.9930814635229376,
-  "diagnostic_out_of_band_frac": 0.14890712324907177,
+  "Lambda": [
+    -23.0,
+    -17.0,
+    -11.0,
+    -5.0,
+    0.0,
+    5.0,
+    11.0,
+    17.0,
+    23.0
+  ],
+  "N": 11,
+  "nu": 34.0,
+  "fold_freq": -17.0,
+  "sample_rmse": 0.09084520960173773,
+  "spectral_error": 1.1387076002459346,
+  "diagnostic_out_of_band_frac": 0.5784154971148215,
   "diagnostic_flag": true,
-  "note": "small sample RMSE but large spectral error at the predicted fold frequency"
+  "note": "structured Lambda + nonuniform samples: small sample residual, large spectral error, non-classical fold target"
 }

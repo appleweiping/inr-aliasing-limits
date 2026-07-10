@@ -40,6 +40,20 @@ def _psnr(a, b):
     return float(10 * np.log10(1.0 / (mse + 1e-12)))
 
 
+def _hf_psnr(a, b, cutoff_frac=0.25):
+    """PSNR restricted to high radial frequencies (detail band), where blur is penalized and
+    aliasing (spurious high-freq energy) is penalized -- so a matched band wins."""
+    def hp(img):
+        F = np.fft.fftshift(np.fft.fft2(img))
+        H, W = img.shape
+        cy, cx = H // 2, W // 2
+        y, x = np.indices((H, W))
+        r = np.sqrt((x - cx) ** 2 + (y - cy) ** 2)
+        F[r < cutoff_frac * min(H, W) / 2] = 0
+        return np.fft.ifft2(np.fft.ifftshift(F)).real
+    return _psnr(hp(a), hp(b))
+
+
 def _radial_spectrum(img):
     F = np.abs(np.fft.fftshift(np.fft.fft2(img)))
     c = np.array(F.shape) // 2
@@ -96,20 +110,22 @@ def run(size=128, sample_frac=0.5, seed=0):
         metrics[tag] = {
             "scale": sc,
             "sample_psnr": _psnr(v_s, full[idx]),   # benign (fits observed pixels)
-            "full_psnr": _psnr(img, r),             # true quality
+            "full_psnr": _psnr(img, r),             # global quality (low-freq dominated)
+            "hf_psnr": _hf_psnr(img, r),            # high-frequency (detail) fidelity
         }
         print(f"[image2d] {tag} scale={sc:.1f} sample_PSNR={metrics[tag]['sample_psnr']:.1f} "
-              f"full_PSNR={metrics[tag]['full_psnr']:.1f}", flush=True)
+              f"full_PSNR={metrics[tag]['full_psnr']:.1f} hf_PSNR={metrics[tag]['hf_psnr']:.1f}",
+              flush=True)
 
     # ---- figure: original | under | matched | over | radial spectrum ----
     fig, axes = plt.subplots(1, 5, figsize=(13.5, 2.9))
     axes[0].imshow(img, cmap="gray"); axes[0].set_title("original"); axes[0].axis("off")
-    for ax, tag, lbl in ((axes[1], "under", "under-scaled\n(blur)"),
-                         (axes[2], "matched", "matched\n(best)"),
-                         (axes[3], "over", "over-scaled\n(aliased/moire)")):
+    for ax, tag, lbl in ((axes[1], "under", "under-scaled\n(safe)"),
+                         (axes[2], "matched", "matched\n(safe)"),
+                         (axes[3], "over", "over-scaled\n(silent alias)")):
         ax.imshow(recon[tag], cmap="gray")
-        ax.set_title(f"{lbl}\nsmpl {metrics[tag]['sample_psnr']:.0f} / full "
-                     f"{metrics[tag]['full_psnr']:.1f} dB", fontsize=8)
+        ax.set_title(f"{lbl}\nfull {metrics[tag]['full_psnr']:.1f} / hf "
+                     f"{metrics[tag]['hf_psnr']:.1f} dB", fontsize=8)
         ax.axis("off")
     fr = np.arange(_radial_spectrum(img).size)
     axes[4].semilogy(fr, _radial_spectrum(img) + 1e-6, color="0.5", label="true")
@@ -122,8 +138,9 @@ def run(size=128, sample_frac=0.5, seed=0):
 
     out = {"size": size, "sample_frac": sample_frac, "N": N, "device": dev,
            "B_img": B_img, "metrics": metrics,
-           "note": "2-D INR band mismatch: under-scaled blurs; over-scaled aliases (high sample-PSNR, "
-                   "low full-PSNR = silent aliasing); matched recovers"}
+           "note": "2-D INR band vs sampling: an OVER-scaled band silently aliases under sparse "
+                   "pixels (high sample-PSNR ~50dB but low full/hf-PSNR, moire); a band matched to "
+                   "or below the sampling is safe (~21dB). Single seed, scipy ascent image."}
     save_json("image2d_aliasing.json", out)
     return out
 
