@@ -150,13 +150,18 @@ def SIREN(hidden: int = 256, layers: int = 3, w0: float = 30.0):  # noqa: N802
 
 
 def FourierFeatureMLP(n_features: int = 128, scale: float = 10.0, hidden: int = 256,
-                      layers: int = 3, seed: int = 0):  # noqa: N802
-    """Random-Fourier-feature input mapping + ReLU MLP (Tancik et al.). Returns ``nn.Module``."""
+                      layers: int = 3, seed: int = 0, in_dim: int = 1):  # noqa: N802
+    """Random-Fourier-feature input mapping + ReLU MLP (Tancik et al.). Returns ``nn.Module``.
+
+    ``scale`` sets the standard deviation of the feature frequencies and hence the INR's
+    representable band -- the direct nonlinear analogue of ``Lambda``'s bandwidth.
+    ``in_dim`` = 1 for signals, 2 for images.
+    """
     torch = _require_torch()
     import torch.nn as nn
 
     g = torch.Generator().manual_seed(seed)
-    B = torch.randn(n_features, 1, generator=g) * scale  # fixed feature frequencies
+    B = torch.randn(n_features, in_dim, generator=g) * scale  # fixed feature frequencies
 
     class _FFN(nn.Module):
         def __init__(self):
@@ -186,7 +191,10 @@ def train_inr(model, t: np.ndarray, y: np.ndarray, epochs: int = 2000, lr: float
     """
     torch = _require_torch()
     model = model.to(device)
-    tt = torch.tensor(np.asarray(t, float).reshape(-1, 1), dtype=torch.float32, device=device)
+    ta = np.asarray(t, float)
+    if ta.ndim == 1:
+        ta = ta.reshape(-1, 1)
+    tt = torch.tensor(ta, dtype=torch.float32, device=device)
     yy = torch.tensor(np.asarray(y, float).reshape(-1, 1), dtype=torch.float32, device=device)
     opt = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     hist = []

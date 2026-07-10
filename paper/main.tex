@@ -1,0 +1,222 @@
+% ICASSP submission: spconf.sty + IEEEbib.bst (official paper-kit files).
+% At most 4 pages of technical content; page 5 contains ONLY references.
+\documentclass{article}
+\usepackage{spconf,amsmath,amssymb,amsthm,graphicx,bm}
+\ninept
+\graphicspath{{figures/}{../results/figures/}}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+\newtheorem{remark}{Remark}
+
+\emergencystretch=1em
+\DeclareMathOperator{\rank}{rank}
+\DeclareMathOperator{\tr}{tr}
+\DeclareMathOperator{\supp}{supp}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\Lam}{\Lambda}
+\newcommand{\Phimat}{\bm{\Phi}}
+\newcommand{\norm}[1]{\lVert#1\rVert}
+
+\title{Learned Nyquist: Fundamental Aliasing Limits of\\ Implicit Neural Representations}
+\name{Weiping Yan\thanks{Code and data: \texttt{github.com/appleweiping/inr-aliasing-limits}.}}
+\address{University of Minnesota, Twin Cities, Minneapolis, MN, USA}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Implicit neural representations (INRs)---SIREN and Fourier-feature coordinate networks---are
+increasingly used as continuous models of signals. Recent theory establishes an
+\emph{achievability} sampling result: how many samples recover a signal that \emph{is} an INR.
+We ask the converse question that governs practice, where signals are \emph{not} INRs: what is
+the fundamental limit of representing an arbitrary, noisily and nonuniformly sampled signal with
+an INR? We show an INR represents only a \emph{structured} frequency set $\Lam$ fixed by its
+features and width/depth, and prove (i) an achievability bound: if the signal spectrum lies in
+$\Lam$ and the samples form a frame for $\Lam$, a bandwidth-matched INR recovers it with
+closed-form noise gain $\kappa=1/\sigma_{\min}(\Phimat)$; (ii) a converse: any out-of-band
+energy is \emph{folded} onto $\Lam$ with a sharp aliasing-error floor no width-$W$ INR can beat,
+and strikingly the sample fit can be near-perfect while the recovered \emph{spectrum} is
+corrupted---\emph{silent aliasing}; and (iii) a statistical minimax version separating an
+estimation-variance regime from a non-vanishing aliasing-bias floor. A bandwidth-matched
+estimator attains the achievability side and a ground-truth-free diagnostic flags the converse
+side. Every theorem is validated against Monte-Carlo simulation, and both sides of the limit are
+demonstrated on real audio, scientific and image data. The classical uniform-lowpass folding law
+is recovered as a special case; the structured/learned aliasing, silent aliasing, and matched
+achievability are new.
+\end{abstract}
+
+\begin{keywords}
+Implicit neural representations, sampling theory, aliasing, generalized sampling, coordinate networks.
+\end{keywords}
+
+\section{Introduction}
+Implicit neural representations parameterize a signal as a coordinate network
+$f_\theta:\R^d\!\to\!\R$ and have become a default continuous model for audio, images, volumes,
+and scientific fields \cite{sitzmann2020siren,tancik2020fourier,mildenhall2020nerf}. A large
+literature engineers their \emph{architectures}---periodic activations, Fourier features,
+band-limited or anti-aliased variants \cite{sitzmann2020siren,tancik2020fourier,shabanov2024banf,barron2021mipnerf}---and
+a recent thread gives a \emph{sampling theory}: Najaf et al.\ \cite{najaf2024sampling} and
+follow-ups \cite{shi2025superres} prove that a signal which \emph{is} a shallow INR is exactly
+recoverable from enough noiseless Fourier measurements. These are all \emph{achievability}
+statements about realizable signals.
+
+\emph{The gap.} In practice the signal is not an INR: it is an arbitrary waveform observed at
+finitely many, often nonuniform, noisy time samples. Nothing in the above characterizes when the
+task is possible, how the answer depends on the network's size, or what failure looks like. We
+supply the missing \emph{converse}. The key object is the INR's \emph{representable frequency set}
+$\Lam$: for a Fourier-feature/periodic coordinate network the output is a combination of complex
+exponentials whose frequencies are integer combinations of the base feature frequencies, a set
+that grows with width and depth \cite{yuce2022structured}. A signal is representable only insofar
+as its spectrum lies in $\Lam$.
+
+\emph{Contributions.} (1) An achievability bound with a closed-form noise gain tied to the stable
+sampling rate of $\Lam$ (Thm.~\ref{thm:ach}). (2) A converse: out-of-band energy folds onto $\Lam$
+with a sharp error floor, and a \emph{silent-aliasing} phenomenon in which the sample fit is near
+perfect while the recovered spectrum is corrupted (Thm.~\ref{thm:conv}). (3) A statistical minimax
+version with a phase transition between a variance regime and a non-vanishing aliasing-bias floor
+(Thm.~\ref{thm:stat}). (4) A bandwidth-matched estimator and a ground-truth-free diagnostic, with
+Monte-Carlo-validated theory and real-data demonstrations of both sides of the limit.
+
+\emph{Why this is not classical Nyquist.} The representable set $\Lam$ is \emph{not} a lowpass
+interval but a structured (and, for adaptive-frequency INRs, signal-dependent) set, so aliasing
+folds energy onto a structured target rather than baseband. The uniform-lowpass folding law is one
+special case of our converse (Rem.~\ref{rem:classical}); structured/learned aliasing, silent
+aliasing, the data-only diagnostic, and matched achievability are new. Our machinery adapts
+generalized sampling and stable-sampling-rate ideas \cite{adcock2016generalized,landau1967necessary,unser2000sampling}
+to the INR dictionary.
+
+\section{Signal model and representable band}
+Let $f:[0,1)\!\to\!\R$ be observed at samples $t_1,\dots,t_N$ (possibly nonuniform) as
+$y_j=f(t_j)+\varepsilon_j$. A Fourier-feature INR with feature frequencies inducing the finite set
+$\Lam=\{\omega_1,\dots,\omega_m\}\subset\R$ has, in its linear output layer, the model class
+$\mathcal M_\Lam=\{\sum_k c_k e^{i2\pi\omega_k x}\}$; deeper/periodic networks enlarge $\Lam$ to
+integer combinations of base frequencies \cite{yuce2022structured}. Define the
+\emph{synthesis matrix} $\Phimat\in\C^{N\times m}$, $\Phimat_{jk}=e^{i2\pi\omega_k t_j}$; fitting
+the INR to the samples is the (ridge) least-squares problem
+$\hat{\bm c}=\arg\min_{\bm c}\norm{\bm y-\Phimat\bm c}^2$. Write the signal as
+$f=f_{\mathrm{in}}+f_{\mathrm{out}}$ with $\supp(\hat f_{\mathrm{in}})\subseteq\Lam$ and
+$f_{\mathrm{out}}$ spectrally disjoint from $\Lam$, so
+$\bm y=\Phimat\bm c^\star+\bm g+\bm\varepsilon$, $g_j=f_{\mathrm{out}}(t_j)$. The lower/upper
+\emph{frame bounds} of the sampled dictionary are $A=\sigma_{\min}(\Phimat)^2$,
+$B=\sigma_{\max}(\Phimat)^2$; $A>0$ iff the samples determine $\mathcal M_\Lam$.
+
+\section{Fundamental limits}
+\begin{theorem}[Achievability]\label{thm:ach}
+If $f_{\mathrm{out}}=0$ and $\sigma_{\min}(\Phimat)>0$, then
+$\norm{\hat{\bm c}-\bm c^\star}\le\kappa\,\norm{\bm\varepsilon}$ with noise gain
+$\kappa=\norm{(\Phimat^{*}\Phimat)^{-1}\Phimat^{*}}_2=1/\sigma_{\min}(\Phimat)$, and for white
+noise of variance $\sigma^2$, $\ \mathbb E\norm{\hat{\bm c}-\bm c^\star}^2=\sigma^2\tr\!\big((\Phimat^{*}\Phimat)^{-1}\big)$.
+\end{theorem}
+The condition $A>0$ holds once the sampling density exceeds the stable rate of $\Lam$; for
+$\Lam\subseteq[-W,W]$ this is the Landau density $N\gtrsim 2W$ \cite{landau1967necessary}.
+
+\begin{theorem}[Converse and aliasing]\label{thm:conv}
+Let $P=\Phimat(\Phimat^{*}\Phimat)^{-1}\Phimat^{*}$. With $f_{\mathrm{out}}\neq0$ the least-squares
+estimate is biased, $\hat{\bm c}=\bm c^\star+\Delta\bm c$,
+$\Delta\bm c=(\Phimat^{*}\Phimat)^{-1}\Phimat^{*}\bm g$, and:
+(i) no INR in $\mathcal M_\Lam$ fits the noiseless samples better than
+$\min_{\bm c}\norm{\bm y-\Phimat\bm c}=\norm{(\bm I-P)\bm g}$;
+(ii) the recovered spectrum is corrupted by $\Delta\bm c$, and $\norm{\Delta\bm c}$ can be
+$\Theta(\norm{f_{\mathrm{out}}})$ even when $\norm{(\bm I-P)\bm g}\!\to\!0$ (\emph{silent aliasing});
+(iii) a tone $e_\nu$ folds onto $\omega_{k^\star}\in\Lam$, $k^\star=\arg\max_k|[\Delta\bm c(\nu)]_k|$.
+\end{theorem}
+
+\begin{remark}\label{rem:classical}
+For uniform $t_j=j/N$ and $\Lam$ an integer lowpass band, part (iii) reduces to
+$\nu\bmod N$: classical aliasing is the coherent special case.
+\end{remark}
+
+\begin{theorem}[Statistical]\label{thm:stat}
+For random $\bm c^\star$, out-of-band coefficients of power $\bm p$, and white noise $\sigma^2$, the
+Bayes risk decomposes as an estimation-variance term $\sigma^2\tr((\Phimat^{*}\Phimat)^{-1})$,
+which vanishes as $N\!\to\!\infty$, plus an aliasing-bias floor
+$\tr(\bm M\bm\Sigma_g\bm M^{*})$ with $\bm M=(\Phimat^{*}\Phimat)^{-1}\Phimat^{*}$ and
+$\bm\Sigma_g=\Phimat_{\mathrm{out}}\mathrm{diag}(\bm p)\Phimat_{\mathrm{out}}^{*}$, which does
+\emph{not} vanish under coherent aliasing. A sharp threshold in $(W,N,\text{spillover})$ separates
+the two regimes.
+\end{theorem}
+Proofs are elementary least-squares/projection arguments; each identity is asserted against
+Monte-Carlo in the released test suite.
+
+\section{Matched estimator and diagnostic}
+\emph{Bandwidth matching.} Estimating the essential band from the samples via a nonuniform
+periodogram and choosing $\Lam$ to cover it places the signal in the Thm.~\ref{thm:ach} regime; this
+is the estimator we use. \emph{Diagnostic.} Because a coherent fold is invisible in-sample
+(Thm.~\ref{thm:conv}(ii)), we test band-limitation to $\Lam$ by fitting an enlarged dictionary
+$\Lam\cup\Lam_{\mathrm{ring}}$ and measuring the recovered energy on the ring; significant ring
+energy flags out-of-band content without any ground truth.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{silent_aliasing.png}
+\caption{\emph{Silent aliasing} (Thm.~\ref{thm:conv}). A tone at $\omega{=}27$ is sampled at rate
+$N{=}23$; the INR fits the samples (RMSE $0.008$) but its spectrum grows a spurious peak at the
+predicted fold $\omega{=}4$ (spectral error $0.99$) while the true tones at $\pm3,\pm6$ are kept.}
+\label{fig:silent}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.92\linewidth]{phase_transition_A.png}
+\caption{Achievability vs.\ converse (Thm.~\ref{thm:ach}--\ref{thm:conv}). In-band ($r{=}1$) error
+falls to the noise floor with sampling density; out-of-band ($r{>}1$) error plateaus at an aliasing
+floor no density removes.}
+\label{fig:phase}
+\end{figure}
+
+\section{Experiments}
+All theory is validated against Monte-Carlo (frame bounds, $\kappa$, aliasing floor, fold law,
+statistical regimes). Fig.~\ref{fig:silent} shows silent aliasing: the fixed-feature INR fits the
+samples to the noise floor yet plants a spurious spectral peak at exactly the predicted fold
+frequency. Fig.~\ref{fig:phase} shows the phase transition: for an in-band signal the error decays
+to the noise floor as sampling density grows (achievability), while any out-of-band content pins
+the error at a floor independent of density (converse).
+
+\emph{Real data, both sides} (Fig.~\ref{fig:real}). We sweep the INR bandwidth $B_{\mathrm{INR}}$ on
+real signals and read the reconstruction-error knee, the empirical learned-Nyquist rate. Mauna~Loa
+$\mathrm{CO_2}$ (NOAA) is bandlimited (annual cycle), giving a \emph{sharp knee} at its spectral
+peak: a narrow INR aliases it, a matched INR recovers it (RMSE $0.42\!\to\!0.16$). Speech (Open
+Speech Repository) is broadband, so the error descends in a staircase and never reaches the noise
+floor---the aliasing side---even at the widest practical width. Smoothed sunspots (SILSO) behave
+like $\mathrm{CO_2}$. The phenomenon persists for \emph{trained nonlinear} INRs: a shallow
+Fourier-feature network fits undersampled data but folds an out-of-hull tone in exactly as
+predicted, and a two-dimensional INR on sparse image pixels exhibits the same limit---an
+over-scaled band yields high sample-PSNR but a moir\'e-corrupted field (2-D silent aliasing), a
+matched band recovers detail.
+
+\section{Conclusion}
+INRs alias, and provably so: they represent only a structured band $\Lam$, out-of-band energy folds
+onto $\Lam$ with an error floor, and the corruption can be spectrally severe yet invisible in the
+sample fit. The limit is sharp, matched by a bandwidth-selecting estimator, detectable from data,
+and visible on real audio, scientific and image signals. Beyond the fixed-feature core, deriving
+$\Lam$ for general depth and adaptive-frequency INRs, and converses under the exact training
+dynamics, are natural next steps.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.49\textwidth]{real_co2.png}\hfill
+\includegraphics[width=0.49\textwidth]{real_speech.png}
+\caption{Both sides of the limit on real data. \emph{Left} ($\mathrm{CO_2}$, recoverable): the
+reconstruction-error knee sits exactly at the annual-cycle frequency; a narrow INR aliases, a
+matched INR recovers. \emph{Right} (speech, aliasing): a broadband signal has no clean knee and the
+error never reaches the noise floor within any practical INR width.}
+\label{fig:real}
+\end{figure*}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.98\textwidth]{image2d_aliasing.png}
+\caption{The limit generalizes to a trained \emph{nonlinear} 2-D INR fit to sparse image pixels.
+An over-scaled representable band aliases: it fits the observed pixels (high sample-PSNR) but the
+full field is moir\'e-corrupted (low full-PSNR) and its radial spectrum carries spurious
+high-frequency energy---2-D silent aliasing---while a matched band recovers detail.}
+\label{fig:image}
+\end{figure*}
+
+\vfill\pagebreak
+\bibliographystyle{IEEEbib}
+\bibliography{refs}
+\end{document}

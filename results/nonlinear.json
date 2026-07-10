@@ -1,0 +1,16 @@
+{
+  "silent_aliasing": {
+    "f_out": 50.0,
+    "N": 46,
+    "sample_rmse": 4.573479156633219e-05,
+    "predicted_fold": 4.0,
+    "device": "cuda",
+    "note": "trained nonlinear INR fits samples but folds the out-of-hull tone (silent aliasing)"
+  },
+  "achievability": {
+    "name": "co2",
+    "nonlinear_rmse": 0.10655513636806083,
+    "linear_rmse": 0.14333510876465655,
+    "B_sig": 69
+  }
+}
