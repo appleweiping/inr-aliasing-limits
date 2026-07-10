@@ -24,16 +24,19 @@ the manuscript.
 > aliasing diagnostic**, and we instantiate **both sides of the limit** on real audio,
 > scientific (astronomical / seismic) and RF signals.
 
-## Status (work in progress)
+## Status
 
 - [x] Sampling / frame machinery on a finite frequency dictionary (`src/inralias/sampling.py`, tested)
-- [x] Theorem 1 achievability — noise gain, recoverable MMSE (tested vs Monte-Carlo)
-- [x] Theorem 2 converse — aliasing bias, error floor, folded frequency, silent aliasing (tested)
-- [x] Theorem 3 statistical — aliasing-bias floor vs estimation variance (tested)
-- [ ] Trained nonlinear INRs (SIREN / learnable frequencies) + bandwidth-matched estimator
-- [ ] Experiments E1–E2 (synthetic phase transition + silent-aliasing spectrum)
-- [ ] Real data E3 audio, E4 science, E5 RF, E6 2-D image demo
-- [ ] Paper (IEEE ICASSP, spconf)
+- [x] Theorem 1 achievability — noise gain, recoverable MMSE (validated vs Monte-Carlo)
+- [x] Theorem 2 converse — aliasing bias, error floor, folded frequency, silent aliasing (validated)
+- [x] Theorem 3 statistical — aliasing-bias floor vs estimation variance (validated)
+- [x] Trained nonlinear INRs (SIREN / Fourier-feature MLP) + bandwidth-matched estimator + data-only diagnostic
+- [x] E1 synthetic phase transition, E2 silent-aliasing spectrum
+- [x] Real data: audio (speech) and science (CO₂, sunspots) — both sides of the limit
+- [x] Nonlinear-INR persistence + 2-D image demo (learned aliasing generalizes)
+- [x] Paper (IEEE ICASSP, spconf) — `paper/main.pdf`, compiles clean
+
+All theorem ↔ Monte-Carlo checks pass (`python -m pytest -q`, 17 tests).
 
 ## Why this is not "just Nyquist"
 
@@ -61,9 +64,22 @@ results/          *.json summaries + figures/
 ```bash
 uv venv --python 3.11 && source .venv/Scripts/activate   # (or .venv/bin/activate)
 uv pip install -e ".[dev]"
-python -m pytest -q                # validate every theorem against Monte-Carlo
-python experiments/run_all.py      # regenerate all results/figures
+python -m pytest -q                # validate every theorem against Monte-Carlo (17 tests)
+python experiments/run_all.py      # regenerate all results/figures (CPU parts)
 ```
+
+The theory core and the synthetic + real-data experiments (E1, E2, learned-Nyquist sweeps) are
+**pure numpy/scipy and run on CPU**. The trained-nonlinear-INR persistence and the 2-D image demo
+need `torch` (`uv pip install ".[torch]"`; on a China network use
+`--index-url https://pypi.tuna.tsinghua.edu.cn/simple`) and a GPU is convenient but not required;
+`run_all.py` skips them automatically if torch is absent. To build the paper:
+
+```bash
+cd paper && pdflatex main && bibtex main && pdflatex main && pdflatex main
+```
+
+Real signals are fetched by `data/fetch_real.py` (public sources; see below) and small copies are
+vendored under `data/*.npz` so the experiments reproduce even offline.
 
 ## Relation to prior work
 
