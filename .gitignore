@@ -1,0 +1,32 @@
+# venv / caches
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.uv/
+*.egg-info/
+
+# large raw data (fetch scripts regenerate); small vendored samples are force-added
+data/raw/
+data/cache/
+*.wav
+*.flac
+!data/samples/*.wav
+!data/samples/*.flac
+
+# results: figures + JSON summaries are versioned; bulky intermediates are not
+results/cache/
+
+# latex build artifacts
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.bbl
+paper/*.blg
+paper/*.synctex.gz
+paper/*.fdb_latexmk
+paper/*.fls
+
+# secrets / local
+.env
+*_secret*
