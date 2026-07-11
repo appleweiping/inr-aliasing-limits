@@ -152,7 +152,7 @@ def test_thm2_silent_aliasing_regime_exists():
 
 
 def test_thm2_exact_grid_fold_silent_aliasing():
-    # Theorem 2(ii), headline form: if the samples lie on a rate-Q grid and the
+    # Theorem 2(iii), headline form: if the samples lie on a rate-Q grid and the
     # out-of-band tone satisfies nu = omega_k (mod Q), then phi_nu = phi_{omega_k}
     # EXACTLY on the samples.  The residual is exactly zero, the spectral bias equals
     # the full out-of-band coefficient energy, and the L2[0,1) reconstruction error is

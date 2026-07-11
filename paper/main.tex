@@ -152,8 +152,8 @@ and $\mathrm{range}\,\Phimat$) while the spectral bias is $\norm{\Delta\bm c}=|a
 (iii) (\emph{silent aliasing}) if $\Lam\subset\mathbb Z$, the samples lie on a rate-$Q$ grid
 ($t_j\in\{0,\dots,Q{-}1\}/Q$), and $\nu\in\mathbb Z\setminus\Lam$ satisfies
 $\nu\equiv\omega_k\ (\mathrm{mod}\ Q)$, then $\bm\phi_\nu=\bm\phi_{\omega_k}$ exactly: the residual
-is \emph{zero} while $\norm{\Delta\bm c}=|a|$, and every $g\in\Mcal_\Lam$ has
-$\norm{g-f}_{L^2[0,1)}\ge\norm{f_{\mathrm{out}}}_{L^2}$---full-energy reconstruction failure,
+is \emph{zero} while $\norm{\Delta\bm c}=|a|$, and every $h\in\Mcal_\Lam$ has
+$\norm{h-f}_{L^2[0,1)}\ge\norm{f_{\mathrm{out}}}_{L^2}$---full-energy reconstruction failure,
 invisible in-sample, at any $N$ and with $\nu$ arbitrarily far from $\Lam$.
 \end{theorem}
 We call such a fold \emph{coherent} with the sampling; in general, coherence means
@@ -173,7 +173,8 @@ grid-subset or nonuniform samples the fold target is non-classical (Fig.~\ref{fi
 \end{remark}
 
 \begin{theorem}[Average-case decomposition]\label{thm:stat}
-Let the out-of-band coefficients $a_l$ be zero-mean, uncorrelated, with $\mathbb E|a_l|^2=p_l$,
+Assume $\sigma_{\min}(\Phimat)>0$, and let the out-of-band coefficients $a_l$ be zero-mean,
+uncorrelated, with $\mathbb E|a_l|^2=p_l$,
 independent of the noise, and $\mathbb E[\bm\varepsilon\bm\varepsilon^{*}]=\sigma^2\bm I$. Then the
 mean-squared error of the least-squares estimator is exactly
 \begin{equation}\label{eq:decomp}
@@ -185,8 +186,9 @@ with $\bm\Sigma_g=\Phimat_{\mathrm{out}}\,\mathrm{diag}(\bm p)\,\Phimat_{\mathrm
 \end{theorem}
 Equation \eqref{eq:decomp} is a fixed-$N$ identity. The estimation term decays like $\sigma^2m/N$
 for well-conditioned sampling, but the aliasing term is not \emph{uniformly} removable: at every
-density some tone folds coherently ($\norm{\bm M\bm\phi_\nu}=1$, Thm.~\ref{thm:conv}(iii)) and
-keeps it at full power. For a \emph{fixed} tone the term converges to its window-leakage energy
+density some tone folds coherently and keeps it at full power
+($\norm{\bm M\bm\phi_\nu}=1$ exactly for grid sampling, Thm.~\ref{thm:conv}(iii); in the
+near-collision limit otherwise). For a \emph{fixed} tone the term converges to its window-leakage energy
 onto $\Mcal_\Lam$: exactly zero for integer-disjoint tones under uniform sampling ($O(m/N)$ in
 expectation under i.i.d.\ sampling), but the positive constant $\sum_k\mathrm{sinc}^2(\nu-\omega_k)$
 for non-integer $\nu$. The proofs are elementary least-squares/projection identities; each
@@ -255,7 +257,7 @@ Loa $\mathrm{CO_2}$ (NOAA; $N{=}414$ of $M{=}820$, nonuniform), after linear det
 bandlimited (annual cycle), giving a sharp knee at its spectral peak: a narrow INR aliases it, a
 matched INR recovers it ($\mathrm{RMSE}\ 0.42\pm0.00\!\to\!0.17\pm0.03$). Broadband speech (Open
 Speech Repository; $N{=}1400$ of $M{=}2000$) shows the converse side: no width approaches the
-$0.03$ noise floor---narrow bands sit on a truncation-plus-aliasing floor ($\mathrm{RMSE}\ge1.02$)
+$0.03$ noise floor---narrow bands sit on a truncation-plus-aliasing floor ($\mathrm{RMSE}\ge1.0$)
 and widths approaching the sample budget explode from the Thm.~\ref{thm:ach} noise gain
 ($\kappa\to\infty$ as $m\to N$; $\mathrm{RMSE}\ 682\pm386$ at $B{=}650$). Smoothed sunspots (SILSO;
 the smoothing is a documented lowpass proxy) behave like $\mathrm{CO_2}$
@@ -264,8 +266,9 @@ fold-for-fold, for trained \emph{nonlinear} INRs: training identical Fourier-fea
 and without an out-of-hull tone and taking the difference spectrum isolates where the trained net
 puts the tone's energy---it matches the Hermitian-pair linear bias pattern bin-for-bin (correlation
 $0.99/0.91/0.63$ over three sampling draws; measured peak equal to the predicted fold target in
-two, and to a near-tied atom within $3\%$ in the third), while a bandwidth-covering trained network
-recovers real $\mathrm{CO_2}$ slightly better than the linear estimator ($0.107$ vs.\ $0.143$).
+two, and to a near-tied atom of the predicted pattern in the third), while a bandwidth-covering
+trained network recovers real $\mathrm{CO_2}$ slightly better than the linear estimator
+($0.107$ vs.\ $0.143$, one fixed draw).
 Because the Gaussian feature scale is a \emph{soft} band edge (features have tails and the MLP
 generates harmonics), the trained-INR persistence claim rests on this out-of-hull-tone ablation,
 not on a scale sweep. Finally, a 2-D INR on sparse image pixels (Fig.~\ref{fig:image}) reproduces
@@ -303,7 +306,7 @@ noise-gain blow-up ($\kappa=1/\sigma_{\min}\to\infty$) as the width approaches t
 restricted to the upper radial-frequency band). An over-scaled representable band silently
 aliases: it fits the observed pixels ($51$~dB) but the full field is moir\'e-corrupted ($16$~dB)
 and its radial spectrum carries spurious high-frequency energy; a band matched to (or below) the
-sampling is safe---under- and matched-band fits are statistically indistinguishable here; the
+sampling is safe---under- and matched-band fits are comparable here (single seed); the
 contrast that matters is with the over-scaled band.}
 \label{fig:image}
 \end{figure*}
