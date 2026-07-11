@@ -1,10 +1,10 @@
 r"""E6 -- 2-D image demo: the learned-aliasing limit generalizes beyond 1-D.
 
 Fit a nonlinear 2-D Fourier-feature INR to a real grayscale image from *sparse, nonuniform*
-pixel samples at two feature scales.  The narrow-band INR cannot represent the image's
-high-frequency texture: it fits the observed pixels (benign sample-PSNR) but its full-field
-spectrum is folded/attenuated -- the 2-D analogue of "silent aliasing" -- while the matched
-INR recovers the detail.
+pixel samples at three feature scales.  The OVER-scaled band silently aliases: it fits the
+observed pixels (high sample-PSNR) but the full field is moire-corrupted with spurious
+high-frequency energy -- the 2-D analogue of "silent aliasing" -- while a band matched to
+(or below) the sampling is safe.
 
 Requires torch (GPU server).  Usage: python experiments/run_image2d.py
 """
