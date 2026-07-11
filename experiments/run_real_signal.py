@@ -64,11 +64,14 @@ def essential_bandwidth(x: np.ndarray, keep: float = 0.95, bmax: int | None = No
     return max(2, min(B, bmax))
 
 
-def _fit_rmse(B_inr: int, t_samp, y_samp, t_ref, x_ref, ridge=1e-6) -> tuple[float, dict]:
+def _fit_rmse(B_inr: int, t_samp, y_samp, t_ref, x_ref, ridge=1e-6,
+              with_diag: bool = True) -> tuple[float, dict | None]:
     Lam = lowpass_dictionary(B_inr)
     inr = FixedFeatureINR(Lam, real=True).fit(t_samp, y_samp, ridge=ridge)
     f_hat = inr.predict(t_ref)
     rmse = float(np.sqrt(np.mean((f_hat - x_ref) ** 2)))
+    if not with_diag:
+        return rmse, None
     ring_hi = min(B_inr + max(4, B_inr // 3), len(x_ref) // 2 - 1)
     ring = np.concatenate([np.arange(B_inr + 1, ring_hi + 1),
                            -np.arange(B_inr + 1, ring_hi + 1)]).astype(float)
@@ -76,53 +79,70 @@ def _fit_rmse(B_inr: int, t_samp, y_samp, t_ref, x_ref, ridge=1e-6) -> tuple[flo
     return rmse, diag
 
 
-def run(name: str, density: float = 3.0, snr_db: float = 30.0, seed: int = 0):
-    rng = np.random.default_rng(seed)
+def _draw_samples(rng, x_ref, N, snr_db):
+    M = x_ref.size
+    t_ref = np.arange(M) / M
+    idx = np.sort(rng.choice(M, size=N, replace=False))
+    sig_p = np.mean(x_ref**2)
+    noise_std = np.sqrt(sig_p / (10 ** (snr_db / 10)))
+    return t_ref[idx], x_ref[idx] + rng.normal(0, noise_std, N)
+
+
+def run(name: str, density: float = 3.0, snr_db: float = 30.0, n_seeds: int = 10):
     x_ref = load_signal(name)
     M = x_ref.size
     t_ref = np.arange(M) / M
     B_sig = essential_bandwidth(x_ref)
 
-    # nonuniform noisy samples at density * Nyquist(B_sig)
-    N = int(min(M, max(2 * B_sig + 5, round(density * 2 * B_sig))))
-    idx = np.sort(rng.choice(M, size=N, replace=False))
-    t_samp = t_ref[idx]
-    sig_p = np.mean(x_ref**2)
-    noise_std = np.sqrt(sig_p / (10 ** (snr_db / 10)))
-    y_samp = x_ref[idx] + rng.normal(0, noise_std, N)
+    # nonuniform noisy samples at density * Nyquist(B_sig), capped STRICTLY below M so the
+    # samples are a genuine nonuniform subset (never the complete uniform grid -- with the
+    # full grid the integer dictionary is exactly orthogonal to all out-of-band grid
+    # frequencies and nothing folds; the cap keeps the aliasing side honest)
+    N = int(min(int(0.7 * M), max(2 * B_sig + 5, round(density * 2 * B_sig))))
 
-    # sweep INR bandwidth
     Bmax = min(int(1.8 * B_sig) + 4, N // 2 - 1, M // 2 - 1)
     grid = np.unique(np.linspace(max(2, B_sig // 6), Bmax, 26).astype(int))
-    rmse, oob = [], []
-    for B in grid:
-        r, d = _fit_rmse(int(B), t_samp, y_samp, t_ref, x_ref)
-        rmse.append(r); oob.append(d["out_of_band_frac"])
-    rmse = np.array(rmse); oob = np.array(oob)
+    B_narrow = int(max(2, B_sig // 3))
+    B_match = int(min(Bmax, int(1.3 * B_sig)))
 
-    # knee: smallest B within 1.3x of the min RMSE
+    # multi-seed sweep: mean +- s.d. over independent subsample+noise draws
+    rmse_seeds, narrow_seeds, matched_seeds = [], [], []
+    oob = None
+    for seed in range(n_seeds):
+        rng = np.random.default_rng(seed)
+        t_samp, y_samp = _draw_samples(rng, x_ref, N, snr_db)
+        row = []
+        oob_row = [] if seed == 0 else None
+        for B in grid:
+            r, d = _fit_rmse(int(B), t_samp, y_samp, t_ref, x_ref, with_diag=(seed == 0))
+            row.append(r)
+            if seed == 0:
+                oob_row.append(d["out_of_band_frac"])
+        rmse_seeds.append(row)
+        if seed == 0:
+            oob = np.array(oob_row)
+        narrow_seeds.append(_fit_rmse(B_narrow, t_samp, y_samp, t_ref, x_ref, with_diag=False)[0])
+        matched_seeds.append(_fit_rmse(B_match, t_samp, y_samp, t_ref, x_ref, with_diag=False)[0])
+    rmse_seeds = np.array(rmse_seeds)             # (n_seeds, |grid|)
+    rmse = rmse_seeds.mean(axis=0)
+    rmse_std = rmse_seeds.std(axis=0)
+    narrow_seeds = np.array(narrow_seeds)
+    matched_seeds = np.array(matched_seeds)
+
+    # knee: smallest B within 1.3x of the min mean RMSE
     floor = rmse.min()
     knee_idx = int(np.argmax(rmse <= 1.3 * floor))
     B_knee = int(grid[knee_idx])
 
-    # narrow vs matched spectra
-    B_narrow = int(max(2, B_sig // 3))
-    B_match = int(min(Bmax, int(1.3 * B_sig)))
-    specs = {}
-    for tag, B in (("narrow", B_narrow), ("matched", B_match)):
-        Lam = lowpass_dictionary(B)
-        inr = FixedFeatureINR(Lam, real=True).fit(t_samp, y_samp, ridge=1e-6)
-        specs[tag] = {"B": B, "freqs": Lam.tolist(),
-                      "coef_abs": np.abs(inr.coeffs_).tolist(),
-                      "recon": inr.predict(t_ref)}
-
-    # ---- figures ----
+    # ---- figures (mean curve with +-1 s.d. band) ----
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8.6, 3.2))
-    ax1.plot(grid, rmse, "o-", ms=3, color="C3")
+    ax1.plot(grid, rmse, "o-", ms=3, color="C3", label=f"mean of {n_seeds} draws")
+    ax1.fill_between(grid, rmse - rmse_std, rmse + rmse_std, color="C3", alpha=0.2,
+                     label="$\\pm 1$ s.d.")
     ax1.axvline(B_sig, color="C0", ls="--", lw=1.2, label=f"$B_{{sig}}$={B_sig}")
     ax1.axvline(B_knee, color="k", ls=":", lw=1.0, label=f"knee={B_knee}")
     ax1.set_xlabel("INR bandwidth $B_{INR}$"); ax1.set_ylabel("reconstruction RMSE")
-    ax1.set_yscale("log"); ax1.set_title(f"{name}: learned-Nyquist knee"); ax1.legend(fontsize=7)
+    ax1.set_yscale("log"); ax1.set_title(f"{name}: error vs INR bandwidth"); ax1.legend(fontsize=7)
 
     Xref = np.abs(np.fft.rfft(x_ref)); fr = np.arange(Xref.size)
     ax2.plot(fr, Xref / Xref.max(), color="0.6", lw=1.0, label="true spectrum")
@@ -135,15 +155,21 @@ def run(name: str, density: float = 3.0, snr_db: float = 30.0, seed: int = 0):
 
     out = {
         "name": name, "M": M, "B_sig": B_sig, "N": N, "snr_db": snr_db, "density": density,
-        "grid": grid.tolist(), "rmse": rmse.tolist(), "out_of_band_frac": oob.tolist(),
+        "n_seeds": n_seeds,
+        "grid": grid.tolist(), "rmse_mean": rmse.tolist(), "rmse_std": rmse_std.tolist(),
+        "out_of_band_frac_seed0": oob.tolist(),
         "B_knee": B_knee, "rmse_floor": float(floor),
-        "narrow": {"B": B_narrow, "rmse": float(_fit_rmse(B_narrow, t_samp, y_samp, t_ref, x_ref)[0])},
-        "matched": {"B": B_match, "rmse": float(_fit_rmse(B_match, t_samp, y_samp, t_ref, x_ref)[0])},
-        "note": "RMSE-vs-B_INR knee at essential bandwidth; narrow INR aliases (folds), matched recovers",
+        "narrow": {"B": B_narrow, "rmse_mean": float(narrow_seeds.mean()),
+                   "rmse_std": float(narrow_seeds.std())},
+        "matched": {"B": B_match, "rmse_mean": float(matched_seeds.mean()),
+                    "rmse_std": float(matched_seeds.std())},
+        "note": "RMSE-vs-B_INR knee at essential bandwidth, mean +- s.d. over n_seeds "
+                "nonuniform-subsample/noise draws (N < M strictly: genuine subsampling)",
     }
     save_json(f"real_{name}.json", out)
     print(f"[real:{name}] M={M} B_sig={B_sig} N={N} knee={B_knee} "
-          f"narrow_rmse={out['narrow']['rmse']:.3f} matched_rmse={out['matched']['rmse']:.3f}",
+          f"narrow_rmse={narrow_seeds.mean():.3f}+-{narrow_seeds.std():.3f} "
+          f"matched_rmse={matched_seeds.mean():.3f}+-{matched_seeds.std():.3f}",
           flush=True)
     return out
 

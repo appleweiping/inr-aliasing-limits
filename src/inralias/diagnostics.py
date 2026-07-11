@@ -50,9 +50,16 @@ def extended_dictionary_test(
     r"""Fit an enlarged dictionary :math:`\Lambda\cup\Lambda_{\text{ring}}` and report how much
     recovered energy lands on the ring (out-of-band) atoms.
 
-    Returns ``{"out_of_band_frac", "ring_energy", "inband_energy", "flag"}`` where
-    ``out_of_band_frac`` is the fraction of recovered coefficient energy on ring atoms and
-    ``flag`` is True when it exceeds a conservative threshold (0.1).
+    Returns ``{"out_of_band_frac", "ring_energy", "inband_energy", "flag",
+    "underdetermined"}`` where ``out_of_band_frac`` is the fraction of recovered
+    coefficient energy on ring atoms and ``flag`` is True when it exceeds a threshold
+    (0.1; validated against a null-calibrated false-positive rate in
+    ``experiments/run_diagnostic_roc.py``).
+
+    **Validity requirement**: the test is only meaningful in the overdetermined regime
+    ``N > |Lambda| + |ring|``.  Underdetermined ridge fits spread energy across all atoms
+    and flag essentially every signal (null out-of-band fraction ~0.7); the returned
+    ``underdetermined`` key marks this case and the ``flag`` should then be ignored.
     """
     freqs = np.asarray(freqs, float)
     ring = np.asarray(ring, float)
@@ -63,11 +70,13 @@ def extended_dictionary_test(
     inb = float(np.sum(np.abs(c[:m]) ** 2))
     out = float(np.sum(np.abs(c[m:]) ** 2))
     frac = out / (inb + out + 1e-30)
+    underdetermined = np.asarray(t).size <= ext.size
     return {
         "out_of_band_frac": frac,
         "ring_energy": out,
         "inband_energy": inb,
         "flag": bool(frac > 0.10),
+        "underdetermined": bool(underdetermined),
     }
 
 

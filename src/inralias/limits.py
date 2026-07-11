@@ -21,11 +21,19 @@ disjoint from :math:`\Lambda`.  With synthesis matrix :math:`\Phi` (see
   (:func:`silent_aliasing_ratio`).  An out-of-band tone folds onto the :math:`\Lambda`
   frequency of :func:`folded_frequency`.
 
-* **Theorem 3 (statistical).**  For random signals + Gaussian noise the Bayes MMSE splits
-  into a variance term that decays like :math:`\sigma^2\,\mathrm{tr}((\Phi^\ast\Phi)^{-1})`
-  (:func:`mmse_recoverable`) and a non-vanishing aliasing-bias floor
-  :math:`\mathrm{tr}(M\,\Sigma_g\,M^\ast)`, :math:`M=(\Phi^\ast\Phi)^{-1}\Phi^\ast`
-  (:func:`mmse_aliasing_floor`).
+* **Theorem 3 (statistical).**  For random out-of-band content + Gaussian noise the MSE of
+  the least-squares estimator splits exactly into an estimation-variance term
+  :math:`\sigma^2\,\mathrm{tr}((\Phi^\ast\Phi)^{-1})` (:func:`mmse_recoverable`) and an
+  aliasing-variance term :math:`\mathrm{tr}(M\,\Sigma_g\,M^\ast)`,
+  :math:`M=(\Phi^\ast\Phi)^{-1}\Phi^\ast` (:func:`mmse_aliasing_floor`).  The aliasing term
+  is a fixed-``N`` quantity: it stays at full power along *coherent* folds (an out-of-band
+  atom with :math:`\lVert M\phi_\nu\rVert` bounded away from zero, e.g.
+  :math:`\nu\equiv\omega_k\ (\mathrm{mod}\ Q)` for samples on a rate-``Q`` grid), while for
+  a fixed tone it converges, as density grows, to the tone's window-leakage energy onto
+  :math:`\mathrm{span}\,\mathcal M_\Lambda` -- exactly zero for integer-disjoint tones
+  under uniform sampling, :math:`O(m/N)` in expectation under i.i.d. sampling, and a
+  positive constant :math:`\sum_k \mathrm{sinc}^2(\nu-\omega_k)` for non-integer tones.
+  Each regime is pinned in ``tests/test_theory_vs_sim.py``.
 """
 from __future__ import annotations
 
@@ -212,7 +220,11 @@ def mmse_aliasing_floor(
     and :math:`\Sigma_g=\Phi_{\text{out}}\,\mathrm{diag}(\text{out\_power})\,\Phi_{\text{out}}^\ast`
     is the covariance of the out-of-band sample vector for random, uncorrelated out-of-band
     coefficients.  Unlike the variance term this does **not** vanish as ``N`` grows when the
-    out-of-band content is coherent with :math:`\Lambda` under the sampling.
+    out-of-band content is *coherent* with :math:`\Lambda` under the sampling, i.e. when
+    :math:`\lVert M\phi_{\nu_l}\rVert` stays bounded away from zero (for samples on a
+    rate-``Q`` grid: :math:`\nu_l\equiv\omega_k\ (\mathrm{mod}\ Q)`); for a fixed
+    incoherent tone it converges to the tone's window-leakage energy (see module
+    docstring and the regime tests).
     """
     freqs = np.asarray(freqs, float)
     out_freqs = np.asarray(out_freqs, float)

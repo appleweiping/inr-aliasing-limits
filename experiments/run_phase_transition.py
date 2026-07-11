@@ -63,52 +63,94 @@ def _make_signal(ratio: float, rng):
     freqs = np.concatenate([in_f, out_f])
     coeffs = np.concatenate([a, out_c])
     coeffs = coeffs / np.linalg.norm(coeffs)
-    return in_f, out_f, coeffs, a / np.linalg.norm(coeffs), out_c / np.linalg.norm(coeffs)
+    n = in_f.size
+    return in_f, out_f, coeffs[:n], coeffs[n:]
 
 
-def _recon_error(ratio: float, N: int, rng) -> float:
-    """Mean reconstruction RMSE of the fixed-feature INR over N_TRIALS draws."""
+def _recon_error(ratio: float, N: int, rng) -> tuple[float, float]:
+    """Mean and s.d. of the fixed-feature INR reconstruction RMSE over N_TRIALS draws."""
     t_dense = np.linspace(0, 1, N_DENSE, endpoint=False)
     errs = []
     for _ in range(N_TRIALS):
-        in_f, out_f, coeffs, _, _ = _make_signal(ratio, rng)
+        in_f, out_f, a, out_c = _make_signal(ratio, rng)
         allf = np.concatenate([in_f, out_f])
+        coeffs = np.concatenate([a, out_c])
         t = nonuniform_times(N, rng, "jitter")
         y = evaluate(allf, coeffs, t, real=True) + rng.normal(0, SIGMA, N)
         m = FixedFeatureINR(LAMBDA, real=True).fit(t, y, ridge=1e-8)
         f_hat = m.predict(t_dense)
         f_true = evaluate(allf, coeffs, t_dense, real=True)
         errs.append(np.sqrt(np.mean((f_hat - f_true) ** 2)))
-    return float(np.mean(errs))
+    errs = np.array(errs)
+    return float(errs.mean()), float(errs.std())
+
+
+def _theory_noise_floor(N: int, rng, n_draws: int = 10) -> float:
+    """Exact Thm-1 dense-grid noise-floor RMSE for an in-band signal:
+    sigma * ||Re(Phi_eval M)||_F / sqrt(N_dense), averaged over jitter draws."""
+    t_dense = np.linspace(0, 1, N_DENSE, endpoint=False)
+    Phi_eval = synthesis_matrix(LAMBDA, t_dense)
+    vals = []
+    for _ in range(n_draws):
+        t = nonuniform_times(N, rng, "jitter")
+        Phi = synthesis_matrix(LAMBDA, t)
+        G = Phi.conj().T @ Phi + 1e-8 * np.eye(LAMBDA.size)
+        M = np.linalg.solve(G, Phi.conj().T)
+        A = np.real(Phi_eval @ M)
+        vals.append(SIGMA * np.linalg.norm(A) / np.sqrt(N_DENSE))
+    return float(np.mean(vals))
+
+
+def _plateau_rmse(ratio: float) -> float:
+    """Expected aliasing plateau ||f_out||: with unit total power and iid coefficient draws
+    the mean out-of-band energy fraction is n_out / (n_in + n_out)."""
+    hi = int(np.floor(ratio * B_INR))
+    n_out = 2 * max(0, hi - B_INR)
+    n_in = LAMBDA.size
+    return float(np.sqrt(n_out / (n_in + n_out))) if n_out else 0.0
 
 
 def figure_A():
     densities = np.linspace(0.5, 3.0, 22)
     ratios = [1.0, 1.25, 1.5]
-    curves = {}
+    curves, stds = {}, {}
     for r in ratios:
-        row = []
+        row, srow = [], []
         for rho in densities:
-            N = max(2 * B_INR + 1, int(round(rho * 2 * B_INR)))
-            row.append(_recon_error(r, N, RNG))
+            # honest density: N really varies with rho, including the sub-critical N < m
+            # regime (the ridge pseudo-inverse gives the minimum-norm interpolant there)
+            N = max(2, int(round(rho * 2 * B_INR)))
+            mu, sd = _recon_error(r, N, RNG)
+            row.append(mu); srow.append(sd)
         curves[f"r={r}"] = row
+        stds[f"r={r}"] = srow
 
-    # theory references: noise floor sigma*sqrt(tr((Phi*Phi)^-1)/N_dense-ish) and aliasing floor
-    t_ref = nonuniform_times(int(3.0 * 2 * B_INR), RNG, "jitter")
-    kappa = noise_gain(synthesis_matrix(LAMBDA, t_ref))
-    noise_floor = SIGMA * kappa / np.sqrt(len(t_ref))  # rough per-sample noise floor scale
+    # exact theory overlays: Thm-1 noise floor for r=1, ||f_out|| plateaus for r>1
+    noise_floor_curve = [
+        _theory_noise_floor(max(2, int(round(rho * 2 * B_INR))), RNG) for rho in densities
+    ]
+    plateaus = {f"r={r}": _plateau_rmse(r) for r in ratios if r > 1.0}
 
     fig, ax = plt.subplots(figsize=(5.2, 3.4))
+    se = 1.0 / np.sqrt(N_TRIALS)
     for r in ratios:
-        ax.plot(densities, curves[f"r={r}"], marker="o", ms=3, label=f"$B_{{sig}}/B_{{INR}}={r}$")
+        mu = np.array(curves[f"r={r}"]); sd = np.array(stds[f"r={r}"])
+        (line,) = ax.plot(densities, mu, marker="o", ms=3, label=f"$B_{{sig}}/B_{{INR}}={r}$")
+        ax.fill_between(densities, mu - se * sd, mu + se * sd, color=line.get_color(), alpha=0.2)
+    ax.plot(densities, noise_floor_curve, color="0.4", ls="--", lw=1.0,
+            label="Thm 1 noise floor ($r{=}1$)")
+    for key, val in plateaus.items():
+        ax.axhline(val, color="0.4", ls=":", lw=0.9)
     ax.axvline(1.0, color="k", ls=":", lw=1, label="stable rate $\\rho=1$")
     ax.set_xlabel("sampling density $\\rho = N/(2 B_{INR})$")
     ax.set_ylabel("reconstruction RMSE")
     ax.set_yscale("log")
     ax.set_title("Achievability ($r{=}1$) vs aliasing floor ($r{>}1$)")
-    ax.legend(fontsize=7)
+    ax.legend(fontsize=6.5)
     savefig(fig, "phase_transition_A.png")
-    return {"densities": densities.tolist(), "curves": curves, "noise_floor_scale": noise_floor}
+    return {"densities": densities.tolist(), "curves": curves, "stds": stds,
+            "n_trials": N_TRIALS,
+            "theory_noise_floor": noise_floor_curve, "theory_plateaus": plateaus}
 
 
 def figure_B():
@@ -117,8 +159,8 @@ def figure_B():
     Z = np.zeros((len(ratios), len(densities)))
     for i, r in enumerate(ratios):
         for j, rho in enumerate(densities):
-            N = max(2 * B_INR + 1, int(round(rho * 2 * B_INR)))
-            Z[i, j] = _recon_error(r, N, RNG)
+            N = max(2, int(round(rho * 2 * B_INR)))
+            Z[i, j] = _recon_error(r, N, RNG)[0]
 
     fig, ax = plt.subplots(figsize=(5.2, 3.8))
     im = ax.pcolormesh(densities, ratios, np.log10(Z + 1e-6), shading="auto", cmap="magma")

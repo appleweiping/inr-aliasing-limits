@@ -2,11 +2,29 @@
   "silent_aliasing": {
     "f_out": 50.0,
     "N": 46,
-    "sample_rmse": 4.573479156633219e-05,
-    "predicted_fold": 4.0,
+    "sample_rmse": 4.5734791566288075e-05,
+    "predicted_fold": 14,
+    "measured_fold": 14,
+    "pattern_corr": 0.9898935792249868,
     "device": "cuda",
-    "note": "trained nonlinear INR fits samples but folds the out-of-hull tone (silent aliasing)"
+    "note": "trained nonlinear INR fits samples but folds the out-of-hull tone (silent aliasing); measured by ablation (identical net trained with vs without the tone, difference spectrum) against the Hermitian-pair linear-theory bias pattern"
   },
+  "silent_aliasing_extra_seeds": [
+    {
+      "seed": 1,
+      "sample_rmse": 3.0134983915604613e-05,
+      "predicted_fold": 4,
+      "measured_fold": 4,
+      "pattern_corr": 0.9119331768308636
+    },
+    {
+      "seed": 2,
+      "sample_rmse": 0.00012659004127307268,
+      "predicted_fold": 8,
+      "measured_fold": 4,
+      "pattern_corr": 0.6322548436574345
+    }
+  ],
   "achievability": {
     "name": "co2",
     "nonlinear_rmse": 0.10655513636806083,

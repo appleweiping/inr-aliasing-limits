@@ -3,9 +3,10 @@ r"""Regenerate every result and figure.
 Order:
   0. fetch real data (data/fetch_real.py) if the .npz files are missing;
   1. E1 phase transition (CPU);
-  2. E2 silent aliasing (CPU);
-  3. real-signal learned-Nyquist sweeps (CPU): co2, sunspots_smooth, speech, sunspots;
-  4. trained nonlinear INR persistence + 2-D image demo (GPU/torch, skipped if torch absent).
+  2. E2 silent aliasing, exact grid fold (CPU);
+  3. E7 ring-diagnostic ROC (CPU);
+  4. real-signal learned-Nyquist sweeps (CPU): co2, sunspots_smooth, speech, sunspots;
+  5. trained nonlinear INR persistence + 2-D image demo (GPU/torch, skipped if torch absent).
 
 Every experiment uses a fixed seed, so results are deterministic. The GPU steps are the only
 ones needing torch; they are skipped with a message if torch is unavailable (run them on the
@@ -43,6 +44,9 @@ def main():
 
     import run_silent_aliasing
     print("\n=== E2 silent aliasing ==="); run_silent_aliasing.main()
+
+    import run_diagnostic_roc
+    print("\n=== E7 diagnostic ROC ==="); run_diagnostic_roc.main()
 
     import run_real_signal
     print("\n=== real-data learned-Nyquist sweeps ===")

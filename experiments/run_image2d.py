@@ -118,13 +118,15 @@ def run(size=128, sample_frac=0.5, seed=0):
               flush=True)
 
     # ---- figure: original | under | matched | over | radial spectrum ----
-    fig, axes = plt.subplots(1, 5, figsize=(13.5, 2.9))
+    # constrained_layout keeps the spectrum panel's y-label off the neighbouring image
+    fig, axes = plt.subplots(1, 5, figsize=(13.5, 2.9), layout="constrained")
     axes[0].imshow(img, cmap="gray"); axes[0].set_title("original"); axes[0].axis("off")
     for ax, tag, lbl in ((axes[1], "under", "under-scaled\n(safe)"),
                          (axes[2], "matched", "matched\n(safe)"),
                          (axes[3], "over", "over-scaled\n(silent alias)")):
         ax.imshow(recon[tag], cmap="gray")
-        ax.set_title(f"{lbl}\nfull {metrics[tag]['full_psnr']:.1f} / hf "
+        ax.set_title(f"{lbl}\nsmp {metrics[tag]['sample_psnr']:.0f} / full "
+                     f"{metrics[tag]['full_psnr']:.1f} / hf "
                      f"{metrics[tag]['hf_psnr']:.1f} dB", fontsize=8)
         ax.axis("off")
     fr = np.arange(_radial_spectrum(img).size)
