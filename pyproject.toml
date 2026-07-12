@@ -1,7 +1,7 @@
 [project]
 name = "inr-aliasing-limits"
-version = "0.1.0"
-description = "Fundamental aliasing limits of implicit neural representations: a learned sampling theorem with achievability and converse"
+version = "0.2.0"
+description = "Silent aliasing in fixed Fourier-feature coordinate models: exact indistinguishability, random sampling, and detection"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

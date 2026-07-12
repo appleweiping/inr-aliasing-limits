@@ -9,7 +9,7 @@ from inralias.sampling import (
     noise_gain,
     alias_projector,
     condition_number,
-    landau_min_samples,
+    pinv_apply,
 )
 
 
@@ -56,6 +56,16 @@ def test_noise_gain_matches_min_singular_value():
     assert noise_gain(Phi) == pytest.approx(1 / s[-1], rel=1e-9)
 
 
-def test_landau_density():
-    freqs = np.array([-5.0, -2.0, 0.0, 3.0, 7.0])
-    assert landau_min_samples(freqs, span=1.0) == pytest.approx(14.0)  # 2 * 7
+def test_pinv_apply_rank_deficient_gives_min_norm():
+    # ridge=0 must give the SVD pseudoinverse (minimum-norm) solution even when the
+    # Gram matrix is singular -- never a solve() on a singular Gram.
+    rng = np.random.default_rng(2)
+    t = np.sort(rng.random(4))                    # N=4 < m=7: underdetermined
+    freqs = np.linspace(-3, 3, 7)
+    Phi = synthesis_matrix(freqs, t)
+    y = rng.standard_normal(4) + 1j * rng.standard_normal(4)
+    c = pinv_apply(Phi, y, ridge=0.0)
+    c_ref = np.linalg.pinv(Phi) @ y
+    assert np.allclose(c, c_ref, atol=1e-9)
+    # interpolates the samples and has minimum norm among interpolants
+    assert np.allclose(Phi @ c, y, atol=1e-8)

@@ -22,8 +22,10 @@ from inralias.sampling import synthesis_matrix, pinv_apply, noise_gain
 
 __all__ = [
     "FixedFeatureINR",
+    "real_design",
     "bandwidth_matched_freqs",
-    "nonuniform_periodogram",
+    "correlation_periodogram",
+    "lombscargle_periodogram",
     "SIREN",
     "FourierFeatureMLP",
     "train_inr",
@@ -31,42 +33,101 @@ __all__ = [
 ]
 
 
+def real_design(freqs: np.ndarray, t: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    r"""Real cosine/sine design matrix for a Hermitian-symmetric frequency set.
+
+    Returns ``(D, pos)`` where ``pos`` is the sorted array of distinct nonnegative
+    frequencies in ``freqs`` and ``D`` has columns ``[1?] + [cos(2 pi w t), sin(2 pi w t)
+    for w in pos, w > 0]`` (the constant column present iff ``0 in pos``).  Fitting a real
+    signal by least squares on ``D`` is exactly equivalent to complex LS on the
+    Hermitian-symmetric exponential dictionary with the constraint
+    :math:`c_{-\omega}=\overline{c_\omega}` *enforced*, not merely applied post hoc.
+    """
+    t = np.asarray(t, float).reshape(-1)
+    pos = np.unique(np.abs(np.asarray(freqs, float)))
+    cols = []
+    if pos.size and pos[0] == 0.0:
+        cols.append(np.ones_like(t))
+    for w in pos[pos > 0]:
+        ph = 2 * np.pi * w * t
+        cols.append(np.cos(ph))
+        cols.append(np.sin(ph))
+    return np.stack(cols, axis=1), pos
+
+
 class FixedFeatureINR:
-    r"""Fixed Fourier-feature INR (linear output layer). Exactly the theory-core model.
+    r"""Fixed Fourier-feature coordinate model (linear coefficients). The theory-core model.
 
     Parameters
     ----------
-    freqs : the representable frequency set :math:`\Lambda`.
-    real  : if True, model a real signal (coefficients paired so the waveform is real).
+    freqs : the model frequency set :math:`\Lambda`.
+    real  : if True, fit a **real cosine/sine design** (Hermitian symmetry enforced in the
+        parameterization); ``freqs`` must then be Hermitian-symmetric.  ``coeffs_`` still
+        exposes the equivalent complex coefficients aligned with ``self.freqs`` for
+        spectrum inspection.
     """
 
     def __init__(self, freqs: np.ndarray, real: bool = False):
         self.freqs = np.asarray(freqs, float)
         self.real = real
         self.coeffs_: np.ndarray | None = None
+        self._beta: np.ndarray | None = None
+
+    def _real_fit(self, t, y, ridge):
+        D, pos = real_design(self.freqs, t)
+        yv = np.asarray(y, float).reshape(-1)
+        if ridge > 0:
+            p = D.shape[1]
+            D_aug = np.vstack([D, np.sqrt(ridge) * np.eye(p)])
+            y_aug = np.concatenate([yv, np.zeros(p)])
+            beta, *_ = np.linalg.lstsq(D_aug, y_aug, rcond=None)
+        else:
+            beta, *_ = np.linalg.lstsq(D, yv, rcond=None)
+        self._beta = beta
+        # equivalent complex Hermitian coefficients aligned with self.freqs
+        c = np.zeros(self.freqs.size, complex)
+        idx = 0
+        has_dc = pos.size and pos[0] == 0.0
+        if has_dc:
+            c[np.isclose(self.freqs, 0.0)] = beta[0]
+            idx = 1
+        for w in pos[pos > 0]:
+            a, b = beta[idx], beta[idx + 1]
+            idx += 2
+            c[np.isclose(self.freqs, w)] = (a - 1j * b) / 2
+            c[np.isclose(self.freqs, -w)] = (a + 1j * b) / 2
+        self.coeffs_ = c
 
     def fit(self, t: np.ndarray, y: np.ndarray, ridge: float = 0.0) -> "FixedFeatureINR":
-        Phi = synthesis_matrix(self.freqs, t)
-        yv = np.asarray(y)
-        if self.real and not np.iscomplexobj(yv):
-            yv = yv.astype(complex)
-        self.coeffs_ = pinv_apply(Phi, yv, ridge=ridge)
+        if self.real:
+            self._real_fit(t, y, ridge)
+        else:
+            Phi = synthesis_matrix(self.freqs, t)
+            self.coeffs_ = pinv_apply(Phi, np.asarray(y, complex), ridge=ridge)
         return self
 
     def predict(self, t: np.ndarray) -> np.ndarray:
         assert self.coeffs_ is not None, "call fit() first"
-        v = synthesis_matrix(self.freqs, t) @ self.coeffs_
-        return v.real if self.real else v
+        if self.real:
+            D, _ = real_design(self.freqs, t)
+            return D @ self._beta
+        return synthesis_matrix(self.freqs, t) @ self.coeffs_
 
     def noise_gain(self, t: np.ndarray) -> float:
+        if self.real:
+            D, _ = real_design(self.freqs, t)
+            s = np.linalg.svd(D, compute_uv=False)
+            return float(1.0 / s[-1]) if s.size and s[-1] > 0 else np.inf
         return noise_gain(synthesis_matrix(self.freqs, t))
 
 
-def nonuniform_periodogram(t: np.ndarray, y: np.ndarray, freq_grid: np.ndarray) -> np.ndarray:
-    r"""Least-squares (Lomb-Scargle-style) periodogram of nonuniform samples on ``freq_grid``.
+def correlation_periodogram(t: np.ndarray, y: np.ndarray, freq_grid: np.ndarray) -> np.ndarray:
+    r"""Correlation (Schuster-type) periodogram of nonuniform samples on ``freq_grid``.
 
-    Returns the squared magnitude of the per-frequency least-squares correlation, usable to
-    estimate a signal's essential band from irregular samples.
+    This is the squared magnitude of the plain per-frequency correlation
+    :math:`|\tfrac1N\sum_j y_j e^{-i2\pi f t_j}|^2`.  It is **not** the Lomb--Scargle
+    periodogram (no per-frequency least-squares normalization, no time-offset
+    invariance); use :func:`lombscargle_periodogram` for that.
     """
     t = np.asarray(t, float)
     y = np.asarray(y)
@@ -76,21 +137,45 @@ def nonuniform_periodogram(t: np.ndarray, y: np.ndarray, freq_grid: np.ndarray) 
     return np.abs(corr) ** 2
 
 
+def lombscargle_periodogram(t: np.ndarray, y: np.ndarray, freq_grid: np.ndarray) -> np.ndarray:
+    r"""Classical Lomb--Scargle periodogram (per-frequency least squares with the
+    time-offset that decorrelates the cosine and sine terms), via
+    :func:`scipy.signal.lombscargle`.  ``y`` is centered first; zero frequencies are
+    assigned the squared mean so the DC term remains comparable."""
+    from scipy.signal import lombscargle
+
+    t = np.asarray(t, float).reshape(-1)
+    y = np.asarray(y, float).reshape(-1)
+    f = np.asarray(freq_grid, float).reshape(-1)
+    out = np.zeros(f.size)
+    nz = f > 0
+    if np.any(nz):
+        out[nz] = lombscargle(t, y - y.mean(), 2 * np.pi * f[nz], precenter=False)
+    out[~nz] = y.mean() ** 2 * t.size / 4.0
+    return out
+
+
 def bandwidth_matched_freqs(
     t: np.ndarray,
     y: np.ndarray,
     max_bandwidth: int,
     energy_keep: float = 0.99,
     real: bool = True,
+    method: str = "lombscargle",
 ) -> np.ndarray:
-    r"""Estimate the essential band from samples and return an integer dictionary covering it.
+    r"""Estimate the essential band **from the samples only** and return an integer
+    dictionary covering it.
 
-    Computes a nonuniform periodogram on the integer grid up to ``max_bandwidth``, keeps the
-    smallest symmetric band capturing ``energy_keep`` of the periodogram energy, and returns
-    the integer lowpass dictionary of that bandwidth (Hermitian-symmetric for real signals).
+    Computes a periodogram (``method``: ``"lombscargle"`` or ``"correlation"``) on the
+    integer grid up to ``max_bandwidth``, keeps the smallest band capturing
+    ``energy_keep`` of the periodogram energy, and returns the integer lowpass dictionary
+    of that bandwidth (Hermitian-symmetric for real signals).  This is the *deployable*
+    estimator; it never sees the full reference signal.
     """
     grid = np.arange(0, max_bandwidth + 1).astype(float)
-    P = nonuniform_periodogram(t, y, grid)
+    P = (lombscargle_periodogram if method == "lombscargle" else correlation_periodogram)(
+        t, y, grid
+    )
     csum = np.cumsum(P) / (np.sum(P) + 1e-30)
     B = int(np.searchsorted(csum, energy_keep))
     B = max(1, min(B, max_bandwidth))

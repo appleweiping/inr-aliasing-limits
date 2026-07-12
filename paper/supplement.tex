@@ -1,0 +1,217 @@
+% Supplement: full proofs. Compile: pdflatex supplement (twice).
+\documentclass[10pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,bm}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{proposition}{Proposition}
+\newtheorem{remark}{Remark}
+\DeclareMathOperator{\tr}{tr}
+\DeclareMathOperator{\range}{range}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Lam}{\Lambda}
+\newcommand{\Phimat}{\bm{\Phi}}
+\newcommand{\norm}[1]{\lVert#1\rVert}
+\newcommand{\vt}{v_T}
+\newcommand{\at}{a_T}
+
+\title{Supplement to ``Silent Aliasing in Fixed Fourier-Feature Coordinate Models'':\\
+Full Proofs}
+\author{Weiping Yan}
+\date{}
+
+\begin{document}
+\maketitle
+
+Numbering follows the main paper (T1--T4 are Theorems 1--4 there).  Setting and notation
+as in the main paper: $e_\omega(x)=e^{i2\pi\omega x}$ on $[0,1)$, model set
+$\Lam=\{\omega_1,\dots,\omega_m\}$, samples $T=\{t_j\}_{j=1}^N$, synthesis matrix
+$\Phimat_{jk}=e_{\omega_k}(t_j)$, sample atom $\bm\phi_\nu=(e^{i2\pi\nu t_j})_j$,
+visibility $\vt(\nu)=\norm{(\bm I-\bm P_\Lam)\bm\phi_\nu}/\sqrt N$, aliasability
+$\at(\nu)=\norm{\Phimat^\dagger\bm\phi_\nu}$.  Every constant below is also asserted
+numerically in \texttt{tests/test\_identifiability.py}.
+
+\section{Proof of Theorem 1 (exact equivalence on grid subsets)}
+
+\textbf{(i)}  $\vt(\nu)=0$ iff $(\bm I-\bm P_\Lam)\bm\phi_\nu=0$ iff
+$\bm\phi_\nu\in\range\Phimat$, which is precisely the statement that some coefficient
+vector $\bm c$ has $\Phimat\bm c=\bm\phi_\nu$, i.e.\ the unit tone at $\nu$ agrees with a
+model element at every sample.  For the grid statement, let $t_j=g_j/Q$ with
+$g_j\in\{0,\dots,Q-1\}$ and $\nu=\omega_k+rQ$, $r\in\Z$.  Then
+\[
+e^{i2\pi\nu g_j/Q}=e^{i2\pi\omega_k g_j/Q}\,e^{i2\pi r g_j}=e^{i2\pi\omega_k g_j/Q},
+\]
+since $rg_j\in\Z$; hence $\bm\phi_\nu=\bm\phi_{\omega_k}$ entrywise, for \emph{every}
+subset of the grid.  Consequently $\vt(\nu)=0$; moreover, because
+$\sigma_{\min}(\Phimat)>0$ makes the LS solution unique, the fit of $y=\bm\phi_\nu$ is
+the unique $\bm c$ with $\Phimat\bm c=\bm\phi_{\omega_k}$, namely the $k$-th unit vector,
+and the residual is exactly zero.
+
+\textbf{(ii)}  By (i), $S_Tf_1=S_Tf_2$ pointwise.  For any noise mechanism that acts on
+$S_Tf$ (additive or otherwise, as long as its law depends on the signal only through
+$S_Tf$), the observation distributions under $f_1$ and $f_2$ are therefore identical.
+Let $\hat f=\delta(\bm y)$ be any estimator.  For every realization $\bm y$,
+\[
+\norm{\delta(\bm y)-f_1}_{L^2}+\norm{\delta(\bm y)-f_2}_{L^2}
+\ \ge\ \norm{f_1-f_2}_{L^2}=|a|\,\norm{e_\nu-e_{\omega_k}}_{L^2}=|a|\sqrt2,
+\]
+using the triangle inequality and, for the last equality, that $e_\nu$ and
+$e_{\omega_k}$ are distinct integer frequencies, hence orthonormal in $L^2[0,1)$.  Thus
+$\max_i\norm{\delta(\bm y)-f_i}\ge|a|/\sqrt2$ pointwise (a two-point bound in the sense
+of Le Cam, here even realization-wise).
+
+\textbf{(iii)}  If $[\Phimat\;\bm\phi_\nu]$ has full column rank then
+$\bm\phi_\nu\notin\range\Phimat$, so $\vt(\nu)>0$ by (i). \hfill$\square$
+
+\begin{remark}
+The full-column-rank hypothesis on $\Phimat$ requires $N\ge m$ and the elements of
+$\Lam$ to be distinct modulo $Q$ (two atoms congruent mod $Q$ have identical columns on
+any grid subset).  ``Any $N$'' claims are always to be read as ``any grid-subset size
+$N$ for which this rank condition holds''.
+\end{remark}
+
+\section{Proof of Theorem 2 (Riesz conversion and decomposition)}
+
+\textbf{(i)}  $G_{L^2}$ is the Gram matrix of $\{e_{\omega_k}\}$ in $L^2[0,1)$:
+$\norm{\sum_kc_ke_{\omega_k}}_{L^2}^2=\bm c^{*}G_{L^2}\bm c$, and the Rayleigh quotient
+of the Hermitian PSD matrix $G_{L^2}$ lies in
+$[\lambda_{\min},\lambda_{\max}]$.  The entries are
+$\int_0^1e^{i2\pi(\omega_\ell-\omega_k)t}\,dt
+=\frac{e^{i2\pi\delta}-1}{i2\pi\delta}=e^{i\pi\delta}\,\frac{\sin\pi\delta}{\pi\delta}$
+for $\delta=\omega_\ell-\omega_k\neq0$, and $1$ on the diagonal.  $G_{L^2}$ is singular
+iff the atoms are linearly dependent in $L^2$, which for finitely many distinct
+frequencies never happens (distinct exponentials are linearly independent); hence
+$\lambda_{\min}>0$ for distinct frequencies.
+
+\textbf{(ii)}  Expand
+$\hat f-f=\sum_k\Delta c_k e_{\omega_k}-\sum_l a_le_{\nu_l}$ and evaluate
+$\norm{\hat f-f}_{L^2}^2$ as the quadratic form of the joint Gram matrix of
+$(\{\omega_k\},\{\nu_l\})$ applied to $(\Delta\bm c,-\bm a)$; grouping blocks gives
+Eq.~(3) of the main paper.  For all-integer frequencies the off-diagonal blocks vanish
+(orthonormality), killing the cross term. \hfill$\square$
+
+\section{Proof of Theorem 3 (random sampling breaks exact aliasing)}
+
+We use the following complex Hoeffding bound throughout: if $Z_1,\dots,Z_N$ are
+independent with $|Z_j|\le1$, then for $\bar Z=\frac1N\sum_jZ_j$,
+\begin{equation}\label{eq:hoeffding}
+\Pr\big(|\bar Z-\mathbb E\bar Z|\ge\varepsilon\big)\ \le\
+4\exp(-N\varepsilon^2/4),
+\end{equation}
+obtained by applying the real Hoeffding inequality to the real and imaginary parts
+(each in $[-1,1]$) with radius $\varepsilon/\sqrt2$ and a union bound.
+
+\subsection{Part (a): jitter}
+
+Let $t_j=g_j/Q+\eta_j$ with $g_j$ grid points and $\eta_j$ i.i.d.\ mean-zero with
+characteristic function $\chi_\eta$, and $\nu-\omega_k=rQ$, $r\in\Z\setminus\{0\}$.  The
+fold coherence is
+\[
+C=\frac1N\sum_je^{i2\pi(\nu-\omega_k)t_j}
+ =\frac1N\sum_j\underbrace{e^{i2\pi rg_j}}_{=1}\,e^{i2\pi rQ\eta_j}
+ =\frac1N\sum_je^{i2\pi rQ\eta_j},
+\]
+an empirical characteristic function with $\mathbb E C=\chi_\eta(2\pi rQ)$ and
+concentration \eqref{eq:hoeffding}: $|C-\chi_\eta(2\pi rQ)|\le
+2\sqrt{\log(4/\delta)/N}$ with probability $\ge1-\delta$.  For Gaussian jitter,
+$\chi_\eta(u)=e^{-u^2\sigma_t^2/2}$, so $\chi_\eta(2\pi rQ)=e^{-2(\pi rQ\sigma_t)^2}$;
+for uniform jitter of width $w$, $\chi_\eta(2\pi rQ)=\mathrm{sinc}(rQw)$.
+
+\emph{From coherence to visibility.}  Let $\bm b=\Phimat^{*}\bm\phi_\nu/N\in\C^m$ and
+$\bm G_N=\Phimat^{*}\Phimat/N$.  Then
+\[
+\vt(\nu)^2=\frac1N\norm{\bm\phi_\nu}^2-\frac1N\bm\phi_\nu^{*}\bm P_\Lam\bm\phi_\nu
+=1-\bm b^{*}\bm G_N^{-1}\bm b .
+\]
+Assume additionally that the grid points $g_j$ are drawn i.i.d.\ uniformly from the grid
+(a uniformly random subset drawn without replacement obeys the same bounds with the same
+constants by Serfling's inequality for sampling without replacement).  Each entry of
+$\bm b$ other than the fold entry, and each off-diagonal entry of $\bm G_N$, is an
+empirical mean of independent unit-modulus terms whose expectation vanishes (distinct
+residues modulo $Q$ average to zero over the uniform grid, and the jitter factor only
+multiplies by a number of modulus $\le1$); the fold entry of $\bm b$ is $C$ above.  By
+\eqref{eq:hoeffding} and a union bound over these $m+m^2$ quantities, with probability
+$\ge1-\delta$ all of them are within
+$\varepsilon=2\sqrt{\log(4(m+m^2)/\delta)/N}$ of their means.  Writing
+$\bm G_N=\bm I+\bm E$ with $\norm{\bm E}\le m\varepsilon$ and
+$\bm b=C\bm e_k+\bm u$ with $\norm{\bm u}\le\sqrt m\,\varepsilon$, a first-order
+expansion of $\bm b^{*}\bm G_N^{-1}\bm b$ gives
+\[
+\big|\vt(\nu)^2-\big(1-|\chi_\eta(2\pi rQ)|^2\big)\big|
+\ \le\ c\,m\,\varepsilon
+\]
+for an absolute constant $c$ (valid while $m\varepsilon<1/2$), which is the
+$O_P\!\big(m\sqrt{\log(m/\delta)/N}\big)$ term of the theorem.  The small-jitter law
+follows from $1-e^{-2u}\le 2u$ and $1-e^{-2u}\to 2u$ as $u\to0$ with
+$u=(2\pi rQ\sigma_t)^2/2$:
+$\vt(\nu)=\sqrt{1-\chi^2}+O(m\varepsilon)=2\pi|r|Q\sigma_t\,(1+o(1))$.
+
+\subsection{Part (b): i.i.d.\ samples}
+
+Entries of $\bm G_N-\bm G_\infty$ and of $\bm b_\nu=\Phimat^{*}\bm\phi_\nu/N$ (for every
+$\nu\in\Omega$) are empirical means of independent unit-modulus variables; by
+\eqref{eq:hoeffding} and a union bound over the $m^2+mK$ of them, with probability
+$\ge1-\delta$ every such quantity is within
+$\varepsilon=2\sqrt{\log(4(mK+m^2)/\delta)/N}$ of its limit.  Under the hypotheses, the
+limiting coherences vanish, so $\norm{\bm b_\nu}\le\sqrt m\,\varepsilon$ for all
+$\nu\in\Omega$, and $\norm{\bm G_N-\bm G_\infty}\le\norm{\cdot}_F\le m\varepsilon$, hence
+$\lambda_{\min}(\bm G_N)\ge\lambda_{\min}-m\varepsilon>0$.  Therefore, uniformly over
+$\Omega$,
+\[
+\at(\nu)=\norm{\bm G_N^{-1}\bm b_\nu}
+\le\frac{\norm{\bm b_\nu}}{\lambda_{\min}(\bm G_N)}
+\le\frac{\sqrt m\,\varepsilon}{\lambda_{\min}-m\varepsilon}. \qquad\square
+\]
+
+\begin{remark}
+The bound is a union bound and is loose by design (Fig.~1b of the main paper); its role
+is the \emph{rate} $N^{-1/2}$ and the uniformity over the candidate set, both matched
+empirically.  It is finite exactly when $m\varepsilon<\lambda_{\min}$ and is reported as
+vacuous otherwise, never silently extrapolated.
+\end{remark}
+
+\section{Proof of Theorem 4 (detection dichotomy)}
+
+\textbf{(a)}  If $S_Tf_1=S_Tf_2$ and the observation law depends on the signal only
+through $S_Tf$ (as for additive noise $\bm y=S_Tf+\bm\varepsilon$ with
+$\bm\varepsilon$ independent of $f$), the distributions of $\bm y$ under the two
+hypotheses are equal.  For any (possibly randomized) test $\varphi(\bm y)\in[0,1]$,
+$\mathbb E_{f_1}\varphi=\mathbb E_{f_2}\varphi$: power equals size.
+
+\textbf{(b)}  Under $\bm y=\bm D\bm\beta+\bm s+\bm\varepsilon$ with
+$\bm\varepsilon\sim\mathcal N(0,\sigma^2\bm I)$ and $\bm P_D$ the projector onto the
+rank-$p$ column space of $\bm D$, $(\bm I-\bm P_D)\bm y=(\bm I-\bm P_D)(\bm
+s+\bm\varepsilon)$ is Gaussian with mean $(\bm I-\bm P_D)\bm s$ and covariance
+$\sigma^2(\bm I-\bm P_D)$; hence $\norm{(\bm I-\bm P_D)\bm y}^2/\sigma^2$ is noncentral
+$\chi^2$ with $N-p$ degrees of freedom and noncentrality
+$\lambda=\norm{(\bm I-\bm P_D)\bm s}^2/\sigma^2$ (central when $\bm s=0$ or when the
+component is coherent, $(\bm I-\bm P_D)\bm s=0$).  The stated power expression is the
+definition of the noncentral-$\chi^2$ survival function at the central
+$(1{-}\alpha)$-quantile. \hfill$\square$
+
+\section{Background: average-case decomposition}
+
+\begin{proposition}[average-case LS error; standard bookkeeping]
+Let $\bm y=\Phimat\bm c^\star+\Phimat_{\mathrm{out}}\bm a+\bm\varepsilon$ with
+$\sigma_{\min}(\Phimat)>0$, the $a_l$ zero-mean, uncorrelated, $\mathbb E|a_l|^2=p_l$,
+independent of $\bm\varepsilon$, and
+$\mathbb E[\bm\varepsilon\bm\varepsilon^{*}]=\sigma^2\bm I$.  Then, with
+$\bm M=(\Phimat^{*}\Phimat)^{-1}\Phimat^{*}$,
+\[
+\mathbb E\norm{\hat{\bm c}-\bm c^\star}^2
+=\sigma^2\tr\!\big((\Phimat^{*}\Phimat)^{-1}\big)
++\tr\!\big(\bm M\,\Phimat_{\mathrm{out}}\mathrm{diag}(\bm p)\Phimat_{\mathrm{out}}^{*}\,
+\bm M^{*}\big).
+\]
+\end{proposition}
+\begin{proof}
+$\hat{\bm c}-\bm c^\star=\bm M(\Phimat_{\mathrm{out}}\bm a+\bm\varepsilon)$; expand the
+squared norm; the cross term vanishes by independence and zero means; the two quadratic
+terms are the stated traces.
+\end{proof}
+This proposition is retained for completeness only; it is standard omitted-variable
+bias/variance bookkeeping and is not claimed as a contribution.
+
+\end{document}

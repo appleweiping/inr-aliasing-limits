@@ -1,160 +1,281 @@
-r"""Nonlinear-INR persistence: silent aliasing happens for a *trained* nonlinear INR too.
+r"""E4 -- do trained nonlinear networks reproduce the linear fold?  (empirical only)
 
-The linear theory (Thm 2) predicts that a signal component beyond the INR's representable
-band folds onto an in-band frequency while the samples are still fit well.  We reproduce this
-with a *trained* nonlinear Fourier-feature INR: a synthetic signal has two in-band tones plus
-one tone far beyond the (shallow, small-scale) network's representable hull, sampled below the
-high tone's Nyquist rate.  The trained INR fits the samples (small residual) yet its recovered
-spectrum shows a spurious peak -- the high tone folded in -- matching what the linear
-fixed-feature INR does on the same data.
+The theorems cover the fixed-feature linear-coefficient model; this experiment measures
+how far they extrapolate to *trained* networks.  Protocol:
 
-We also confirm the complementary *achievability* transfer: on the real CO2 signal a trained
-INR whose band covers the signal recovers it, agreeing with the linear theory.
+* **Ablation attribution.**  For each run, two networks with identical initialization are
+  trained on samples with and without the out-of-band tone; the spectrum of the
+  difference of their reconstructions isolates where the trained net put the tone.
+* **Principled predictions.**  (i) For the ``bandlimited`` architecture (trainable linear
+  head over fixed integer cosine/sine features) the theory dictionary IS the model's
+  frequency set -- exact correspondence.  (ii) For FF-MLP / SIREN, the prediction comes
+  from the network's own **Jacobian (NTK) linearization at initialization**: the tone is
+  pushed through kernel regression with the empirical NTK and its reconstruction
+  spectrum is the predicted pattern.  No arbitrary reference band is used.
+* **Seed hygiene.**  Sampling seed, feature-initialization seed, and weight/optimizer
+  seed are separated and varied independently (20 sampling seeds; weight-seed stability
+  control on a subset).
+* **Controls.**  Label permutation (attribution must die), amplitude sweep, and
+  weight-seed stability.
+* **No hidden failures.**  Every run's (predicted, measured, correlation) triple is
+  recorded; the summary reports the full distribution (exact-match rate, top-3 rate,
+  correlation quantiles, bootstrap CIs) including failures.
 
-Requires torch (GPU server).
+Requires torch (GPU server).  Usage: python experiments/run_nonlinear.py [--quick]
 """
 from __future__ import annotations
+
+import sys
 
 import numpy as np
 
 from _util import save_json, savefig
-from inralias.signals import nonuniform_times, evaluate, lowpass_dictionary
-from inralias.inr import FixedFeatureINR, FourierFeatureMLP, train_inr, torch_available
-from run_real_signal import load_signal, essential_bandwidth
+from inralias.signals import nonuniform_times, evaluate
+from inralias.inr import FourierFeatureMLP, SIREN, train_inr, torch_available
 
 import matplotlib.pyplot as plt
 
+N = 46
+SIGMA = 0.02
+EPOCHS = 6000
+LR = 2e-4
+T_REF = np.linspace(0, 1, 2000, endpoint=False)
+N_SEEDS = 20
+F_OUTS = (35.0, 50.0, 70.0)
+IN_F = np.array([3.0, 7.0, -3.0, -7.0])
+_ic = np.array([1.0, 0.7]) * np.exp(1j * np.array([0.3, 1.0]))
+IN_C = np.concatenate([_ic, np.conj(_ic)])
+FMAX_SPEC = 30            # attribution spectra inspected below this frequency
+
 
 def _spec(x):
-    X = np.abs(np.fft.rfft(x)); return X / (X.max() + 1e-12)
+    X = np.abs(np.fft.rfft(x))
+    return X / (X.max() + 1e-12)
 
 
-def silent_aliasing_nonlinear(seed=0, make_fig=True):
+def _make_model(arch, feature_seed, weight_seed):
     import torch
-    dev = "cuda" if torch.cuda.is_available() else "cpu"
-    rng = np.random.default_rng(seed)
 
-    # in-band tones + one tone far beyond a shallow/small-scale INR's representable hull
-    in_f = np.array([3.0, 7.0, -3.0, -7.0])
-    ic = np.array([1.0, 0.7]) * np.exp(1j * np.array([0.3, 1.0]))
-    in_c = np.concatenate([ic, np.conj(ic)])
-    f_out = 50.0
-    out_c = np.concatenate([[0.8 * np.exp(1j * 0.2)], [np.conj(0.8 * np.exp(1j * 0.2))]])
-    allf = np.concatenate([in_f, [f_out, -f_out]])
-    allc = np.concatenate([in_c, out_c])
+    torch.manual_seed(weight_seed)
+    if arch == "ffmlp":
+        return FourierFeatureMLP(n_features=96, scale=6.0, hidden=128, layers=2,
+                                 seed=feature_seed, in_dim=1)
+    if arch == "siren":
+        return SIREN(hidden=128, layers=2, w0=12.0)
+    if arch == "bandlimited":
+        import torch.nn as nn
 
-    # undersample the high tone (N well below its Nyquist of 2*50=100)
-    N = 46
-    t = nonuniform_times(N, rng, "jitter")
-    noise = rng.normal(0, 0.02, N)
-    y_inband = evaluate(in_f, in_c, t, real=True) + noise
-    y = y_inband + evaluate(np.array([f_out, -f_out]), out_c, t, real=True)
-    t_ref = np.linspace(0, 1, 2000, endpoint=False)
-    f_true = evaluate(allf, allc, t_ref, real=True)
+        B = 20
 
-    # trained nonlinear INR: shallow, small feature scale -> representable hull well below f_out
-    def _train(target):
-        torch.manual_seed(seed)
-        model = FourierFeatureMLP(n_features=96, scale=6.0, hidden=128, layers=2, seed=seed, in_dim=1)
-        model, _ = train_inr(model, t, target, epochs=8000, lr=2e-4, device=dev, weight_decay=1e-6)
-        with torch.no_grad():
-            f_ref = model(torch.tensor(t_ref.reshape(-1, 1), dtype=torch.float32, device=dev)).cpu().numpy().ravel()
-            y_fit = model(torch.tensor(t.reshape(-1, 1), dtype=torch.float32, device=dev)).cpu().numpy().ravel()
-        return f_ref, y_fit
+        class _BandLimited(nn.Module):
+            """Trainable linear head over FIXED integer cos/sin features up to B."""
 
-    f_nn, y_nn = _train(y)
-    sample_rmse = float(np.sqrt(np.mean((y_nn - y) ** 2)))
-    # controlled ablation: identical net/seed trained WITHOUT the out-of-band tone.  The
-    # difference of the two reconstructions isolates where the trained net puts the tone's
-    # energy, removing harmonic-distortion artifacts common to both runs.
-    f_nn0, _ = _train(y_inband)
-    diff_spec = np.abs(np.fft.rfft(f_nn - f_nn0))
-    diff_spec = diff_spec / (diff_spec.max() + 1e-12)
+            def __init__(self):
+                super().__init__()
+                self.head = nn.Linear(2 * B + 1, 1, bias=False)
 
-    # linear fixed-feature INR on a lowpass band that also excludes f_out
-    Lam = lowpass_dictionary(20)
-    lin = FixedFeatureINR(Lam, real=True).fit(t, y, ridge=1e-6)
-    f_lin = lin.predict(t_ref)
+            def forward(self, x):
+                ks = torch.arange(1, B + 1, dtype=x.dtype, device=x.device)
+                ph = 2 * np.pi * x * ks
+                feats = torch.cat([torch.ones_like(x), torch.cos(ph), torch.sin(ph)], -1)
+                return self.head(feats)
 
-    # linear-theory prediction for the REAL (Hermitian-pair) tone: the bias pattern of
-    # {+f_out, -f_out} on the lowpass band under these samples; its argmax is the fold target
-    from inralias.limits import aliasing_bias
-    dc = aliasing_bias(Lam, t, np.array([f_out, -f_out]), out_c)
-    lin_pattern = np.zeros(21)
-    for w, v in zip(Lam, np.abs(dc)):
-        if w >= 0:
-            lin_pattern[int(w)] = max(lin_pattern[int(w)], v)
-    lin_pattern = lin_pattern / (lin_pattern.max() + 1e-12)
-    predicted_fold = int(np.argmax(lin_pattern))
-
-    measured_fold = int(np.argmax(diff_spec[:31]))
-    corr = float(np.corrcoef(diff_spec[:21], lin_pattern)[0, 1])
-
-    if not make_fig:
-        return {"seed": seed, "sample_rmse": sample_rmse,
-                "predicted_fold": predicted_fold, "measured_fold": measured_fold,
-                "pattern_corr": corr}
-
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8.6, 3.2))
-    ax1.plot(t_ref, f_true, color="0.6", lw=1.0, label="true (has $f_{out}$=50)")
-    ax1.plot(t_ref, f_nn, color="C3", lw=1.0, ls="--", label=f"trained INR (sample rmse {sample_rmse:.3f})")
-    ax1.plot(t, y, "k.", ms=4)
-    ax1.set_xlabel("t"); ax1.set_ylabel("amp"); ax1.set_title("nonlinear INR: fits samples"); ax1.legend(fontsize=7)
-    fr = np.arange(diff_spec.size)
-    ax2.plot(fr, _spec(f_true), color="0.6", lw=1.0, label="true")
-    ax2.plot(fr, diff_spec, color="C3", lw=1.2, label="tone-attributable (trained, ablation)")
-    ax2.plot(np.arange(21), lin_pattern, color="C0", lw=1.0, ls="--",
-             label=f"linear-theory bias (corr {corr:.2f})")
-    ax2.axvline(predicted_fold, color="C1", ls=":", lw=1.2,
-                label=f"predicted fold={predicted_fold}")
-    ax2.set_xlim(0, 30); ax2.set_xlabel("frequency"); ax2.set_ylabel("|X| (norm)")
-    ax2.set_title("where the trained net puts $f_{out}$=50"); ax2.legend(fontsize=7)
-    savefig(fig, "nonlinear_silent_aliasing.png")
-
-    out = {"f_out": f_out, "N": N, "sample_rmse": sample_rmse,
-           "predicted_fold": predicted_fold, "measured_fold": measured_fold,
-           "pattern_corr": corr, "device": dev,
-           "note": "trained nonlinear INR fits samples but folds the out-of-hull tone "
-                   "(silent aliasing); measured by ablation (identical net trained with vs "
-                   "without the tone, difference spectrum) against the Hermitian-pair "
-                   "linear-theory bias pattern"}
-    print(f"[nonlinear] sample_rmse={sample_rmse:.3f} predicted_fold={predicted_fold} "
-          f"measured_fold={measured_fold} pattern_corr={corr:.3f}", flush=True)
-    return out
+        return _BandLimited()
+    raise ValueError(arch)
 
 
-def achievability_transfer(name="co2", seed=0):
-    """Trained INR whose band covers the real signal recovers it (agrees with linear theory)."""
+def _train_predict(model, t, y, dev):
     import torch
-    dev = "cuda" if torch.cuda.is_available() else "cpu"
-    rng = np.random.default_rng(seed)
-    x = load_signal(name); M = x.size; t_ref = np.arange(M) / M
-    B = essential_bandwidth(x)
-    N = int(min(M, 0.6 * M)); idx = np.sort(rng.choice(M, N, replace=False))
-    t, y = t_ref[idx], x[idx] + rng.normal(0, np.sqrt(np.mean(x**2)) / 31.6, N)
-    torch.manual_seed(seed)
-    model = FourierFeatureMLP(n_features=256, scale=B / 2.5, hidden=256, layers=3, seed=seed, in_dim=1)
-    model, _ = train_inr(model, t, y, epochs=6000, lr=2e-4, device=dev, weight_decay=1e-5)
+
+    model, _ = train_inr(model, t, y, epochs=EPOCHS, lr=LR, device=dev,
+                         weight_decay=1e-6)
     with torch.no_grad():
-        f_nn = model(torch.tensor(t_ref.reshape(-1, 1), dtype=torch.float32, device=dev)).cpu().numpy().ravel()
-    nn_rmse = float(np.sqrt(np.mean((f_nn - x) ** 2)))
-    lin = FixedFeatureINR(lowpass_dictionary(int(1.1 * B)), real=True).fit(t, y, ridge=1e-6)
-    lin_rmse = float(np.sqrt(np.mean((lin.predict(t_ref) - x) ** 2)))
-    print(f"[nonlinear:{name}] achievability transfer  nonlinear rmse={nn_rmse:.3f}  linear rmse={lin_rmse:.3f}", flush=True)
-    return {"name": name, "nonlinear_rmse": nn_rmse, "linear_rmse": lin_rmse, "B_sig": B}
+        return model(torch.tensor(T_REF.reshape(-1, 1), dtype=torch.float32,
+                                  device=dev)).cpu().numpy().ravel(), model
+
+
+def _ntk_prediction(model, t, tone_samples, dev, lam=1e-6):
+    """Predicted tone reconstruction via the empirical NTK at initialization.
+
+    Kernel regression of the tone samples with K = J J^T (J = param Jacobian at init):
+    f_pred(x) = k(x, t) K^{-1} tone_samples.  Returns the dense reconstruction.
+    """
+    import torch
+
+    tt = torch.tensor(t.reshape(-1, 1), dtype=torch.float32, device=dev)
+    te = torch.tensor(T_REF.reshape(-1, 1), dtype=torch.float32, device=dev)
+    params = [p for p in model.parameters() if p.requires_grad]
+
+    def jac(inputs):
+        rows = []
+        for i in range(inputs.shape[0]):
+            model.zero_grad(set_to_none=True)
+            out = model(inputs[i:i + 1]).squeeze()
+            grads = torch.autograd.grad(out, params, retain_graph=False)
+            rows.append(torch.cat([g.reshape(-1) for g in grads]))
+        return torch.stack(rows)
+
+    J_t = jac(tt)                                   # (N, P)
+    K = J_t @ J_t.T
+    K = K + lam * torch.eye(K.shape[0], device=dev) * K.diagonal().mean()
+    alpha = torch.linalg.solve(K, torch.tensor(tone_samples, dtype=torch.float32,
+                                               device=dev))
+    # evaluate in batches to bound memory
+    preds = []
+    bs = 200
+    for i in range(0, te.shape[0], bs):
+        J_e = jac(te[i:i + bs])
+        preds.append((J_e @ J_t.T @ alpha).detach().cpu())
+    import torch as _t
+
+    return _t.cat(preds).numpy().ravel()
+
+
+def _fold_metrics(diff_recon, pred_recon):
+    """Measured vs predicted attribution spectra below FMAX_SPEC.
+
+    The DC bin is excluded from fold extraction: network bias paths give both the
+    measured and predicted reconstructions a common offset component that is not a
+    frequency fold (the full spectra, DC included, enter the pattern correlation).
+    """
+    d = _spec(diff_recon)[: FMAX_SPEC + 1]
+    p = _spec(pred_recon)[: FMAX_SPEC + 1]
+    meas = 1 + int(np.argmax(d[1:]))
+    pred = 1 + int(np.argmax(p[1:]))
+    corr = float(np.corrcoef(d, p)[0, 1])
+    top3 = bool(meas in (1 + np.argsort(p[1:])[::-1][:3]))
+    return {"measured_fold": meas, "predicted_fold": pred,
+            "exact_match": bool(meas == pred), "top3_match": top3,
+            "pattern_corr": corr}
+
+
+def one_run(arch, f_out, samp_seed, weight_seed, amp=0.8, permute=False, dev="cuda"):
+    rng = np.random.default_rng(samp_seed)
+    t = nonuniform_times(N, rng, "jitter")
+    noise = rng.normal(0, SIGMA, N)
+    y_in = evaluate(IN_F, IN_C, t, real=True) + noise
+    oc = amp * np.exp(1j * 0.2)
+    tone = evaluate(np.array([f_out, -f_out]), np.array([oc, np.conj(oc)]), t, real=True)
+    y_all = y_in + tone
+    if permute:
+        y_all = rng.permutation(y_all)
+
+    feature_seed = 100 + samp_seed
+    m1 = _make_model(arch, feature_seed, weight_seed)
+    f_with, _ = _train_predict(m1, t, y_all, dev)
+    m0 = _make_model(arch, feature_seed, weight_seed)
+    f_wo, _ = _train_predict(m0, t, y_in, dev)
+    diff = f_with - f_wo
+
+    m_ref = _make_model(arch, feature_seed, weight_seed)
+    m_ref = m_ref.to(dev) if hasattr(m_ref, "to") else m_ref
+    pred_recon = _ntk_prediction(m_ref, t, tone, dev)
+
+    res = _fold_metrics(diff, pred_recon)
+    res.update({"arch": arch, "f_out": f_out, "samp_seed": samp_seed,
+                "weight_seed": weight_seed, "amp": amp, "permute": permute,
+                "diff_energy": float(np.mean(diff**2))})
+    return res, diff, pred_recon, t
+
+
+def _boot_ci(bools, rng, n=2000):
+    v = np.asarray(bools, float)
+    stats = [v[rng.integers(0, v.size, v.size)].mean() for _ in range(n)]
+    return [float(np.quantile(stats, 0.025)), float(np.quantile(stats, 0.975))]
 
 
 def main():
     if not torch_available():
-        print("[nonlinear] torch unavailable -- run on server", flush=True)
+        print("[nonlinear] torch unavailable -- run on the GPU server", flush=True)
         return
-    # seed 0 draws the figure; two extra seeds check fold-target and residual stability
-    main_run = silent_aliasing_nonlinear(seed=0)
-    extra = [silent_aliasing_nonlinear(seed=s, make_fig=False) for s in (1, 2)]
-    out = {"silent_aliasing": main_run,
-           "silent_aliasing_extra_seeds": extra,
-           "achievability": achievability_transfer("co2")}
+    import torch
+
+    torch.use_deterministic_algorithms(True, warn_only=True)
+    dev = "cuda" if torch.cuda.is_available() else "cpu"
+    quick = "--quick" in sys.argv
+    n_seeds = 4 if quick else N_SEEDS
+
+    runs = []
+    # main grid: ffmlp x f_out x sampling seeds
+    for f_out in F_OUTS:
+        for s in range(n_seeds):
+            r, *_ = one_run("ffmlp", f_out, s, 200 + s, dev=dev)
+            runs.append(r)
+            print(f"[nl] ffmlp f={f_out} s={s}: meas={r['measured_fold']} "
+                  f"pred={r['predicted_fold']} corr={r['pattern_corr']:.2f}", flush=True)
+    # siren + bandlimited at f_out = 50
+    for arch in ("siren", "bandlimited"):
+        for s in range(n_seeds):
+            r, *_ = one_run(arch, 50.0, s, 200 + s, dev=dev)
+            runs.append(r)
+            print(f"[nl] {arch} s={s}: meas={r['measured_fold']} "
+                  f"pred={r['predicted_fold']} corr={r['pattern_corr']:.2f}", flush=True)
+    # controls
+    controls = []
+    for s in range(0, n_seeds, 4):
+        r, *_ = one_run("ffmlp", 50.0, s, 200 + s, permute=True, dev=dev)
+        r["control"] = "label_permutation"; controls.append(r)
+    for s in range(0, n_seeds, 4):
+        r, *_ = one_run("ffmlp", 50.0, s, 200 + s, amp=0.4, dev=dev)
+        r["control"] = "amp0.4"; controls.append(r)
+    for s in range(0, n_seeds, 4):          # weight-seed stability
+        r, *_ = one_run("ffmlp", 50.0, s, 900 + s, dev=dev)
+        r["control"] = "weight_seed_900"; controls.append(r)
+
+    rng = np.random.default_rng(0)
+    summary = {}
+    for arch in ("ffmlp", "siren", "bandlimited"):
+        sub = [r for r in runs if r["arch"] == arch]
+        if not sub:
+            continue
+        ex = [r["exact_match"] for r in sub]
+        t3 = [r["top3_match"] for r in sub]
+        co = [r["pattern_corr"] for r in sub]
+        summary[arch] = {
+            "n_runs": len(sub),
+            "exact_match_rate": float(np.mean(ex)),
+            "exact_match_ci95": _boot_ci(ex, rng),
+            "top3_match_rate": float(np.mean(t3)),
+            "top3_match_ci95": _boot_ci(t3, rng),
+            "pattern_corr_median": float(np.median(co)),
+            "pattern_corr_q10_q90": [float(np.quantile(co, 0.1)),
+                                     float(np.quantile(co, 0.9))],
+        }
+    perm_corr = [r["pattern_corr"] for r in controls
+                 if r.get("control") == "label_permutation"]
+
+    # figure: one representative run (spectra) + corr distributions per arch
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(7.6, 3.0), layout="constrained")
+    r, diff, pred, t = one_run("ffmlp", 50.0, 0, 200, dev=dev)
+    fr = np.arange(FMAX_SPEC + 1)
+    ax1.plot(fr, _spec(diff)[: FMAX_SPEC + 1], "C3-", lw=1.5,
+             label="measured attribution (ablation)")
+    ax1.plot(fr, _spec(pred)[: FMAX_SPEC + 1], "C0--", lw=1.4,
+             label=f"NTK prediction (corr {r['pattern_corr']:.2f})")
+    ax1.set_xlabel("frequency"); ax1.set_ylabel("|X| (norm)")
+    ax1.set_title("tone attribution: trained FF-MLP vs its NTK")
+    ax1.legend(fontsize=9)
+    data = [[r["pattern_corr"] for r in runs if r["arch"] == a]
+            for a in ("ffmlp", "siren", "bandlimited")]
+    ax2.boxplot(data, tick_labels=["FF-MLP", "SIREN", "band-limited"], whis=(5, 95))
+    if perm_corr:
+        ax2.axhline(float(np.mean(perm_corr)), color="0.5", ls=":",
+                    label="label-permutation control")
+        ax2.legend(fontsize=9)
+    ax2.set_ylabel("pattern correlation")
+    ax2.set_title(f"attribution vs prediction ({n_seeds} sampling seeds)")
+    savefig(fig, "nonlinear_folds.png")
+
+    out = {"N": N, "sigma": SIGMA, "epochs": EPOCHS, "n_seeds": n_seeds,
+           "f_outs": list(F_OUTS), "device": dev, "quick": quick,
+           "runs": runs, "controls": controls, "summary": summary,
+           "note": "empirical extrapolation only; predictions from each network's own "
+                   "NTK linearization (bandlimited: exact dictionary); all runs "
+                   "recorded including failures"}
     save_json("nonlinear.json", out)
+    print("[nl] summary:", {k: {kk: (round(vv, 3) if isinstance(vv, float) else vv)
+                                for kk, vv in v.items() if "ci" not in kk}
+                            for k, v in summary.items()}, flush=True)
 
 
 if __name__ == "__main__":

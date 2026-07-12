@@ -34,7 +34,6 @@ __all__ = [
     "noise_gain",
     "alias_projector",
     "pinv_apply",
-    "landau_min_samples",
     "bandwidth",
 ]
 
@@ -117,29 +116,27 @@ def alias_projector(Phi: np.ndarray) -> np.ndarray:
 
 
 def pinv_apply(Phi: np.ndarray, y: np.ndarray, ridge: float = 0.0) -> np.ndarray:
-    r"""Return the (ridge) least-squares coefficients
-    :math:`\hat c=(\Phi^\ast\Phi+\lambda I)^{-1}\Phi^\ast y`."""
-    m = Phi.shape[1]
-    G = Phi.conj().T @ Phi
+    r"""Least-squares / ridge coefficients, numerically safe at any rank.
+
+    * ``ridge == 0``: the SVD **pseudoinverse** solution :math:`\hat c=\Phi^\dagger y`
+      (via ``lstsq``).  In the overdetermined full-rank case this is ordinary least
+      squares; in the underdetermined or rank-deficient case it is the
+      **minimum-norm** interpolant -- these are different estimators and are treated
+      separately in the paper.
+    * ``ridge > 0``: the ridge estimator
+      :math:`\hat c=(\Phi^\ast\Phi+\lambda I)^{-1}\Phi^\ast y` (always well posed, but
+      biased; the exact theory statements in :mod:`inralias.limits` are for the
+      unridged estimators).
+    """
     if ridge > 0:
-        G = G + ridge * np.eye(m)
-    return np.linalg.solve(G, Phi.conj().T @ y)
+        m = Phi.shape[1]
+        G = Phi.conj().T @ Phi + ridge * np.eye(m)
+        return np.linalg.solve(G, Phi.conj().T @ y)
+    c, *_ = np.linalg.lstsq(Phi, y, rcond=None)
+    return c
 
 
 def bandwidth(freqs: np.ndarray) -> float:
     """Half-extent (max |omega|) of a frequency set -- its two-sided bandwidth reach."""
     freqs = np.asarray(freqs, dtype=float)
     return float(np.max(np.abs(freqs))) if freqs.size else 0.0
-
-
-def landau_min_samples(freqs: np.ndarray, span: float = 1.0) -> float:
-    r"""Landau lower density: minimum number of samples on an interval of length ``span``
-    for stable reconstruction of signals bandlimited to the reach of ``freqs``.
-
-    For a dictionary with two-sided bandwidth :math:`W=\max_k|\omega_k|`, stable sampling
-    on :math:`[0,\text{span})` requires an average density :math:`\ge 2W` (Beurling-Landau),
-    i.e. :math:`N\gtrsim 2W\cdot\text{span}`.  Returned as a float threshold; the actual
-    frame bound ``A>0`` (see :func:`frame_bounds`) is the exact, sample-set-specific test.
-    """
-    W = bandwidth(freqs)
-    return 2.0 * W * span

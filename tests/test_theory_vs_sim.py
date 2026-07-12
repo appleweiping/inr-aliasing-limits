@@ -12,8 +12,8 @@ from inralias.limits import (
     aliasing_floor,
     folded_frequency,
     silent_aliasing_ratio,
-    mmse_recoverable,
-    mmse_aliasing_floor,
+    ls_coefficient_mse,
+    aliasing_variance_term,
 )
 
 
@@ -50,7 +50,7 @@ def test_thm1_recoverable_mmse_matches_montecarlo():
     G = Phi.conj().T @ Phi
     Minv = np.linalg.inv(G) @ Phi.conj().T
     sigma = 0.3
-    predicted = mmse_recoverable(Phi, sigma**2)  # sigma^2 tr((Phi*Phi)^-1)
+    predicted = ls_coefficient_mse(Phi, sigma**2)  # sigma^2 tr((Phi*Phi)^-1)
     trials = 8000
     acc = 0.0
     c_star = rng.standard_normal(freqs.size) + 1j * rng.standard_normal(freqs.size)
@@ -226,7 +226,7 @@ def test_thm3_aliasing_floor_matches_montecarlo():
     freqs = np.linspace(-4, 4, 5)
     out_freqs = np.array([6.3, -7.1, 9.0])
     out_power = np.array([0.5, 0.3, 0.8])
-    predicted = mmse_aliasing_floor(freqs, t, out_freqs, out_power)
+    predicted = aliasing_variance_term(freqs, t, out_freqs, out_power)
     Phi = synthesis_matrix(freqs, t)
     Phi_out = synthesis_matrix(out_freqs, t)
     G = Phi.conj().T @ Phi
@@ -257,8 +257,8 @@ def test_thm3_aliasing_floor_does_not_vanish_with_N():
         t = np.arange(N) / N
         out_freqs = np.array([float(N)])  # first alias of atom 0 at sampling rate N
         Phi = synthesis_matrix(freqs, t)
-        floors.append(mmse_aliasing_floor(freqs, t, out_freqs, 1.0))
-        variances.append(mmse_recoverable(Phi, sigma2=1.0))
+        floors.append(aliasing_variance_term(freqs, t, out_freqs, 1.0))
+        variances.append(ls_coefficient_mse(Phi, sigma2=1.0))
     floors = np.array(floors)
     variances = np.array(variances)
     # variance (estimation) term decays ~ m/N
@@ -279,14 +279,14 @@ def test_thm3_fixed_tone_regimes():
     # (i) exactly zero
     for N in [64, 256, 1024]:
         t = np.arange(N) / N
-        assert mmse_aliasing_floor(freqs, t, np.array([7.0]), 1.0) < 1e-20
+        assert aliasing_variance_term(freqs, t, np.array([7.0]), 1.0) < 1e-20
     # (ii) m/N law under iid sampling
     rng = np.random.default_rng(1)
     Ns = np.array([128, 512, 2048])
     means = []
     for N in Ns:
         vals = [
-            mmse_aliasing_floor(freqs, np.sort(rng.uniform(0, 1, N)), np.array([7.0]), 1.0)
+            aliasing_variance_term(freqs, np.sort(rng.uniform(0, 1, N)), np.array([7.0]), 1.0)
             for _ in range(30)
         ]
         means.append(float(np.mean(vals)))
@@ -298,7 +298,7 @@ def test_thm3_fixed_tone_regimes():
     nu = 7.3
     leak = float(np.sum(np.sinc(nu - freqs) ** 2))  # np.sinc(x) = sin(pi x)/(pi x)
     t = np.arange(4096) / 4096
-    val = mmse_aliasing_floor(freqs, t, np.array([nu]), 1.0)
+    val = aliasing_variance_term(freqs, t, np.array([nu]), 1.0)
     assert val == pytest.approx(leak, rel=1e-2)
 
 
@@ -316,7 +316,7 @@ def test_thm3_joint_decomposition_matches_montecarlo():
     Phi_out = synthesis_matrix(out_freqs, t)
     G = Phi.conj().T @ Phi
     M = np.linalg.inv(G) @ Phi.conj().T
-    predicted = mmse_recoverable(Phi, sigma**2) + mmse_aliasing_floor(
+    predicted = ls_coefficient_mse(Phi, sigma**2) + aliasing_variance_term(
         freqs, t, out_freqs, out_power
     )
     trials = 6000

@@ -1,315 +1,351 @@
 % ICASSP submission: spconf.sty + IEEEbib.bst (official paper-kit files).
 % At most 4 pages of technical content; page 5 contains ONLY references.
+% Full proofs: paper/supplement.pdf (also in the repository).
 \documentclass{article}
 \usepackage{spconf,amsmath,amssymb,amsthm,graphicx,bm}
 \ninept
 \graphicspath{{figures/}{../results/figures/}}
 
 \newtheorem{theorem}{Theorem}
-\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
 \newtheorem{corollary}{Corollary}
 \newtheorem{remark}{Remark}
 
 \emergencystretch=1em
-\DeclareMathOperator{\rank}{rank}
 \DeclareMathOperator{\tr}{tr}
-\DeclareMathOperator{\supp}{supp}
+\DeclareMathOperator{\range}{range}
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\C}{\mathbb{C}}
-\newcommand{\F}{\mathcal{F}}
+\newcommand{\Z}{\mathbb{Z}}
 \newcommand{\Lam}{\Lambda}
 \newcommand{\Mcal}{\mathcal{M}}
 \newcommand{\Phimat}{\bm{\Phi}}
 \newcommand{\norm}[1]{\lVert#1\rVert}
+\newcommand{\vt}{v_T}
+\newcommand{\at}{a_T}
 
-\title{Learned Nyquist: Fundamental Aliasing Limits of\\ Implicit Neural Representations}
-\name{Weiping Yan\thanks{Code and data: \texttt{github.com/\allowbreak appleweiping/\allowbreak inr-aliasing-limits}.}}
+% ---- volatile experiment numbers (single source for easy re-sync with results/) ----
+\newcommand{\NumCohAUC}{0.21}          % coherent-demo ring AUC
+\newcommand{\NumCohTPR}{0.03}          % coherent-demo TPR at 5% FPR
+\newcommand{\NumCoTwoLS}{0.167}        % CO2 sample-only LS-periodogram RMSE
+\newcommand{\NumCoTwoOracle}{0.204}    % CO2 oracle RMSE
+
+\title{Silent Aliasing in Fixed Fourier-Feature Coordinate Models}
+\name{Weiping Yan\thanks{Code, data provenance, and the supplement with full proofs:
+\texttt{github.com/\allowbreak appleweiping/\allowbreak inr-aliasing-limits}.}}
 \address{University of Minnesota, Twin Cities, Minneapolis, MN, USA}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-Implicit neural representations (INRs)---SIREN and Fourier-feature coordinate networks---are
-increasingly used as continuous models of signals. A recent \emph{achievability} sampling theory
-addresses signals that are themselves INRs; we address the \emph{converse} question that governs
-practice, where the signal is arbitrary and observed at finite, noisy, nonuniform samples. A
-fixed-feature INR (fixed feature frequencies, linear output layer) represents only a
-\emph{structured} frequency set $\Lam$. Casting its least-squares fit as generalized sampling on
-this dictionary, we prove: (i) achievability---if the signal spectrum lies in $\Lam$ and the
-samples render the dictionary matrix full column rank, a bandwidth-matched INR recovers it with
-closed-form noise gain $\kappa=1/\sigma_{\min}(\Phimat)$; (ii) a converse---out-of-band energy is
-\emph{folded} onto $\Lam$ with an error floor no fixed-feature INR can beat, and for
-grid-coherent tones the sample residual is \emph{exactly zero} while the reconstruction error is
-at least the full out-of-band energy (\emph{silent aliasing}), with a \emph{non-classical} fold
-target when $\Lam$ is structured; (iii) an exact decomposition of the estimator's average error
-into an estimation-variance term and an aliasing-variance term that no sampling density uniformly
-removes. We give a bandwidth-matched estimator and a ground-truth-free diagnostic with a measured
-operating characteristic (AUC $1.0$ off the provably undetectable coherent worst case), validate
-every identity against Monte Carlo, and demonstrate both sides of the limit on real audio and
-scientific signals---the phenomenon persisting, fold-for-fold, for trained \emph{nonlinear} and
-2-D INRs. The classical uniform-lowpass fold is one special case; the structured-set fold law,
-the exact-fold characterization of silent aliasing, and the diagnostic's operating characteristic
-are new.
+Coordinate models built on a \emph{fixed} finite set of Fourier features---the linear core
+of Fourier-feature implicit neural representations---fit signals by least squares on an
+exponential dictionary $\Lam$.  We give an identifiability theory for what such models do
+to out-of-band content.  (i)~On any subset of a rate-$Q$ sampling grid, an integer tone
+congruent to a model frequency modulo $Q$ is \emph{exactly} indistinguishable from that
+atom: zero training residual, full-energy reconstruction failure, and---by a two-point
+argument---no estimator whatsoever can avoid the error (\emph{silent aliasing}).
+(ii)~Random sampling provably destroys this exact aliasing: under timing jitter the tone's
+visibility follows the jitter's characteristic function ($v\approx2\pi|r|Q\sigma_t$ for
+small Gaussian jitter), and under i.i.d.\ sampling the worst-case aliasability over a
+finite candidate set concentrates at $O(\sqrt{m\log(mK/\delta)/N})$.  (iii)~Detection is
+dichotomous: exactly coherent folds are undetectable by \emph{any} sample-only test
+(identical observation laws), while visible tones admit exact noncentral-$\chi^2$
+detection power, which calibrated sample-only detectors match empirically.  Every closed
+form is validated against Monte Carlo; trained nonlinear networks (Fourier-feature MLPs,
+SIRENs) are studied strictly as empirical extrapolation, with fold patterns predicted by
+each network's own NTK linearization and all seed-level failures reported.
 \end{abstract}
 
 \begin{keywords}
-Implicit neural representations, sampling theory, aliasing, generalized sampling, coordinate networks.
+Sampling theory, aliasing, identifiability, Fourier features, coordinate networks.
 \end{keywords}
 
 \section{Introduction}
-Implicit neural representations parameterize a signal as a coordinate network
-$f_\theta:\R^d\!\to\!\R$ and are now a default continuous model for audio, images, volumes, and
-scientific fields~\cite{sitzmann2020siren,tancik2020fourier,mildenhall2020nerf}. A large literature
-engineers their \emph{architectures} against spectral bias and aliasing---periodic activations,
-Fourier features, band-limited and anti-aliased variants
-\cite{rahaman2019spectral,shabanov2024banf,lindell2022bacon,barron2021mipnerf,novello2025tuner,alsakabi2025fmsiren}---and
-a recent thread gives a \emph{sampling theory}: Najaf and Ongie~\cite{najaf2024sampling} and the
-super-resolution follow-up~\cite{najaf2025superres} prove that a signal which \emph{is} a shallow
-INR is exactly recoverable from enough noiseless Fourier measurements, and sinc-activated INRs
-admit Shannon-style reconstruction guarantees~\cite{saratchandran2024activations}. These are
-\emph{achievability} statements about realizable signals~\cite{jayasundara2026survey}.
+Coordinate networks with Fourier features are now standard continuous signal
+models~\cite{sitzmann2020siren,tancik2020fourier,mildenhall2020nerf}.  Their analytically
+exact core---and the object of every theorem in this paper---is the \emph{fixed
+Fourier-feature coordinate model}: a finite frequency set
+$\Lam=\{\omega_1,\dots,\omega_m\}\subset\R$ with linear coefficients, fit by least
+squares.  Trained nonlinear networks (Fourier-feature MLPs, SIRENs) enter only as
+\emph{empirical extrapolation} in Sec.~\ref{sec:exp}, and adaptive or learned frequency
+sets are outside the scope of our theory; we do not claim results for ``all INRs''.
 
-\emph{The gap.} In practice the signal is not an INR: it is an arbitrary waveform observed at
-finitely many, often nonuniform, noisy samples. The achievability theory is noiseless and
-realizable-signal by construction (misspecification appears in~\cite{najaf2024sampling} only as an
-experiment); nothing above says when the task is possible, how the answer depends on the network's
-capacity, or what failure looks like. We supply the converse. The key
-object is the INR's \emph{representable frequency set} $\Lam$: for a Fourier-feature/periodic
-coordinate network the output is a combination of complex exponentials whose frequencies are integer
-combinations of the base feature frequencies---a set that grows with width and depth
-\cite{yuce2022structured,novello2025tuner}. A signal is representable only insofar as its spectrum
-lies in $\Lam$.
+\emph{Questions.}  When a signal contains energy outside $\Lam$, three practical
+questions arise.  \textbf{Q1}: when is that energy \emph{exactly} invisible in the
+samples---fitting perfectly while corrupting the reconstruction?  \textbf{Q2}: how does
+the sampling design (grids, jitter, i.i.d.\ draws) change this?  \textbf{Q3}: when can a
+practitioner \emph{detect} the problem from the samples alone?
 
-\emph{Scope and contributions.} Our theorems concern the analytically exact case: a fixed-feature
-INR whose output layer is linear over $\Lam$. Its least-squares fit is generalized (nonharmonic)
-sampling on the finite dictionary $\Lam$~\cite{adcock2016generalized,unser2000sampling}; that recast
-is the mechanism. On top of it we establish the INR-specific facts: (1) an achievability bound with
-a closed-form noise gain (Thm.~\ref{thm:ach}); (2) a converse in which out-of-band energy folds onto
-$\Lam$ with an error floor, and an exact-fold characterization of \emph{silent aliasing}---zero
-sample residual with full-energy reconstruction failure---whose target, for structured $\Lam$, is
-unlike the classical lowpass law (Thm.~\ref{thm:conv}); (3) an exact average-case error
-decomposition separating estimation variance from an aliasing-variance term that no sampling
-density uniformly removes (Thm.~\ref{thm:stat}); and (4) a bandwidth-matched estimator, a
-ground-truth-free diagnostic with a measured ROC, Monte Carlo--validated theory, and real-data
-demonstrations of both sides, which persist---fold-for-fold---for trained nonlinear and 2-D INRs.
+\emph{Contributions.}  (1)~An identifiability framework---sample atoms, equivalence
+classes, \emph{visibility} $\vt(\nu)$, \emph{aliasability} $\at(\nu)$---in which exact
+silent aliasing is classified on arbitrary subsets of sampling grids, with an
+estimator-independent two-point lower bound (Thm.~\ref{thm:t1}).  (2)~Function-space
+accounting: a closed-form continuous Gram matrix with Riesz bounds and an exact error
+decomposition that keeps coefficient error, aliasing-induced modeled-component error, and
+truncation error \emph{separate} (Thm.~\ref{thm:t2}).  (3)~Proof that \emph{random
+sampling breaks exact aliasing}, with explicit rates: a characteristic-function law for
+jitter and a finite-candidate concentration bound for i.i.d.\ sampling
+(Thm.~\ref{thm:t3}).  (4)~A detection dichotomy: impossibility for coherent folds, exact
+noncentral-$\chi^2$ power otherwise, and a calibrated empirical operating characteristic
+with baselines (Thm.~\ref{thm:t4}, Sec.~\ref{sec:exp}).
 
-\emph{Relation to prior analyses.} When $\Lam=\{-B,\dots,B\}$ and sampling is uniform, our converse
-reduces to classical aliasing (Rem.~\ref{rem:classical}). Three adjacent lines must be
-distinguished. \emph{Basis mismatch}~\cite{chi2011sensitivity} analyzes the same least-squares bias
-for a tone \emph{near} a dictionary atom; our silent-aliasing regime is the complementary
-\emph{far} regime, where a grid-coherent tone arbitrarily far from $\Lam$ folds with zero residual
-(Thm.~\ref{thm:conv}(iii)). The \emph{spectral window} of nonuniform sampling
-\cite{vanderplas2018lomb} predicts where out-of-band power appears in a periodogram; our fold
-target is its dictionary-projection analogue, and we pair it with achievability, noise, and a
-diagnostic. A \emph{generalized aliasing decomposition} for least-squares/random-feature models
-\cite{transtrum2024gad} and an NTK-based lower bound from \emph{missing} frequencies
-\cite{ma2025robustifying} both bound misspecification error; neither gives the structured fold
-law (where the energy \emph{lands}), the exact-fold silent regime, or the detection question that
-we address. Empirically, trained SIRENs have been observed to plant off-grid aliases
-\cite{chandravamsi2025spectral}; we supply the theory and the diagnostic for that observation.
+\emph{Relation to prior work} (per-item increments; full audit in the repository).
+Classical modulo-$N$ aliasing~\cite{shannon1949} is the full-grid special case of
+Thm.~\ref{thm:t1}, which covers \emph{arbitrary} grid subsets.  Generalized
+sampling~\cite{adcock2016generalized,unser2000sampling} supplies the least-squares recast
+we build on; the equivalence-class, sampling-design, and detection results are not part
+of it.  The generalized aliasing decomposition of eGAD~\cite{transtrum2024gad} computes an
+aliasing operator for \emph{given} samples; our $\at(\nu)$ is a column norm of that
+operator, and our new content is probabilistic control of it \emph{over the sampling
+design} (Thm.~\ref{thm:t3}).  Basis mismatch~\cite{chi2011sensitivity} concerns tones
+\emph{near} atoms; silent aliasing is the complementary far regime.  The Lomb--Scargle
+spectral window~\cite{vanderplas2018lomb} predicts periodogram leakage; we add the
+estimator-independent indistinguishability statement and detection theory.  The
+structured-dictionary view of INRs~\cite{yuce2022structured} motivates the model class
+but contains no sampling theory; INR sampling theorems to
+date~\cite{najaf2024sampling,najaf2025superres,saratchandran2024activations} are
+achievability results for realizable signals; an NTK bound from missing
+frequencies~\cite{ma2025robustifying} gives an error floor but not the fold structure,
+invisibility, or detection.  Empirical SIREN aliasing has been
+observed~\cite{chandravamsi2025spectral}; we supply theory for the linear core and a
+measured, calibrated diagnostic.
 
-\section{Signal model and representable band}
-Let $f:[0,1)\!\to\!\R$ be observed at samples $t_1,\dots,t_N$ (possibly nonuniform) as
-$y_j=f(t_j)+\varepsilon_j$. A fixed-feature INR with feature set inducing
-$\Lam=\{\omega_1,\dots,\omega_m\}\subset\R$ has model class
-$\Mcal_\Lam=\{\sum_k c_k e_{\omega_k}\}$ where $e_\omega(x)=e^{i2\pi\omega x}$; deeper/periodic
-networks enlarge $\Lam$ to integer combinations of base frequencies~\cite{yuce2022structured}. Define
-the \emph{synthesis matrix} $\Phimat\in\C^{N\times m}$, $\Phimat_{jk}=e_{\omega_k}(t_j)$; fitting the
-INR is the least-squares problem $\hat{\bm c}=\arg\min_{\bm c}\norm{\bm y-\Phimat\bm c}^2$ (the
-released code optionally adds a negligible ridge, $10^{-8}$--$10^{-6}$ in the experiments).
-Write $f=f_{\mathrm{in}}+f_{\mathrm{out}}$ where $f_{\mathrm{in}}=\sum_k c^\star_k e_{\omega_k}
-\in\Mcal_\Lam$ and $f_{\mathrm{out}}=\sum_l a_l e_{\nu_l}$ is a finite exponential sum on
-frequencies $\nu_l\notin\Lam$ (synthesis matrix $\Phimat_{\mathrm{out}}$), so
-$\bm y=\Phimat\bm c^\star+\bm g+\bm\varepsilon$ with
-$g_j=f_{\mathrm{out}}(t_j)$. The lower \emph{frame bound} is $A=\sigma_{\min}(\Phimat)^2$; $A>0$ iff
-$\Phimat$ has full column rank ($m\le N$, generic positions), i.e.\ the samples determine
-$\Mcal_\Lam$.
+\section{Setup and background}\label{sec:setup}
+Signals live on $[0,1)$; $e_\omega(x)=e^{i2\pi\omega x}$.  The model class is
+$\Mcal_\Lam=\{\sum_k c_k e_{\omega_k}\}$ with $\Lam$ \emph{fixed}.  Samples
+$T=\{t_1,\dots,t_N\}\subset[0,1)$ define $S_Tf=(f(t_j))_j$, the synthesis matrix
+$\Phimat\in\C^{N\times m}$, $\Phimat_{jk}=e_{\omega_k}(t_j)$, and observations
+$\bm y=S_Tf+\bm\varepsilon$.  We write $f=f_{\mathrm{in}}+f_{\mathrm{out}}$ with
+$f_{\mathrm{in}}=\sum_k c^\star_ke_{\omega_k}$ and $f_{\mathrm{out}}=\sum_l a_le_{\nu_l}$,
+$\nu_l\notin\Lam$.  Real signals are fit with the equivalent real cosine/sine design
+(Hermitian symmetry enforced in the parameterization; see the code).  Ordinary least
+squares $\hat{\bm c}=\Phimat^\dagger\bm y$ is used throughout the theory (no ridge); the
+underdetermined minimum-norm case is treated separately in the code and experiments.
 
-\section{Fundamental limits}
-\begin{theorem}[Achievability]\label{thm:ach}
-If $f_{\mathrm{out}}=0$ and $\Phimat$ has full column rank ($\sigma_{\min}(\Phimat)>0$), then
-$\norm{\hat{\bm c}-\bm c^\star}\le\kappa\,\norm{\bm\varepsilon}$ with noise gain
-$\kappa=\norm{(\Phimat^{*}\Phimat)^{-1}\Phimat^{*}}_2=1/\sigma_{\min}(\Phimat)$, and for white noise
-of variance $\sigma^2$, $\mathbb E\norm{\hat{\bm c}-\bm c^\star}^2=\sigma^2\tr((\Phimat^{*}\Phimat)^{-1})$.
-\end{theorem}
-Full column rank needs $N\ge m=|\Lam|$; for the special case $\Lam=\{-B,\dots,B\}$ this is
-consistent with the Landau density $N\gtrsim 2B$~\cite{landau1967necessary}, but for a sparse
-structured $\Lam$ the binding requirement is $N\ge|\Lam|$, not the band extent. Rank alone prices
-nothing: $\kappa$ can be arbitrarily large for clustered samples---the bound is achievability at
-the price $\kappa$, which generalized sampling controls via density conditions
-\cite{adcock2016generalized}.
+\begin{lemma}[LS stability; standard]\label{lem:ls}
+If $\sigma_{\min}(\Phimat)>0$ and $f_{\mathrm{out}}=0$ then
+$\norm{\hat{\bm c}-\bm c^\star}\le\norm{\bm\varepsilon}/\sigma_{\min}(\Phimat)$ and, for
+white noise, $\mathbb E\norm{\hat{\bm c}-\bm c^\star}^2=\sigma^2\tr((\Phimat^{*}\Phimat)^{-1})$.
+\end{lemma}
+This is textbook least-squares perturbation, stated for calibration of what follows; the
+average-case bias/variance decomposition under random out-of-band content is likewise
+standard bookkeeping and is deferred to the supplement (Prop.~S1).
 
-\begin{theorem}[Converse and aliasing]\label{thm:conv}
-Assume $\sigma_{\min}(\Phimat)>0$ and let $\bm P=\Phimat(\Phimat^{*}\Phimat)^{-1}\Phimat^{*}$,
-$\bm M=(\Phimat^{*}\Phimat)^{-1}\Phimat^{*}$. With $f_{\mathrm{out}}\neq0$ and
-$\bm\varepsilon=\bm 0$ the estimate is
-biased, $\hat{\bm c}=\bm c^\star+\Delta\bm c$, $\Delta\bm c=\bm M\bm g$, and:
-(i) no INR in $\Mcal_\Lam$ fits the samples better than
-$\min_{\bm c}\norm{\bm y-\Phimat\bm c}=\norm{(\bm I-\bm P)\bm g}$;
-(ii) for a tone $a\,e_\nu$ with sample vector $\bm\phi_\nu$, the residual is
-$|a|\,\norm{\bm\phi_\nu}\sin\theta_\nu$ ($\theta_\nu$ the principal angle between $\bm\phi_\nu$
-and $\mathrm{range}\,\Phimat$) while the spectral bias is $\norm{\Delta\bm c}=|a|\norm{\bm M\bm\phi_\nu}$;
-(iii) (\emph{silent aliasing}) if $\Lam\subset\mathbb Z$, the samples lie on a rate-$Q$ grid
-($t_j\in\{0,\dots,Q{-}1\}/Q$), and $\nu\in\mathbb Z\setminus\Lam$ satisfies
-$\nu\equiv\omega_k\pmod{Q}$, then $\bm\phi_\nu=\bm\phi_{\omega_k}$ exactly: the residual
-is \emph{zero} while $\norm{\Delta\bm c}=|a|$, and every $h\in\Mcal_\Lam$ has
-$\norm{h-f}_{L^2[0,1)}\ge\norm{f_{\mathrm{out}}}_{L^2}$---full-energy reconstruction failure,
-invisible in-sample, at any $N$ and with $\nu$ arbitrarily far from $\Lam$.
-\end{theorem}
-We call such a fold \emph{coherent} with the sampling; in general, coherence means
-$\norm{\bm M\bm\phi_\nu}$ stays bounded away from zero as the density grows. The \emph{fold
-target} is defined as $\omega_{k^\star}$, $k^\star=\arg\max_k|\Delta c_k|$: for generic nonuniform
-samples it is the dictionary analogue of the peak of the sampled spectral window familiar from
-Lomb--Scargle analysis~\cite{vanderplas2018lomb}. The near-collision regime
-$\nu\to\omega_k$ (where the residual also vanishes but so does the reconstruction error) is the
-basis-mismatch sensitivity of~\cite{chi2011sensitivity}, governed by super-resolution conditioning
-\cite{candes2014superres}; (iii) is its harmful far counterpart.
-
-\begin{remark}\label{rem:classical}
-For uniform $t_j=j/N$ and $\Lam$ an integer lowpass band, the fold target is the unique element of
-$\Lam$ congruent to $\nu$ modulo $N$ (and $\Delta\bm c=\bm 0$ if the residue class misses
-$\Lam$): classical aliasing~\cite{shannon1949} is the coherent special case $Q=N$. For structured $\Lam$ and
-grid-subset or nonuniform samples the fold target is non-classical (Fig.~\ref{fig:silent}).
-\end{remark}
-
-\begin{theorem}[Average-case decomposition]\label{thm:stat}
-Assume $\sigma_{\min}(\Phimat)>0$; let the out-of-band coefficients $a_l$ be zero-mean,
-uncorrelated, with $\mathbb E|a_l|^2=p_l$, and independent of the noise; and assume
-$\mathbb E[\bm\varepsilon\bm\varepsilon^{*}]=\sigma^2\bm I$. Then the
-mean-squared error of the least-squares estimator is exactly
-\begin{equation}\label{eq:decomp}
-\mathbb E\norm{\hat{\bm c}-\bm c^\star}^2
-=\underbrace{\sigma^2\tr\!\big((\Phimat^{*}\Phimat)^{-1}\big)}_{\text{estimation variance}}
-+\underbrace{\tr\!\big(\bm M\bm\Sigma_g\bm M^{*}\big)}_{\text{aliasing variance}},
+\section{Main results}\label{sec:main}
+\subsection{T1: exact equivalence and silent aliasing}
+For $\nu\in\R$ define the \emph{sample atom} $\bm\phi_\nu=(e^{i2\pi\nu t_j})_j$, the
+\emph{visibility} and \emph{aliasability}
+\begin{equation}
+\vt(\nu)=\tfrac{1}{\sqrt N}\norm{(\bm I-\bm P_\Lam)\bm\phi_\nu},\qquad
+\at(\nu)=\norm{\Phimat^\dagger\bm\phi_\nu},
 \end{equation}
-with $\bm\Sigma_g=\Phimat_{\mathrm{out}}\,\mathrm{diag}(\bm p)\,\Phimat_{\mathrm{out}}^{*}$.
+with $\bm P_\Lam$ the orthogonal projector onto $\range\Phimat$.  $\vt(\nu)\in[0,1]$ is
+the fraction of the tone's sample energy the model cannot absorb; $\at(\nu)$ is the
+coefficient bias a unit tone induces.
+
+\begin{theorem}[Exact equivalence on grid subsets]\label{thm:t1}
+Let $\Lam\subset\Z$, let $T$ be \emph{any} subset of the rate-$Q$ grid
+$\{0,\dots,Q{-}1\}/Q$ with $\sigma_{\min}(\Phimat)>0$ (which requires $N\ge m$ and the
+elements of $\Lam$ distinct mod $Q$), and let $\nu\in\Z$.
+(i)~$\vt(\nu)=0$ iff $\bm\phi_\nu\in\range\Phimat$, i.e.\ iff a tone at $\nu$ is exactly
+reproducible by the model class on the samples.  If $\nu\equiv\omega_k\pmod Q$ then
+$\bm\phi_\nu=\bm\phi_{\omega_k}$, hence $\vt(\nu)=0$ \emph{for every such subset} $T$,
+the fit of a unit tone is the unit coefficient on atom $k$, and the training residual is
+exactly zero.
+(ii)~(estimator-independent converse) With $f_1=f_{\mathrm{in}}+a\,e_\nu$ and
+$f_2=f_{\mathrm{in}}+a\,e_{\omega_k}$, $\nu\equiv\omega_k\pmod Q$, $\nu\neq\omega_k$:
+$S_Tf_1=S_Tf_2$, so under any noise law the two hypotheses induce identical observation
+distributions, and \emph{any} estimator $\hat f$ satisfies
+$\max_{i\in\{1,2\}}\norm{\hat f-f_i}_{L^2[0,1)}\ge|a|/\sqrt2$.
+(iii)~If $\nu\not\equiv\omega_k\pmod Q$ for all $k$ and $[\Phimat\;\bm\phi_\nu]$ has full
+column rank, then $\vt(\nu)>0$.
 \end{theorem}
-Equation~\eqref{eq:decomp} is a fixed-$N$ identity. The estimation term decays like $\sigma^2m/N$
-for well-conditioned sampling, but the aliasing term is not \emph{uniformly} removable: at every
-density some tone folds coherently and keeps it at full power
-($\norm{\bm M\bm\phi_\nu}=1$ exactly for grid sampling, Thm.~\ref{thm:conv}(iii); in the
-near-collision limit otherwise). For a \emph{fixed} tone the term converges to its window-leakage energy
-onto $\Mcal_\Lam$: exactly zero for integer-disjoint tones under uniform sampling ($O(m/N)$ in
-expectation under i.i.d.\ sampling), but the positive constant $\sum_k\mathrm{sinc}^2(\nu-\omega_k)$,
-$\mathrm{sinc}(x)=\sin(\pi x)/(\pi x)$, for non-integer $\nu$. The proofs are elementary least-squares/projection identities; each
-statement---including every asymptotic regime above---is asserted against Monte Carlo in the
-released test suite.
+\emph{Sketch.}  (i)~$e^{i2\pi\nu g/Q}$ depends on $\nu\bmod Q$; (ii)~is a two-point
+(Le Cam) argument with $\norm{e_\nu-e_{\omega_k}}_{L^2}=\sqrt2$; (iii)~is the rank
+condition.  Full proofs in the supplement.  \emph{Silent aliasing} is regime (i)--(ii):
+the model fits the samples to the noise floor while the reconstruction error is at least
+the full out-of-band energy, at any budget $N$ satisfying the rank condition, with $\nu$
+arbitrarily far from $\Lam$.  Classical aliasing is the special case $T$ = full grid
+($Q=N$)~\cite{shannon1949}; the point here is that \emph{nonuniform designs inherit the
+grid's equivalence classes} whenever they live on a grid.
 
-\section{Matched estimator and diagnostic}
-\emph{Bandwidth matching.} Estimating the essential band from the samples via a nonuniform
-periodogram and choosing $\Lam$ to cover it places the signal in the Thm.~\ref{thm:ach} regime; this
-is the estimator we use. \emph{Diagnostic.} Because a fold is invisible in-sample
-(Thm.~\ref{thm:conv}(ii)--(iii)), we test band-limitation to $\Lam$ by fitting an enlarged
-dictionary $\Lam\cup\Lam_{\mathrm{ring}}$ ($\Lam_{\mathrm{ring}}$ a ring of candidate frequencies
-outside $\Lam$) and measuring the recovered energy fraction on the ring. The test is valid only in
-the overdetermined regime $N>|\Lam\cup\Lam_{\mathrm{ring}}|$ (an underdetermined ridge fit spreads
-energy everywhere and flags every signal), and its threshold should be null-calibrated; Sec.~5
-measures its full operating characteristic. By Thm.~\ref{thm:conv}(iii) an \emph{exactly} coherent
-grid fold is information-theoretically undetectable from the samples---the diagnostic's measured
-collapse there is the converse made visible, not a defect of the test.
+\subsection{T2: function-space accounting}
+Coefficient norms are not signal energies unless the dictionary is orthonormal.  Let
+$G_{L^2}[k,\ell]=\langle e_{\omega_\ell},e_{\omega_k}\rangle_{L^2[0,1)}
+=e^{i\pi\delta}\operatorname{sinc}(\delta)$, $\delta=\omega_\ell-\omega_k$,
+$\operatorname{sinc}(x)=\sin(\pi x)/(\pi x)$.
 
-\begin{figure}[t]
-\centering
-\includegraphics[width=\linewidth]{silent_aliasing.png}
-\caption{\emph{Silent aliasing} onto a structured $\Lam=\{0,\pm5,\pm11,\pm17,\pm23\}$
-($m{=}9$): the exact-fold regime of Thm.~\ref{thm:conv}(iii). $N{=}96$ nonuniform samples (a
-random subset of a rate-$Q{=}128$ grid, $N\gg m$), noise $\sigma{=}0.03$. The INR fits the samples
-at the noise floor (RMSE $0.026$; $0.028\pm0.002$ over $20$ draws) yet its reconstruction error is
-$1.60$ and its spectrum carries the full tone energy (bias $1.13$): the tone $\nu{=}111$ folds
-\emph{exactly} onto the non-classical atom $-17$ in every draw, while the true tones
-($\pm11,\pm23$) are kept. The fold appears on both $\pm17$ (Hermitian pair of the real tone).}
-\label{fig:silent}
-\end{figure}
+\begin{theorem}[Riesz conversion and exact decomposition]\label{thm:t2}
+(i)~With $\lambda_{\min},\lambda_{\max}$ the extreme eigenvalues of $G_{L^2}$ (positive
+iff the frequencies are distinct),
+$\lambda_{\min}\norm{\bm c}^2\le\norm{\sum_kc_ke_{\omega_k}}_{L^2}^2\le\lambda_{\max}\norm{\bm c}^2$.
+(ii)~With $\Delta\bm c=\hat{\bm c}-\bm c^\star$,
+\begin{equation}\label{eq:dec}
+\norm{\hat f-f}_{L^2}^2=\Delta\bm c^{*}G_{\Lam\Lam}\Delta\bm c
+-2\,\mathrm{Re}\,\Delta\bm c^{*}G_{\Lam,\mathrm{out}}\,\bm a
++\bm a^{*}G_{\mathrm{out}}\,\bm a,
+\end{equation}
+the three terms being the aliasing-induced \emph{modeled-component} error, a cross term
+(zero for all-integer frequencies), and the \emph{truncation} energy.
+\end{theorem}
+Equation~\eqref{eq:dec} is elementary but load-bearing: truncation error exists for
+\emph{any} sampling and is not aliasing; only the first term is the model
+\emph{misplacing} energy, and only that term responds to sampling design
+(Fig.~\ref{fig:matrix}d).
 
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.92\linewidth]{phase_transition_A.png}
-\caption{Achievability vs.\ converse (Thms.~\ref{thm:ach}--\ref{thm:conv}), $40$-trial Monte Carlo
-(bands: $\pm1$~s.e.), $r=B_{\mathrm{sig}}/B_{\mathrm{INR}}$, sampling density
-$\rho=N/(2B_{\mathrm{INR}})$. In-band ($r{=}1$) error is large in the rank-deficient regime
-$\rho<1$, drops sharply at the stable rate $\rho{=}1$, and then tracks the exact Thm.~\ref{thm:ach}
-noise floor (dashed); out-of-band ($r{>}1$) error plateaus at the predicted
-$\norm{f_{\mathrm{out}}}$ levels (dotted) that no density removes.}
-\label{fig:phase}
-\end{figure}
+\subsection{T3: random sampling breaks exact aliasing}
+\begin{theorem}[Sampling design]\label{thm:t3}
+Let $\Lam\subset\Z$ with $|\Lam|=m$.
+(a)~\emph{(jitter)}  Let $t_j=g_j/Q+\eta_j$ with $g_j$ grid points and $\eta_j$ i.i.d.,
+mean-zero, with characteristic function $\chi_\eta$, and let $\nu=\omega_k+rQ$,
+$r\in\Z\setminus\{0\}$.  Then the empirical fold coherence
+$\frac1N\sum_je^{i2\pi(\nu-\omega_k)t_j}$ has mean $\chi_\eta(2\pi rQ)$ and concentrates
+around it at rate $2\sqrt{\log(4/\delta)/N}$; consequently
+$\vt(\nu)^2=1-|\chi_\eta(2\pi rQ)|^2+O_P\!\big(m\sqrt{\log(m/\delta)/N}\big)$.  For
+Gaussian jitter of std $\sigma_t$, $\chi_\eta(2\pi rQ)=e^{-2(\pi rQ\sigma_t)^2}$, giving
+the small-jitter law $\vt(\nu)\approx2\pi|r|Q\sigma_t$.
+(b)~\emph{(i.i.d.\ samples)}  Let $t_j$ be i.i.d.\ from a density whose limiting
+normalized Gram satisfies $G_\infty\succeq\lambda_{\min}\bm I$ and whose limiting
+model--candidate coherences vanish on a finite candidate set $\Omega$, $|\Omega|=K$ (for
+the uniform density and integer-disjoint candidates, $G_\infty=\bm I$,
+$\lambda_{\min}=1$).  With
+$\varepsilon=2\sqrt{\log\!\big(4(mK+m^2)/\delta\big)/N}$ and $m\varepsilon<\lambda_{\min}$,
+with probability at least $1-\delta$,
+\begin{equation}
+\max_{\nu\in\Omega}\;\at(\nu)\;\le\;\frac{\sqrt m\,\varepsilon}{\lambda_{\min}-m\varepsilon}.
+\end{equation}
+\end{theorem}
+\emph{Sketch.}  (a)~On the grid part the fold phase is exactly $1$; the jitter
+contributes i.i.d.\ unit-modulus factors, so the coherence is an empirical characteristic
+function; Hoeffding on real and imaginary parts.  (b)~Hoeffding + union bound over all
+$mK+m^2$ coherences, then a perturbation bound on
+$\at(\nu)=\norm{(\Phimat^{*}\Phimat/N)^{-1}(\Phimat^{*}\bm\phi_\nu/N)}$.  Proofs in the
+supplement; both laws are verified to tight tolerance in Fig.~\ref{fig:matrix}(a,b).
 
-\section{Experiments}
-Every identity is validated against Monte Carlo (frame bounds, $\kappa$, aliasing floor, exact and
-near-collision fold regimes, all three Thm.~\ref{thm:stat} asymptotic regimes, and the joint
-decomposition~\eqref{eq:decomp}). Fig.~\ref{fig:silent} shows the structured silent-aliasing
-regime of Thm.~\ref{thm:conv}(iii): the INR fits the samples at the noise floor yet the recovered
-spectrum carries the full tone energy on the exact non-classical fold atom. Fig.~\ref{fig:phase}
-shows the phase transition with the exact theory overlaid.
+Three honest distinctions follow.  \emph{Exact} grid equivalence persists at every $N$
+\emph{if the design stays on the grid} (Thm.~\ref{thm:t1}); for a \emph{fixed} separated
+tone, randomized designs make aliasing vanish at explicit rates (Thm.~\ref{thm:t3}); and
+at any finite $N$ an adversary may still pick near-invisible alternatives---but under
+i.i.d.\ sampling even the adversarial candidate within a finite set becomes visible
+(Fig.~\ref{fig:matrix}c).  We make no claim that ``no sampling density removes
+aliasing''; what no design removes is the truncation term of~\eqref{eq:dec}.
 
-\emph{Diagnostic ROC.} Over $500$ draws per condition (structured $\Lam$ as in
-Fig.~\ref{fig:silent}, ring $[-30,30]\setminus\Lam$, $N\in\{80,150\}$ jittered samples, tone
-amplitudes $0.25$--$1\times$ the in-band RMS, on- and off-grid $\nu$), the ring diagnostic
-separates perfectly (AUC $1.000$; TPR $1.000$ at the null-calibrated threshold with FPR $0.05$;
-the fixed $0.1$ threshold has zero false positives but misses the weakest tones). On the exact
-coherent grid fold of Fig.~\ref{fig:silent} it collapses to below-chance (AUC $0.20$)---the
-provably undetectable worst case---and in the underdetermined regime it flags $100\%$ of null
-signals, confirming the validity requirement of Sec.~4 (released \texttt{diagnostic\_roc}).
+\subsection{T4: detection---impossibility and power}
+\begin{theorem}[Detection dichotomy]\label{thm:t4}
+(a)~If $S_Tf_1=S_Tf_2$, then for any noise distribution the observation laws under the
+two hypotheses coincide, and every sample-based test has power equal to its size.
+(b)~For $\bm y=\bm D\bm\beta+\bm s+\bm\varepsilon$, $\bm\varepsilon\sim\mathcal
+N(0,\sigma^2\bm I)$, $\bm D$ the real design of rank $p$ and $\bm s$ the sample vector of
+an additive component, the residual statistic
+$\norm{(\bm I-\bm P_D)\bm y}^2/\sigma^2$ is $\chi^2_{N-p}$ under H0 and noncentral
+$\chi^2_{N-p}(\lambda)$ with $\lambda=\norm{(\bm I-\bm P_D)\bm s}^2/\sigma^2$ under H1:
+detection power is driven by \emph{amplitude times visibility}, and is exactly the size
+$\alpha$ when $\lambda=0$ (coherent fold).
+\end{theorem}
+Sample-only detectors must be \emph{calibrated}: in all experiments, thresholds come from
+an independent null calibration set and are then frozen; test-set FPR/TPR are reported
+separately (Sec.~\ref{sec:exp}).
 
-\emph{Real data, both sides} (Fig.~\ref{fig:real}; mean${}\pm{}$s.d.\ over $10$
-subsample/noise draws). Sweeping the INR bandwidth $B_{\mathrm{INR}}$ on a real signal and reading
-the reconstruction-error knee gives the empirical learned-Nyquist rate. Mauna
-Loa $\mathrm{CO_2}$ (NOAA; $N{=}414$ of $M{=}820$, nonuniform), after linear detrending, is
-bandlimited (annual cycle), giving a sharp knee at its spectral peak: a narrow INR aliases it, a
-matched INR recovers it ($\mathrm{RMSE}\ 0.42\pm0.00\!\to\!0.17\pm0.03$). Broadband speech (Open
-Speech Repository; $N{=}1400$ of $M{=}2000$) shows the converse side: no width approaches the
-$0.03$ noise floor---narrow bands sit on a truncation-plus-aliasing floor ($\mathrm{RMSE}\ge1.0$)
-and widths approaching the sample budget explode from the Thm.~\ref{thm:ach} noise gain
-($\kappa\to\infty$ as $m\to N$; $\mathrm{RMSE}\ 682\pm386$ at $B_{\mathrm{INR}}{=}650$). Smoothed
-sunspots (SILSO; the smoothing is a documented lowpass proxy) behave like $\mathrm{CO_2}$
-($0.92\pm0.01\!\to\!0.41\pm0.18$); the raw series behaves like the broadband case. The phenomenon persists,
-fold-for-fold, for trained \emph{nonlinear} INRs: training identical Fourier-feature networks with
-and without an out-of-hull tone and taking the difference spectrum isolates where the trained net
-puts the tone's energy---it matches the Hermitian-pair linear bias pattern bin-for-bin (correlation
-$0.99/0.91/0.63$ over three sampling draws; measured peak equal to the predicted fold target in
-two, and to a near-tied atom of the predicted pattern in the third), while a bandwidth-covering
-trained network recovers real $\mathrm{CO_2}$ slightly better than the linear estimator
-($0.107$ vs.\ $0.143$, one fixed draw).
-Because the Gaussian feature scale is a \emph{soft} band edge (features have tails and the MLP
-generates harmonics), the trained-INR persistence claim rests on this out-of-hull-tone ablation,
-not on a scale sweep. Finally, a 2-D INR on sparse image pixels (Fig.~\ref{fig:image}) reproduces
-the limit: over three pixel-mask draws, an over-scaled band fits the observed pixels to
-$49$--$64$~dB while the full field stays moir\'e-corrupted at $16$~dB.
+\section{Experiments}\label{sec:exp}
+All identities and bounds above are validated against Monte Carlo in the released test
+suite (34 tests); experiment JSONs carry seeds, configs, and environment stamps.
 
-\section{Conclusion}
-Fixed-feature INRs alias, and provably so: they represent only a structured band $\Lam$, out-of-band
-energy folds onto $\Lam$ with an error floor, and for coherent folds the corruption is total yet
-\emph{exactly} invisible in the sample fit. The limit is sharp, matched by a bandwidth-selecting
-estimator, detectable from data everywhere except the provably undetectable coherent worst case,
-and visible on real signals, persisting fold-for-fold for trained nonlinear and
-2-D INRs. Extending the converse to adaptive-frequency $\Lam$ (where the network can move atoms onto
-the signal) and characterizing the exact training dynamics are the natural next steps.
+\emph{Theorem validation (Fig.~\ref{fig:matrix}).}  (a)~the jitter law: empirical
+visibility of a grid-coherent tone matches $\sqrt{1-\chi_\eta^2}$ across two decades,
+with the exact fold ($v\approx10^{-13}$) at $\sigma_t=0$; (b)~worst-case aliasability
+over a $K{=}31$ candidate set under i.i.d.\ sampling decays as $N^{-1/2}$ beneath the
+proved bound (loose, as unions are, but finite exactly where the theorem says);
+(c)~persistence vs randomization: the grid-subset coherent tone stays exactly invisible
+at every $N$, while under i.i.d.\ sampling both the same tone and the per-$N$
+\emph{adversarial} candidate are immediately visible; (d)~the decomposition: jitter
+drives the aliasing-bias term to the noise level while the truncation floor is untouched
+---sampling design removes aliasing, never truncation.
+
+\emph{Detection (Fig.~\ref{fig:roc}).}  With calibration/test separation, sample-only
+detectors (ring test, residual, Lomb--Scargle band test, held-out prediction, cross-fit)
+track the exact Thm.~\ref{thm:t4}(b) power curve; at the calibrated threshold the
+test-set FPR stays at its nominal 5\%.  On the exactly coherent grid fold every detector
+collapses (ring AUC $\NumCohAUC$, TPR at 5\% FPR $\NumCohTPR$)---the
+indistinguishability of Thm.~\ref{thm:t4}(a) made visible, reported separately from the
+operating characteristics by design.
+
+\emph{Real signals, sample-only.}  On real series (Mauna Loa CO$_2$, sunspots, and nine
+2-s speech segments from three Open Speech Repository recordings; anti-aliased
+\texttt{resample\_poly} decimation; full records, no window selection), bandwidth
+selectors that see \emph{only the training samples} are compared against an
+oracle that reads the reference spectrum.  On CO$_2$ the sample-only Lomb--Scargle
+selector attains RMSE $\NumCoTwoLS$ vs the oracle heuristic's $\NumCoTwoOracle$
+(mean over 10 draws; paired CIs in the released results)---deployable selection is not
+the bottleneck; cross-validated selection is markedly less stable under gappy sampling.
+Full per-method, per-signal tables with paired 95\% CIs are in the repository.
+
+\emph{Trained networks (empirical extrapolation only).}  For FF-MLPs, SIRENs, and an
+explicitly band-limited head, tone attribution is measured by an ablation (identical
+initialization trained with/without the tone) and compared to the prediction of
+\emph{each network's own NTK linearization}---no arbitrary reference band.  Across 20
+sampling seeds per condition we report exact-match and top-3 fold agreement rates,
+pattern-correlation distributions with bootstrap CIs, and controls (label permutation,
+amplitude, weight-seed stability); seed-level disagreements are reported, not hidden
+(Fig.~\ref{fig:nl}, left: a representative run; right: correlation distributions).  In
+2-D (Fig.~\ref{fig:img}), the linear model reproduces the predicted frequency-vector
+fold exactly ((a): planted $(27,3)$ on a rate-32 grid subset folds to $(-5,3)$, residual
+$10^{-15}$), and trained 2-D networks show the predicted DFT replicas under
+\emph{lattice} (coherent) masks but not under random masks of equal density---with
+ridge/early-stopping baselines and clean/noisy/held-out/full-field PSNR reported
+separately in the released results.
+
+\section{Limitations and conclusion}
+Our theorems cover fixed-feature, linear-coefficient Fourier models; trained nonlinear
+networks are studied only empirically, and adaptive/learned frequency sets are open.  The
+concentration bound is a union bound (loose constants); the jitter law's multi-atom
+correction is $O_P(m\sqrt{\log/N})$.  Within that scope the theory is complete and
+mechanically verified: exact silent aliasing is a property of \emph{grid designs} and is
+classified by congruence; randomized sampling provably destroys it at explicit rates;
+detectability is dichotomous and quantitatively matched by calibrated sample-only
+detectors.  Practical guidance: avoid pure grid designs when out-of-band content is
+possible; jitter of std $\sigma_t$ buys visibility $\approx2\pi|r|Q\sigma_t$; calibrate
+diagnostics on explicit nulls; and never read training residual as reconstruction
+fidelity.
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.49\textwidth]{real_co2.png}\hfill
-\includegraphics[width=0.49\textwidth]{real_speech.png}
-\caption{Both sides of the limit on real data (curves: mean${}\pm1$~s.d.\ over $10$
-subsample/noise draws; dashed line $B_{\mathrm{sig}}$ = essential bandwidth, dotted line = error
-knee). \emph{Left} ($\mathrm{CO_2}$, recoverable): the knee sits at the annual-cycle frequency; a
-narrow INR aliases, a matched INR recovers (the mild rise past the knee is the onset of the
-noise gain). \emph{Right} (speech, converse): the error never
-approaches the noise floor at any width---a truncation-plus-aliasing floor for narrow bands, and a
-noise-gain blow-up ($\kappa=1/\sigma_{\min}\to\infty$) as the width approaches the sample budget.}
-\label{fig:real}
+\includegraphics[width=0.99\textwidth]{synthetic_matrix.png}
+\caption{Theorem validation (mean $\pm$ 95\% CI over 20 draws).  (a)~T3a jitter law;
+(b)~T3b concentration with the proved bound; (c)~T1 grid persistence vs i.i.d.\ sampling
+(fixed and adversarial tones); (d)~T2 decomposition: jitter removes aliasing bias, not
+truncation.}
+\label{fig:matrix}
 \end{figure*}
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{diagnostic_roc.png}
+\caption{Detection power (TPR at 5\% FPR, calibration/test separated) vs tone amplitude
+at $\sigma{=}0.1$: five sample-only detectors against the exact Thm.~\ref{thm:t4}(b)
+power curve; the coherent fold stays at chance at any amplitude (Thm.~\ref{thm:t4}(a)).}
+\label{fig:roc}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{nonlinear_folds.png}
+\caption{Trained networks (empirical): ablation-measured tone attribution vs each
+network's NTK prediction; right: pattern-correlation distributions over 20 sampling
+seeds (whiskers 5--95\%), with the label-permutation control.}
+\label{fig:nl}
+\end{figure}
+
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.98\textwidth]{image2d_aliasing.png}
-\caption{The limit generalizes to a trained \emph{nonlinear} 2-D INR fit to sparse image pixels
-(panel numbers: PSNR on the observed pixels\,/\,full field\,/\,upper radial-frequency band;
-figure: seed $0$, metric ranges over three pixel-mask/noise draws). An over-scaled representable band silently
-aliases: it fits the observed pixels ($49$--$64$~dB) but the full field is moir\'e-corrupted
-($16.3$--$16.6$~dB) and its radial spectrum carries spurious high-frequency energy; a band
-matched to (or below) the sampling is safe---under- and matched-band fits are comparable across
-draws (full-field $20.8$--$21.4$~dB); the contrast that matters is with the over-scaled band.}
-\label{fig:image}
+\includegraphics[width=0.92\textwidth]{image2d_aliasing.png}
+\caption{2-D structured aliasing.  (a)~linear model: the planted out-of-band frequency
+vector folds exactly onto the predicted atom (circle) on a grid subset;
+(b,c)~trained 2-D networks: DFT of over-scaled reconstructions shows the predicted
+replicas (circles) under a lattice (coherent) mask but not under a random mask of equal
+density.}
+\label{fig:img}
 \end{figure*}
 
 \vfill\pagebreak

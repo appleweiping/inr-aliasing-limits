@@ -1,136 +1,269 @@
-r"""E7 -- operating characteristic (ROC) of the ground-truth-free ring diagnostic.
+r"""E2 -- operating characteristic of sample-only aliasing detectors.
 
-The ring diagnostic (Sec. 4 of the paper; :func:`inralias.diagnostics.extended_dictionary_test`)
-claims to detect out-of-band content from the samples alone.  This script measures that claim
-instead of asserting it: over ``K`` random draws per condition we compute the recovered
-out-of-band energy fraction under
+Protocol (strictly honest):
 
-* **H0** (null): a random Hermitian in-band signal on the structured ``Lambda`` plus noise;
-* **H1**: H0 plus one out-of-band tone of relative amplitude ``a`` at a frequency ``nu`` that
-  is either an integer on the ring grid ("on-grid") or a uniform real frequency ("off-grid");
-* **H1-coherent** (worst case): samples restricted to a rate-``Q`` grid with
-  ``nu = -17 (mod Q)`` -- the exact fold of E2, which is *provably invisible* from the
-  samples; the diagnostic must degrade to chance here, matching the converse.
+* **calibration / test separation**: for every condition, decision thresholds are set on
+  an independent calibration set of H0 draws (95th percentile) and *never* touched again;
+  the reported FPR/TPR come from a disjoint test set.
+* **detectors** (all sample-only):
+  - ``ring``      recovered out-of-band energy fraction of the extended-dictionary fit;
+  - ``residual``  in-sample residual energy of the model-band fit;
+  - ``lomb``      max Lomb--Scargle power outside the model band;
+  - ``heldout``   held-out prediction MSE (single random split);
+  - ``crossfit``  multi-split cross-fit excess prediction error.
+* **metrics**: ROC-AUC with 95% bootstrap CI, PR-AUC (average precision), TPR at
+  test-H0-quantile FPR 1% and 5%, and FPR/TPR at the calibrated threshold.
+* **sweeps**: tone amplitude, noise, N, ring width, off-grid distance, sampling family
+  (jittered / i.i.d. / grid subset), and the ring-miss case (true frequency outside the
+  ring).  The exactly grid-coherent condition is reported *separately* as the
+  indistinguishability demonstration (T4a) -- by construction no detector can beat
+  chance there, and that is the point, not a headline operating characteristic.
 
-and report, per condition, the ROC AUC, the TPR/FPR at the fixed 0.1 threshold used in the
-package, and the null-calibrated threshold (H0 95th percentile).  Everything is
-overdetermined (``N > |Lambda| + |ring|``) except an explicitly labelled underdetermined
-demo condition documenting WHY the guard in ``extended_dictionary_test`` exists.
-
-CPU-only, ~1 minute.  Usage: python experiments/run_diagnostic_roc.py
+CPU-only.  Usage: python experiments/run_diagnostic_roc.py
 """
 from __future__ import annotations
+
+import sys
 
 import numpy as np
 
 from _util import save_json, savefig
 from inralias.signals import nonuniform_times, evaluate, random_inband
-from inralias.diagnostics import extended_dictionary_test
+from inralias.diagnostics import (
+    extended_dictionary_test,
+    residual_energy,
+    crossfit_aliasing_energy,
+)
+from inralias.inr import FixedFeatureINR, lombscargle_periodogram
 
 import matplotlib.pyplot as plt
 
-LAMBDA = np.array([0.0, 5.0, 11.0, 17.0, 23.0])
-LAMBDA = np.concatenate([-LAMBDA[::-1][:-1], LAMBDA])          # {0,+-5,+-11,+-17,+-23}, m=9
-RING = np.setdiff1d(np.arange(-30, 31).astype(float), LAMBDA)  # 52 ring atoms, ext size 61
-SIGMA = 0.03
-K = 500
-Q = 128          # grid rate for the coherent (exact-fold) worst case
-NU_COH = 111.0   # 111 = -17 (mod 128)
+LAMBDA = np.array([0.0, 5.0, -5.0, 11.0, -11.0, 17.0, -17.0, 23.0, -23.0])
+Q = 128
+NU_COH = 111.0
+N_CAL = 300
+N_TEST = 500
+N_BOOT = 1000
+DETECTORS = ("ring", "residual", "lomb", "heldout", "crossfit")
 
 
-def _draw_frac(rng, N, amp, nu_mode, sampling):
-    """One draw: return the diagnostic's out-of-band fraction (and validity flag)."""
-    c = random_inband(LAMBDA, rng, power=1.0)
-    freqs, coeffs = LAMBDA.copy(), np.asarray(c, complex)
-    if nu_mode is not None:
-        if nu_mode == "on":
-            cand = np.setdiff1d(np.arange(24, 46).astype(float), LAMBDA)
-            nu = float(rng.choice(cand))
-        elif nu_mode == "off":
-            nu = float(rng.uniform(24.0, 45.0))
-        elif nu_mode == "coherent":
-            nu = NU_COH
-        phase = rng.uniform(0, 2 * np.pi)
-        a = amp / np.sqrt(2)  # tone RMS = amp x in-band RMS (unit power)
-        freqs = np.concatenate([freqs, [nu, -nu]])
-        coeffs = np.concatenate([coeffs, [a * np.exp(1j * phase), a * np.exp(-1j * phase)]])
+def _sample_times(rng, N, sampling):
+    if sampling == "jitter":
+        return nonuniform_times(N, rng, "jitter")
+    if sampling == "iid":
+        return np.sort(rng.uniform(0, 1, N))
     if sampling == "grid":
-        t = np.sort(rng.choice(Q, size=N, replace=False)) / Q
-    else:
-        t = nonuniform_times(N, rng, "jitter")
-    y = evaluate(freqs, coeffs, t, real=True) + rng.normal(0, SIGMA, N)
-    d = extended_dictionary_test(LAMBDA, t, y, RING)
-    return d["out_of_band_frac"], d["underdetermined"]
+        return np.sort(rng.choice(Q, size=N, replace=False)) / Q
+    raise ValueError(sampling)
 
 
-def _roc(h0, h1, thresholds):
-    tpr = [(h1 >= th).mean() for th in thresholds]
-    fpr = [(h0 >= th).mean() for th in thresholds]
-    # AUC by rank statistic (Mann-Whitney)
-    auc = float((h1[:, None] > h0[None, :]).mean() + 0.5 * (h1[:, None] == h0[None, :]).mean())
-    return np.array(tpr), np.array(fpr), auc
+def _draw(rng, N, sampling, sigma, amp, nu_mode, ring_hi, offgrid):
+    """One draw; returns (t, y).  H0 when amp == 0."""
+    t = _sample_times(rng, N, sampling)
+    c = random_inband(LAMBDA, rng, power=1.0)
+    y = evaluate(LAMBDA, c, t, real=True) + rng.normal(0, sigma, N)
+    if amp > 0:
+        if nu_mode == "coherent":
+            nu = NU_COH
+        elif nu_mode == "outside_ring":
+            nu = float(rng.uniform(ring_hi * 2 + 2, ring_hi * 2 + 15))
+        else:  # inside ring reach, off-grid by `offgrid`
+            base = int(rng.integers(24, min(45, ring_hi - 1)))
+            while base in np.abs(LAMBDA).astype(int):
+                base = int(rng.integers(24, min(45, ring_hi - 1)))
+            nu = base + offgrid
+        ph = rng.uniform(0, 2 * np.pi)
+        # real tone with RMS = amp x (unit in-band RMS)
+        y = y + amp * np.sqrt(2) * np.cos(2 * np.pi * nu * t + ph)
+    return t, y
+
+
+def _scores(t, y, ring, sigma):
+    """All detector scores for one draw (larger = more suspicious)."""
+    out = {}
+    d = extended_dictionary_test(LAMBDA, t, y, ring)
+    out["ring"] = d["out_of_band_frac"]
+    out["residual"] = residual_energy(LAMBDA, t, y)
+    grid = np.arange(int(np.max(np.abs(LAMBDA))) + 1, int(np.max(ring)) + 1).astype(float)
+    P = lombscargle_periodogram(t, y, grid)
+    out["lomb"] = float(np.max(P)) if P.size else 0.0
+    # held-out prediction error, single split
+    n = t.size
+    idx = np.random.default_rng(int(1e6 * t[0]) % (2**31)).permutation(n)
+    a_idx, b_idx = idx[: n // 2], idx[n // 2:]
+    m = FixedFeatureINR(LAMBDA, real=True).fit(t[a_idx], y[a_idx], ridge=1e-8)
+    out["heldout"] = float(np.mean((m.predict(t[b_idx]) - y[b_idx]) ** 2))
+    cf = crossfit_aliasing_energy(LAMBDA, t, y, sigma2=sigma**2, n_splits=8, seed=0)
+    out["crossfit"] = cf["aliasing_energy"]
+    return out
+
+
+def _auc(h0, h1):
+    return float((h1[:, None] > h0[None, :]).mean() + 0.5 * (h1[:, None] == h0[None, :]).mean())
+
+
+def _auc_ci(h0, h1, rng, n_boot=N_BOOT):
+    vals = np.empty(n_boot)
+    for b in range(n_boot):
+        i0 = rng.integers(0, h0.size, h0.size)
+        i1 = rng.integers(0, h1.size, h1.size)
+        vals[b] = _auc(h0[i0], h1[i1])
+    return float(np.quantile(vals, 0.025)), float(np.quantile(vals, 0.975))
+
+
+def _average_precision(h0, h1):
+    scores = np.concatenate([h0, h1])
+    labels = np.concatenate([np.zeros(h0.size), np.ones(h1.size)])
+    order = np.argsort(-scores, kind="stable")
+    labels = labels[order]
+    tp = np.cumsum(labels)
+    prec = tp / np.arange(1, labels.size + 1)
+    return float(np.sum(prec * labels) / max(1, int(labels.sum())))
+
+
+def run_condition(label, N=150, sampling="jitter", sigma=0.03, amp=0.5,
+                  nu_mode="ring", ring_hi=30, offgrid=0.5, seed_base=0):
+    import zlib
+
+    rng = np.random.default_rng(zlib.crc32(label.encode()))
+    ring = np.setdiff1d(
+        np.concatenate([np.arange(-ring_hi, ring_hi + 1).astype(float)]), LAMBDA
+    )
+    n_atoms = LAMBDA.size + ring.size
+    underdetermined = N <= n_atoms
+
+    def batch(n, with_tone):
+        rows = {k: [] for k in DETECTORS}
+        for _ in range(n):
+            t, y = _draw(rng, N, sampling, sigma, amp if with_tone else 0.0,
+                         nu_mode, ring_hi, offgrid)
+            s = _scores(t, y, ring, sigma)
+            for k in DETECTORS:
+                rows[k].append(s[k])
+        return {k: np.asarray(v) for k, v in rows.items()}
+
+    cal = batch(N_CAL, with_tone=False)          # calibration H0 only
+    test0 = batch(N_TEST, with_tone=False)       # test H0
+    test1 = batch(N_TEST, with_tone=True)        # test H1
+
+    out = {"label": label, "N": N, "sampling": sampling, "sigma": sigma, "amp": amp,
+           "nu_mode": nu_mode, "ring_hi": ring_hi, "offgrid": offgrid,
+           "underdetermined": bool(underdetermined),
+           "n_cal": N_CAL, "n_test": N_TEST, "detectors": {}}
+    boot_rng = np.random.default_rng(zlib.crc32((label + "boot").encode()))
+    for k in DETECTORS:
+        thr = float(np.quantile(cal[k], 0.95))            # calibrated on H0 cal set only
+        h0, h1 = test0[k], test1[k]
+        lo, hi = _auc_ci(h0, h1, boot_rng)
+        out["detectors"][k] = {
+            "auc": _auc(h0, h1), "auc_ci95": [lo, hi],
+            "pr_auc": _average_precision(h0, h1),
+            "tpr_at_fpr01": float((h1 >= np.quantile(h0, 0.99)).mean()),
+            "tpr_at_fpr05": float((h1 >= np.quantile(h0, 0.95)).mean()),
+            "cal_threshold": thr,
+            "test_fpr_at_cal": float((h0 >= thr).mean()),
+            "test_tpr_at_cal": float((h1 >= thr).mean()),
+        }
+    return out
+
+
+def make_figure(conditions):
+    """Detection-power figure from computed conditions (also --figure-only from JSON)."""
+    fig, ax = plt.subplots(figsize=(5.4, 3.6), layout="constrained")
+    power_amps = [0.0125, 0.025, 0.05, 0.1, 0.2, 0.4]
+    styles = {"ring": ("C0", "o-"), "residual": ("C1", "s--"), "lomb": ("C2", "^-."),
+              "heldout": ("C4", "v:"), "crossfit": ("C5", "d-")}
+    by_label = {c["label"]: c for c in conditions}
+    for k in DETECTORS:
+        ys = [by_label[f"power_amp{a}"]["detectors"][k]["tpr_at_fpr05"]
+              for a in power_amps]
+        col, fmt = styles[k]
+        ax.plot(power_amps, ys, fmt, color=col, ms=4, lw=1.4, label=k)
+    from inralias.identifiability import residual_test_power
+    from inralias.inr import real_design
+    import zlib
+
+    prng = np.random.default_rng(zlib.crc32(b"theory-power"))
+    theo = []
+    for a in power_amps:
+        vals = []
+        for _ in range(60):
+            t = _sample_times(prng, 150, "jitter")
+            D, _ = real_design(LAMBDA, t)
+            nu = int(prng.integers(24, 29)) + 0.5
+            s = a * np.sqrt(2) * np.cos(2 * np.pi * nu * t + prng.uniform(0, 2 * np.pi))
+            vals.append(residual_test_power(D, s, sigma=0.1, alpha=0.05)["power"])
+        theo.append(float(np.mean(vals)))
+    ax.plot(power_amps, theo, "k--", lw=1.4, label="T4b residual-test power (theory)")
+    coh = by_label["coherent_demo"]["detectors"]["ring"]["tpr_at_fpr05"]
+    ax.axhline(0.05, color="0.75", lw=0.8, ls=":")
+    ax.plot([power_amps[0], power_amps[-1]], [coh, coh], color="k", lw=1.0, alpha=0.5,
+            ls="-", label=f"coherent fold, any amp (TPR {coh:.2f})")
+    ax.set_xscale("log")
+    ax.set_xticks(power_amps)
+    ax.set_xticklabels([str(a) for a in power_amps])
+    ax.minorticks_off()
+    ax.set_xlabel("out-of-band tone amplitude (x in-band RMS), $\\sigma{=}0.1$")
+    ax.set_ylabel("TPR at 5% FPR")
+    ax.set_title("detection power: theory vs sample-only detectors")
+    ax.legend(fontsize=8.5)
+    savefig(fig, "diagnostic_roc.png")
 
 
 def main():
-    thresholds = np.linspace(0, 1, 201)
+    if "--figure-only" in sys.argv:
+        import json
+        from _util import RESULTS
+
+        conditions = json.loads((RESULTS / "diagnostic_roc.json").read_text())["conditions"]
+        make_figure(conditions)
+        print("[roc] figure regenerated from JSON", flush=True)
+        return
+
     conditions = []
-    roc_curves = {}
-    # H0 per (N, sampling) -- shared across the H1 conditions with matching sampling
-    plans = [
-        # (label, N, sampling, list of (amp, nu_mode))
-        ("N80_jitter", 80, "jitter", [(0.25, "on"), (0.5, "on"), (1.0, "on"),
-                                      (0.25, "off"), (0.5, "off"), (1.0, "off")]),
-        ("N150_jitter", 150, "jitter", [(0.5, "on"), (0.5, "off")]),
-        ("N96_grid_coherent", 96, "grid", [(1.0, "coherent")]),
-        # underdetermined demo: documents the guard, EXCLUDED from headline numbers
-        ("N36_jitter_underdetermined", 36, "jitter", [(1.0, "on")]),
-    ]
-    import zlib
+    base = dict(N=150, sampling="jitter", sigma=0.03, amp=0.5, nu_mode="ring",
+                ring_hi=30, offgrid=0.5)
 
-    for label, N, sampling, h1_specs in plans:
-        rng = np.random.default_rng(zlib.crc32(label.encode()))  # deterministic per label
-        h0 = np.array([_draw_frac(rng, N, 0.0, None, sampling)[0] for _ in range(K)])
-        under = _draw_frac(rng, N, 0.0, None, sampling)[1]
-        for amp, mode in h1_specs:
-            h1 = np.array([_draw_frac(rng, N, amp, mode, sampling)[0] for _ in range(K)])
-            tpr, fpr, auc = _roc(h0, h1, thresholds)
-            i01 = int(np.argmin(np.abs(thresholds - 0.10)))
-            cond = {
-                "label": label, "N": N, "sampling": sampling, "amp": amp, "nu_mode": mode,
-                "underdetermined": bool(under), "n_draws": K,
-                "auc": auc,
-                "tpr_at_0.1": float(tpr[i01]), "fpr_at_0.1": float(fpr[i01]),
-                "h0_p95": float(np.quantile(h0, 0.95)),
-                "tpr_at_h0_p95": float((h1 >= np.quantile(h0, 0.95)).mean()),
-            }
-            conditions.append(cond)
-            roc_curves[f"{label}_a{amp}_{mode}"] = {"tpr": tpr.tolist(), "fpr": fpr.tolist()}
-            print(f"[roc] {label} a={amp} nu={mode}: AUC={auc:.3f} "
-                  f"TPR@0.1={cond['tpr_at_0.1']:.3f} FPR@0.1={cond['fpr_at_0.1']:.3f} "
-                  f"underdet={under}", flush=True)
+    def add(label, **kw):
+        cfg = dict(base); cfg.update(kw)
+        print(f"[roc] {label} ...", flush=True)
+        conditions.append(run_condition(label, **cfg))
 
-    # figure: ROC curves for the headline N=80 conditions + the coherent worst case
-    fig, ax = plt.subplots(figsize=(4.6, 3.6))
-    for key, style in [("N80_jitter_a0.25_on", "-"), ("N80_jitter_a0.5_on", "-"),
-                       ("N80_jitter_a1.0_on", "-"), ("N80_jitter_a0.5_off", "--"),
-                       ("N96_grid_coherent_a1.0_coherent", ":")]:
-        if key in roc_curves:
-            c = roc_curves[key]
-            ax.plot(c["fpr"], c["tpr"], style, lw=1.4, label=key.replace("_jitter", ""))
-    ax.plot([0, 1], [0, 1], color="0.8", lw=0.8)
-    ax.set_xlabel("false-positive rate"); ax.set_ylabel("true-positive rate")
-    ax.set_title(f"ring diagnostic ROC ({K} draws/condition)")
-    ax.legend(fontsize=6)
-    savefig(fig, "diagnostic_roc.png")
+    add("base")
+    for a in (0.125, 0.25, 1.0):
+        add(f"amp{a}", amp=a)
+    # power sweep at low SNR: the regime where detectors actually differ
+    for a in (0.0125, 0.025, 0.05, 0.1, 0.2, 0.4):
+        add(f"power_amp{a}", amp=a, sigma=0.1)
+    for s in (0.01, 0.1):
+        add(f"sigma{s}", sigma=s)
+    for n in (100, 300):
+        add(f"N{n}", N=n)
+    for rh in (45, 60):
+        add(f"ring{rh}", ring_hi=rh)
+    for og in (0.0, 0.25):
+        add(f"offgrid{og}", offgrid=og)
+    add("iid", sampling="iid")
+    add("gridsubset", sampling="grid", N=96)
+    add("outside_ring", nu_mode="outside_ring")
+    # indistinguishability demonstration (T4a) -- separate, NOT a headline ROC
+    add("coherent_demo", sampling="grid", N=96, nu_mode="coherent", amp=1.0)
 
-    out = {"Lambda": LAMBDA.tolist(), "ring_lo": -30, "ring_hi": 30, "sigma": SIGMA,
-           "K": K, "Q": Q, "nu_coherent": NU_COH,
+    make_figure(conditions)
+
+    out = {"Lambda": LAMBDA.tolist(), "Q": Q, "nu_coherent": NU_COH,
+           "protocol": {"n_cal": N_CAL, "n_test": N_TEST, "n_boot": N_BOOT,
+                        "threshold_rule": "95th percentile of calibration H0 scores",
+                        "separation": "calibration, test-H0, test-H1 all disjoint draws"},
            "conditions": conditions,
-           "note": "ring-diagnostic operating characteristic; the coherent grid-fold "
-                   "condition is the provably-undetectable worst case (AUC ~ 0.5 expected); "
-                   "the underdetermined condition documents the validity guard"}
+           "note": "coherent_demo is the T4a indistinguishability demonstration, not an "
+                   "operating characteristic; underdetermined ring fits are flagged"}
     save_json("diagnostic_roc.json", out)
-    print("[roc] wrote diagnostic_roc.json", flush=True)
+    for c in conditions:
+        r = c["detectors"]["ring"]
+        print(f"[roc] {c['label']}: ring AUC={r['auc']:.3f} CI[{r['auc_ci95'][0]:.3f},"
+              f"{r['auc_ci95'][1]:.3f}] TPR@5%={r['tpr_at_fpr05']:.3f} "
+              f"calFPR={r['test_fpr_at_cal']:.3f}", flush=True)
 
 
 if __name__ == "__main__":

@@ -1,162 +1,1794 @@
 {
   "Lambda": [
-    -23.0,
-    -17.0,
-    -11.0,
-    -5.0,
     0.0,
     5.0,
+    -5.0,
     11.0,
+    -11.0,
     17.0,
-    23.0
+    -17.0,
+    23.0,
+    -23.0
   ],
-  "ring_lo": -30,
-  "ring_hi": 30,
-  "sigma": 0.03,
-  "K": 500,
   "Q": 128,
   "nu_coherent": 111.0,
+  "protocol": {
+    "n_cal": 300,
+    "n_test": 500,
+    "n_boot": 1000,
+    "threshold_rule": "95th percentile of calibration H0 scores",
+    "separation": "calibration, test-H0, test-H1 all disjoint draws"
+  },
   "conditions": [
     {
-      "label": "N80_jitter",
-      "N": 80,
-      "sampling": "jitter",
-      "amp": 0.25,
-      "nu_mode": "on",
-      "underdetermined": false,
-      "n_draws": 500,
-      "auc": 1.0,
-      "tpr_at_0.1": 0.002,
-      "fpr_at_0.1": 0.0,
-      "h0_p95": 0.0010528099809427069,
-      "tpr_at_h0_p95": 1.0
-    },
-    {
-      "label": "N80_jitter",
-      "N": 80,
-      "sampling": "jitter",
-      "amp": 0.5,
-      "nu_mode": "on",
-      "underdetermined": false,
-      "n_draws": 500,
-      "auc": 1.0,
-      "tpr_at_0.1": 0.818,
-      "fpr_at_0.1": 0.0,
-      "h0_p95": 0.0010528099809427069,
-      "tpr_at_h0_p95": 1.0
-    },
-    {
-      "label": "N80_jitter",
-      "N": 80,
-      "sampling": "jitter",
-      "amp": 1.0,
-      "nu_mode": "on",
-      "underdetermined": false,
-      "n_draws": 500,
-      "auc": 1.0,
-      "tpr_at_0.1": 1.0,
-      "fpr_at_0.1": 0.0,
-      "h0_p95": 0.0010528099809427069,
-      "tpr_at_h0_p95": 1.0
-    },
-    {
-      "label": "N80_jitter",
-      "N": 80,
-      "sampling": "jitter",
-      "amp": 0.25,
-      "nu_mode": "off",
-      "underdetermined": false,
-      "n_draws": 500,
-      "auc": 1.0,
-      "tpr_at_0.1": 0.0,
-      "fpr_at_0.1": 0.0,
-      "h0_p95": 0.0010528099809427069,
-      "tpr_at_h0_p95": 1.0
-    },
-    {
-      "label": "N80_jitter",
-      "N": 80,
-      "sampling": "jitter",
-      "amp": 0.5,
-      "nu_mode": "off",
-      "underdetermined": false,
-      "n_draws": 500,
-      "auc": 1.0,
-      "tpr_at_0.1": 0.82,
-      "fpr_at_0.1": 0.0,
-      "h0_p95": 0.0010528099809427069,
-      "tpr_at_h0_p95": 1.0
-    },
-    {
-      "label": "N80_jitter",
-      "N": 80,
-      "sampling": "jitter",
-      "amp": 1.0,
-      "nu_mode": "off",
-      "underdetermined": false,
-      "n_draws": 500,
-      "auc": 1.0,
-      "tpr_at_0.1": 1.0,
-      "fpr_at_0.1": 0.0,
-      "h0_p95": 0.0010528099809427069,
-      "tpr_at_h0_p95": 1.0
-    },
-    {
-      "label": "N150_jitter",
+      "label": "base",
       "N": 150,
       "sampling": "jitter",
+      "sigma": 0.03,
       "amp": 0.5,
-      "nu_mode": "on",
+      "nu_mode": "ring",
+      "ring_hi": 30,
+      "offgrid": 0.5,
       "underdetermined": false,
-      "n_draws": 500,
-      "auc": 1.0,
-      "tpr_at_0.1": 0.316,
-      "fpr_at_0.1": 0.0,
-      "h0_p95": 0.00042336649880945235,
-      "tpr_at_h0_p95": 1.0
+      "n_cal": 300,
+      "n_test": 500,
+      "detectors": {
+        "ring": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.00043932022754056857,
+          "test_fpr_at_cal": 0.04,
+          "test_tpr_at_cal": 1.0
+        },
+        "residual": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0010060007705667347,
+          "test_fpr_at_cal": 0.066,
+          "test_tpr_at_cal": 1.0
+        },
+        "lomb": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.546540365087036,
+          "test_fpr_at_cal": 0.04,
+          "test_tpr_at_cal": 1.0
+        },
+        "heldout": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0013735919040526853,
+          "test_fpr_at_cal": 0.052,
+          "test_tpr_at_cal": 1.0
+        },
+        "crossfit": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.00035139089539502037,
+          "test_fpr_at_cal": 0.044,
+          "test_tpr_at_cal": 1.0
+        }
+      }
     },
     {
-      "label": "N150_jitter",
+      "label": "amp0.125",
       "N": 150,
       "sampling": "jitter",
-      "amp": 0.5,
-      "nu_mode": "off",
+      "sigma": 0.03,
+      "amp": 0.125,
+      "nu_mode": "ring",
+      "ring_hi": 30,
+      "offgrid": 0.5,
       "underdetermined": false,
-      "n_draws": 500,
-      "auc": 1.0,
-      "tpr_at_0.1": 0.314,
-      "fpr_at_0.1": 0.0,
-      "h0_p95": 0.00042336649880945235,
-      "tpr_at_h0_p95": 1.0
+      "n_cal": 300,
+      "n_test": 500,
+      "detectors": {
+        "ring": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.00042075969951803485,
+          "test_fpr_at_cal": 0.052,
+          "test_tpr_at_cal": 1.0
+        },
+        "residual": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.001012483732143087,
+          "test_fpr_at_cal": 0.044,
+          "test_tpr_at_cal": 1.0
+        },
+        "lomb": {
+          "auc": 0.95804,
+          "auc_ci95": [
+            0.9470417,
+            0.9682221999999999
+          ],
+          "pr_auc": 0.9571631316315178,
+          "tpr_at_fpr01": 0.536,
+          "tpr_at_fpr05": 0.798,
+          "cal_threshold": 0.4792039577131596,
+          "test_fpr_at_cal": 0.062,
+          "test_tpr_at_cal": 0.816
+        },
+        "heldout": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0012775509642323182,
+          "test_fpr_at_cal": 0.074,
+          "test_tpr_at_cal": 1.0
+        },
+        "crossfit": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.000319654015772001,
+          "test_fpr_at_cal": 0.052,
+          "test_tpr_at_cal": 1.0
+        }
+      }
     },
     {
-      "label": "N96_grid_coherent",
+      "label": "amp0.25",
+      "N": 150,
+      "sampling": "jitter",
+      "sigma": 0.03,
+      "amp": 0.25,
+      "nu_mode": "ring",
+      "ring_hi": 30,
+      "offgrid": 0.5,
+      "underdetermined": false,
+      "n_cal": 300,
+      "n_test": 500,
+      "detectors": {
+        "ring": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0004464191889532119,
+          "test_fpr_at_cal": 0.032,
+          "test_tpr_at_cal": 1.0
+        },
+        "residual": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0010294752759511968,
+          "test_fpr_at_cal": 0.04,
+          "test_tpr_at_cal": 1.0
+        },
+        "lomb": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.43322510182742935,
+          "test_fpr_at_cal": 0.048,
+          "test_tpr_at_cal": 1.0
+        },
+        "heldout": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0013485051205203826,
+          "test_fpr_at_cal": 0.042,
+          "test_tpr_at_cal": 1.0
+        },
+        "crossfit": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.00034996493507750265,
+          "test_fpr_at_cal": 0.036,
+          "test_tpr_at_cal": 1.0
+        }
+      }
+    },
+    {
+      "label": "amp1.0",
+      "N": 150,
+      "sampling": "jitter",
+      "sigma": 0.03,
+      "amp": 1.0,
+      "nu_mode": "ring",
+      "ring_hi": 30,
+      "offgrid": 0.5,
+      "underdetermined": false,
+      "n_cal": 300,
+      "n_test": 500,
+      "detectors": {
+        "ring": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0004235954922425205,
+          "test_fpr_at_cal": 0.046,
+          "test_tpr_at_cal": 1.0
+        },
+        "residual": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0010241978579948454,
+          "test_fpr_at_cal": 0.05,
+          "test_tpr_at_cal": 1.0
+        },
+        "lomb": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.467150946925459,
+          "test_fpr_at_cal": 0.058,
+          "test_tpr_at_cal": 1.0
+        },
+        "heldout": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0013091182999916558,
+          "test_fpr_at_cal": 0.054,
+          "test_tpr_at_cal": 1.0
+        },
+        "crossfit": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.00034373519336348187,
+          "test_fpr_at_cal": 0.058,
+          "test_tpr_at_cal": 1.0
+        }
+      }
+    },
+    {
+      "label": "power_amp0.0125",
+      "N": 150,
+      "sampling": "jitter",
+      "sigma": 0.1,
+      "amp": 0.0125,
+      "nu_mode": "ring",
+      "ring_hi": 30,
+      "offgrid": 0.5,
+      "underdetermined": false,
+      "n_cal": 300,
+      "n_test": 500,
+      "detectors": {
+        "ring": {
+          "auc": 0.520012,
+          "auc_ci95": [
+            0.483947,
+            0.5567831000000001
+          ],
+          "pr_auc": 0.5233733155778769,
+          "tpr_at_fpr01": 0.012,
+          "tpr_at_fpr05": 0.058,
+          "cal_threshold": 0.004980525174659887,
+          "test_fpr_at_cal": 0.04,
+          "test_tpr_at_cal": 0.038
+        },
+        "residual": {
+          "auc": 0.533308,
+          "auc_ci95": [
+            0.499352,
+            0.566848
+          ],
+          "pr_auc": 0.5266207940770039,
+          "tpr_at_fpr01": 0.008,
+          "tpr_at_fpr05": 0.062,
+          "cal_threshold": 0.01127957306157022,
+          "test_fpr_at_cal": 0.058,
+          "test_tpr_at_cal": 0.068
+        },
+        "lomb": {
+          "auc": 0.497412,
+          "auc_ci95": [
+            0.4616762,
+            0.5315956
+          ],
+          "pr_auc": 0.5064897064645639,
+          "tpr_at_fpr01": 0.01,
+          "tpr_at_fpr05": 0.06,
+          "cal_threshold": 0.5585690975349458,
+          "test_fpr_at_cal": 0.04,
+          "test_tpr_at_cal": 0.04
+        },
+        "heldout": {
+          "auc": 0.514952,
+          "auc_ci95": [
+            0.48082359999999996,
+            0.5542301000000001
+          ],
+          "pr_auc": 0.5073544722863745,
+          "tpr_at_fpr01": 0.004,
+          "tpr_at_fpr05": 0.056,
+          "cal_threshold": 0.015020998245732322,
+          "test_fpr_at_cal": 0.044,
+          "test_tpr_at_cal": 0.048
+        },
+        "crossfit": {
+          "auc": 0.510128,
+          "auc_ci95": [
+            0.4779102,
+            0.5475383
+          ],
+          "pr_auc": 0.5135375531480442,
+          "tpr_at_fpr01": 0.01,
+          "tpr_at_fpr05": 0.07,
+          "cal_threshold": 0.003927405054913223,
+          "test_fpr_at_cal": 0.048,
+          "test_tpr_at_cal": 0.054
+        }
+      }
+    },
+    {
+      "label": "power_amp0.025",
+      "N": 150,
+      "sampling": "jitter",
+      "sigma": 0.1,
+      "amp": 0.025,
+      "nu_mode": "ring",
+      "ring_hi": 30,
+      "offgrid": 0.5,
+      "underdetermined": false,
+      "n_cal": 300,
+      "n_test": 500,
+      "detectors": {
+        "ring": {
+          "auc": 0.710264,
+          "auc_ci95": [
+            0.6775415,
+            0.7420435000000001
+          ],
+          "pr_auc": 0.7078057308629709,
+          "tpr_at_fpr01": 0.094,
+          "tpr_at_fpr05": 0.2,
+          "cal_threshold": 0.004963017090440833,
+          "test_fpr_at_cal": 0.038,
+          "test_tpr_at_cal": 0.17
+        },
+        "residual": {
+          "auc": 0.63518,
+          "auc_ci95": [
+            0.6014328,
+            0.6698976000000001
+          ],
+          "pr_auc": 0.6290358732963385,
+          "tpr_at_fpr01": 0.034,
+          "tpr_at_fpr05": 0.124,
+          "cal_threshold": 0.011215197625327897,
+          "test_fpr_at_cal": 0.07,
+          "test_tpr_at_cal": 0.142
+        },
+        "lomb": {
+          "auc": 0.538744,
+          "auc_ci95": [
+            0.5042975,
+            0.5721109000000001
+          ],
+          "pr_auc": 0.5250374021211184,
+          "tpr_at_fpr01": 0.012,
+          "tpr_at_fpr05": 0.04,
+          "cal_threshold": 0.515108931766848,
+          "test_fpr_at_cal": 0.06,
+          "test_tpr_at_cal": 0.042
+        },
+        "heldout": {
+          "auc": 0.590332,
+          "auc_ci95": [
+            0.5533475999999999,
+            0.6235923
+          ],
+          "pr_auc": 0.5858232717729919,
+          "tpr_at_fpr01": 0.042,
+          "tpr_at_fpr05": 0.102,
+          "cal_threshold": 0.01514122353319059,
+          "test_fpr_at_cal": 0.038,
+          "test_tpr_at_cal": 0.086
+        },
+        "crossfit": {
+          "auc": 0.627722,
+          "auc_ci95": [
+            0.5955290000000001,
+            0.66247005
+          ],
+          "pr_auc": 0.6216742785346173,
+          "tpr_at_fpr01": 0.048,
+          "tpr_at_fpr05": 0.132,
+          "cal_threshold": 0.0037681034956482586,
+          "test_fpr_at_cal": 0.064,
+          "test_tpr_at_cal": 0.142
+        }
+      }
+    },
+    {
+      "label": "power_amp0.05",
+      "N": 150,
+      "sampling": "jitter",
+      "sigma": 0.1,
+      "amp": 0.05,
+      "nu_mode": "ring",
+      "ring_hi": 30,
+      "offgrid": 0.5,
+      "underdetermined": false,
+      "n_cal": 300,
+      "n_test": 500,
+      "detectors": {
+        "ring": {
+          "auc": 0.973904,
+          "auc_ci95": [
+            0.9653913000000001,
+            0.9817812
+          ],
+          "pr_auc": 0.9750901670454735,
+          "tpr_at_fpr01": 0.736,
+          "tpr_at_fpr05": 0.88,
+          "cal_threshold": 0.004839844464791246,
+          "test_fpr_at_cal": 0.046,
+          "test_tpr_at_cal": 0.864
+        },
+        "residual": {
+          "auc": 0.926584,
+          "auc_ci95": [
+            0.909966,
+            0.9422522
+          ],
+          "pr_auc": 0.9318252561001263,
+          "tpr_at_fpr01": 0.464,
+          "tpr_at_fpr05": 0.678,
+          "cal_threshold": 0.011419889446679309,
+          "test_fpr_at_cal": 0.034,
+          "test_tpr_at_cal": 0.618
+        },
+        "lomb": {
+          "auc": 0.64238,
+          "auc_ci95": [
+            0.6085931,
+            0.6769354
+          ],
+          "pr_auc": 0.6496996925716387,
+          "tpr_at_fpr01": 0.066,
+          "tpr_at_fpr05": 0.162,
+          "cal_threshold": 0.48227126099673046,
+          "test_fpr_at_cal": 0.07,
+          "test_tpr_at_cal": 0.182
+        },
+        "heldout": {
+          "auc": 0.8411,
+          "auc_ci95": [
+            0.8159699,
+            0.8636865
+          ],
+          "pr_auc": 0.8497009930549231,
+          "tpr_at_fpr01": 0.274,
+          "tpr_at_fpr05": 0.456,
+          "cal_threshold": 0.015072188114288438,
+          "test_fpr_at_cal": 0.026,
+          "test_tpr_at_cal": 0.356
+        },
+        "crossfit": {
+          "auc": 0.9107959999999999,
+          "auc_ci95": [
+            0.8925245500000001,
+            0.92755955
+          ],
+          "pr_auc": 0.9200433886896182,
+          "tpr_at_fpr01": 0.418,
+          "tpr_at_fpr05": 0.658,
+          "cal_threshold": 0.0039460720843693545,
+          "test_fpr_at_cal": 0.034,
+          "test_tpr_at_cal": 0.57
+        }
+      }
+    },
+    {
+      "label": "power_amp0.1",
+      "N": 150,
+      "sampling": "jitter",
+      "sigma": 0.1,
+      "amp": 0.1,
+      "nu_mode": "ring",
+      "ring_hi": 30,
+      "offgrid": 0.5,
+      "underdetermined": false,
+      "n_cal": 300,
+      "n_test": 500,
+      "detectors": {
+        "ring": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.004752109670157121,
+          "test_fpr_at_cal": 0.052,
+          "test_tpr_at_cal": 1.0
+        },
+        "residual": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.011131892796162456,
+          "test_fpr_at_cal": 0.07,
+          "test_tpr_at_cal": 1.0
+        },
+        "lomb": {
+          "auc": 0.863824,
+          "auc_ci95": [
+            0.8408903999999999,
+            0.8845724
+          ],
+          "pr_auc": 0.8606414718757851,
+          "tpr_at_fpr01": 0.182,
+          "tpr_at_fpr05": 0.46,
+          "cal_threshold": 0.4949081622225322,
+          "test_fpr_at_cal": 0.068,
+          "test_tpr_at_cal": 0.538
+        },
+        "heldout": {
+          "auc": 0.998276,
+          "auc_ci95": [
+            0.9967079000000001,
+            0.9993164
+          ],
+          "pr_auc": 0.998385103230652,
+          "tpr_at_fpr01": 0.976,
+          "tpr_at_fpr05": 0.992,
+          "cal_threshold": 0.014398987159619155,
+          "test_fpr_at_cal": 0.06,
+          "test_tpr_at_cal": 0.992
+        },
+        "crossfit": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0035321257703587313,
+          "test_fpr_at_cal": 0.062,
+          "test_tpr_at_cal": 1.0
+        }
+      }
+    },
+    {
+      "label": "power_amp0.2",
+      "N": 150,
+      "sampling": "jitter",
+      "sigma": 0.1,
+      "amp": 0.2,
+      "nu_mode": "ring",
+      "ring_hi": 30,
+      "offgrid": 0.5,
+      "underdetermined": false,
+      "n_cal": 300,
+      "n_test": 500,
+      "detectors": {
+        "ring": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.004871072663683868,
+          "test_fpr_at_cal": 0.042,
+          "test_tpr_at_cal": 1.0
+        },
+        "residual": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.011283260086539501,
+          "test_fpr_at_cal": 0.046,
+          "test_tpr_at_cal": 1.0
+        },
+        "lomb": {
+          "auc": 0.998944,
+          "auc_ci95": [
+            0.9978119000000001,
+            0.999776
+          ],
+          "pr_auc": 0.998884334019393,
+          "tpr_at_fpr01": 0.984,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.5087515739771786,
+          "test_fpr_at_cal": 0.062,
+          "test_tpr_at_cal": 1.0
+        },
+        "heldout": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.014933947412961427,
+          "test_fpr_at_cal": 0.042,
+          "test_tpr_at_cal": 1.0
+        },
+        "crossfit": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0036141607305858934,
+          "test_fpr_at_cal": 0.058,
+          "test_tpr_at_cal": 1.0
+        }
+      }
+    },
+    {
+      "label": "power_amp0.4",
+      "N": 150,
+      "sampling": "jitter",
+      "sigma": 0.1,
+      "amp": 0.4,
+      "nu_mode": "ring",
+      "ring_hi": 30,
+      "offgrid": 0.5,
+      "underdetermined": false,
+      "n_cal": 300,
+      "n_test": 500,
+      "detectors": {
+        "ring": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.004872635861867602,
+          "test_fpr_at_cal": 0.034,
+          "test_tpr_at_cal": 1.0
+        },
+        "residual": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.011269613130117966,
+          "test_fpr_at_cal": 0.04,
+          "test_tpr_at_cal": 1.0
+        },
+        "lomb": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.49773263599727585,
+          "test_fpr_at_cal": 0.066,
+          "test_tpr_at_cal": 1.0
+        },
+        "heldout": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.014628118894206074,
+          "test_fpr_at_cal": 0.054,
+          "test_tpr_at_cal": 1.0
+        },
+        "crossfit": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.003973067673458096,
+          "test_fpr_at_cal": 0.036,
+          "test_tpr_at_cal": 1.0
+        }
+      }
+    },
+    {
+      "label": "sigma0.01",
+      "N": 150,
+      "sampling": "jitter",
+      "sigma": 0.01,
+      "amp": 0.5,
+      "nu_mode": "ring",
+      "ring_hi": 30,
+      "offgrid": 0.5,
+      "underdetermined": false,
+      "n_cal": 300,
+      "n_test": 500,
+      "detectors": {
+        "ring": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 4.688956439141144e-05,
+          "test_fpr_at_cal": 0.076,
+          "test_tpr_at_cal": 1.0
+        },
+        "residual": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.00011134479769926161,
+          "test_fpr_at_cal": 0.044,
+          "test_tpr_at_cal": 1.0
+        },
+        "lomb": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.4532848057254928,
+          "test_fpr_at_cal": 0.044,
+          "test_tpr_at_cal": 1.0
+        },
+        "heldout": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0001458134947946046,
+          "test_fpr_at_cal": 0.072,
+          "test_tpr_at_cal": 1.0
+        },
+        "crossfit": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 3.4829200602092434e-05,
+          "test_fpr_at_cal": 0.076,
+          "test_tpr_at_cal": 1.0
+        }
+      }
+    },
+    {
+      "label": "sigma0.1",
+      "N": 150,
+      "sampling": "jitter",
+      "sigma": 0.1,
+      "amp": 0.5,
+      "nu_mode": "ring",
+      "ring_hi": 30,
+      "offgrid": 0.5,
+      "underdetermined": false,
+      "n_cal": 300,
+      "n_test": 500,
+      "detectors": {
+        "ring": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.004788971508457446,
+          "test_fpr_at_cal": 0.046,
+          "test_tpr_at_cal": 1.0
+        },
+        "residual": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.011474991485391984,
+          "test_fpr_at_cal": 0.042,
+          "test_tpr_at_cal": 1.0
+        },
+        "lomb": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.5190734653479272,
+          "test_fpr_at_cal": 0.062,
+          "test_tpr_at_cal": 1.0
+        },
+        "heldout": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.014838284402091183,
+          "test_fpr_at_cal": 0.05,
+          "test_tpr_at_cal": 1.0
+        },
+        "crossfit": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.003943963792986422,
+          "test_fpr_at_cal": 0.038,
+          "test_tpr_at_cal": 1.0
+        }
+      }
+    },
+    {
+      "label": "N100",
+      "N": 100,
+      "sampling": "jitter",
+      "sigma": 0.03,
+      "amp": 0.5,
+      "nu_mode": "ring",
+      "ring_hi": 30,
+      "offgrid": 0.5,
+      "underdetermined": false,
+      "n_cal": 300,
+      "n_test": 500,
+      "detectors": {
+        "ring": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0007339955812624931,
+          "test_fpr_at_cal": 0.026,
+          "test_tpr_at_cal": 1.0
+        },
+        "residual": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0010541768769174009,
+          "test_fpr_at_cal": 0.022,
+          "test_tpr_at_cal": 1.0
+        },
+        "lomb": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 1.0287605452700892,
+          "test_fpr_at_cal": 0.042,
+          "test_tpr_at_cal": 1.0
+        },
+        "heldout": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0014806087753355566,
+          "test_fpr_at_cal": 0.064,
+          "test_tpr_at_cal": 1.0
+        },
+        "crossfit": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.000531133545100389,
+          "test_fpr_at_cal": 0.022,
+          "test_tpr_at_cal": 1.0
+        }
+      }
+    },
+    {
+      "label": "N300",
+      "N": 300,
+      "sampling": "jitter",
+      "sigma": 0.03,
+      "amp": 0.5,
+      "nu_mode": "ring",
+      "ring_hi": 30,
+      "offgrid": 0.5,
+      "underdetermined": false,
+      "n_cal": 300,
+      "n_test": 500,
+      "detectors": {
+        "ring": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0002127530075209911,
+          "test_fpr_at_cal": 0.038,
+          "test_tpr_at_cal": 1.0
+        },
+        "residual": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.000992190265343647,
+          "test_fpr_at_cal": 0.052,
+          "test_tpr_at_cal": 1.0
+        },
+        "lomb": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.11101996024499709,
+          "test_fpr_at_cal": 0.086,
+          "test_tpr_at_cal": 1.0
+        },
+        "heldout": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.001143278800828897,
+          "test_fpr_at_cal": 0.066,
+          "test_tpr_at_cal": 1.0
+        },
+        "crossfit": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.00018069862178276275,
+          "test_fpr_at_cal": 0.076,
+          "test_tpr_at_cal": 1.0
+        }
+      }
+    },
+    {
+      "label": "ring45",
+      "N": 150,
+      "sampling": "jitter",
+      "sigma": 0.03,
+      "amp": 0.5,
+      "nu_mode": "ring",
+      "ring_hi": 45,
+      "offgrid": 0.5,
+      "underdetermined": false,
+      "n_cal": 300,
+      "n_test": 500,
+      "detectors": {
+        "ring": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0006916807990911613,
+          "test_fpr_at_cal": 0.05,
+          "test_tpr_at_cal": 1.0
+        },
+        "residual": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0010281934802174656,
+          "test_fpr_at_cal": 0.032,
+          "test_tpr_at_cal": 1.0
+        },
+        "lomb": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 1.0220673163714298,
+          "test_fpr_at_cal": 0.028,
+          "test_tpr_at_cal": 1.0
+        },
+        "heldout": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0013440016559392635,
+          "test_fpr_at_cal": 0.052,
+          "test_tpr_at_cal": 1.0
+        },
+        "crossfit": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.00032244239587250826,
+          "test_fpr_at_cal": 0.062,
+          "test_tpr_at_cal": 1.0
+        }
+      }
+    },
+    {
+      "label": "ring60",
+      "N": 150,
+      "sampling": "jitter",
+      "sigma": 0.03,
+      "amp": 0.5,
+      "nu_mode": "ring",
+      "ring_hi": 60,
+      "offgrid": 0.5,
+      "underdetermined": false,
+      "n_cal": 300,
+      "n_test": 500,
+      "detectors": {
+        "ring": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0012520158684728568,
+          "test_fpr_at_cal": 0.038,
+          "test_tpr_at_cal": 1.0
+        },
+        "residual": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0010354420234989553,
+          "test_fpr_at_cal": 0.046,
+          "test_tpr_at_cal": 1.0
+        },
+        "lomb": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 1.4363011078961192,
+          "test_fpr_at_cal": 0.052,
+          "test_tpr_at_cal": 1.0
+        },
+        "heldout": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.001408512755871938,
+          "test_fpr_at_cal": 0.028,
+          "test_tpr_at_cal": 1.0
+        },
+        "crossfit": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0003687433280827419,
+          "test_fpr_at_cal": 0.04,
+          "test_tpr_at_cal": 1.0
+        }
+      }
+    },
+    {
+      "label": "offgrid0.0",
+      "N": 150,
+      "sampling": "jitter",
+      "sigma": 0.03,
+      "amp": 0.5,
+      "nu_mode": "ring",
+      "ring_hi": 30,
+      "offgrid": 0.0,
+      "underdetermined": false,
+      "n_cal": 300,
+      "n_test": 500,
+      "detectors": {
+        "ring": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.000428333541709855,
+          "test_fpr_at_cal": 0.036,
+          "test_tpr_at_cal": 1.0
+        },
+        "residual": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.001006214586952521,
+          "test_fpr_at_cal": 0.06,
+          "test_tpr_at_cal": 1.0
+        },
+        "lomb": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.42166480295458075,
+          "test_fpr_at_cal": 0.094,
+          "test_tpr_at_cal": 1.0
+        },
+        "heldout": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0013516945688938227,
+          "test_fpr_at_cal": 0.034,
+          "test_tpr_at_cal": 1.0
+        },
+        "crossfit": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0003298646214560699,
+          "test_fpr_at_cal": 0.066,
+          "test_tpr_at_cal": 1.0
+        }
+      }
+    },
+    {
+      "label": "offgrid0.25",
+      "N": 150,
+      "sampling": "jitter",
+      "sigma": 0.03,
+      "amp": 0.5,
+      "nu_mode": "ring",
+      "ring_hi": 30,
+      "offgrid": 0.25,
+      "underdetermined": false,
+      "n_cal": 300,
+      "n_test": 500,
+      "detectors": {
+        "ring": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0004237064122427223,
+          "test_fpr_at_cal": 0.06,
+          "test_tpr_at_cal": 1.0
+        },
+        "residual": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0010262730331153387,
+          "test_fpr_at_cal": 0.032,
+          "test_tpr_at_cal": 1.0
+        },
+        "lomb": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.49817493741910146,
+          "test_fpr_at_cal": 0.046,
+          "test_tpr_at_cal": 1.0
+        },
+        "heldout": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0013219410987878545,
+          "test_fpr_at_cal": 0.046,
+          "test_tpr_at_cal": 1.0
+        },
+        "crossfit": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0003277407158004461,
+          "test_fpr_at_cal": 0.042,
+          "test_tpr_at_cal": 1.0
+        }
+      }
+    },
+    {
+      "label": "iid",
+      "N": 150,
+      "sampling": "iid",
+      "sigma": 0.03,
+      "amp": 0.5,
+      "nu_mode": "ring",
+      "ring_hi": 30,
+      "offgrid": 0.5,
+      "underdetermined": false,
+      "n_cal": 300,
+      "n_test": 500,
+      "detectors": {
+        "ring": {
+          "auc": 0.996104,
+          "auc_ci95": [
+            0.9901639000000001,
+            1.0
+          ],
+          "pr_auc": 0.9857661699428355,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.006588570248758767,
+          "test_fpr_at_cal": 0.052,
+          "test_tpr_at_cal": 1.0
+        },
+        "residual": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0010110175648281828,
+          "test_fpr_at_cal": 0.06,
+          "test_tpr_at_cal": 1.0
+        },
+        "lomb": {
+          "auc": 0.996708,
+          "auc_ci95": [
+            0.9942159,
+            0.998692
+          ],
+          "pr_auc": 0.9967389469760488,
+          "tpr_at_fpr01": 0.94,
+          "tpr_at_fpr05": 0.988,
+          "cal_threshold": 4.665263016412957,
+          "test_fpr_at_cal": 0.034,
+          "test_tpr_at_cal": 0.982
+        },
+        "heldout": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.001316014863049616,
+          "test_fpr_at_cal": 0.08,
+          "test_tpr_at_cal": 1.0
+        },
+        "crossfit": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0003189689913426948,
+          "test_fpr_at_cal": 0.076,
+          "test_tpr_at_cal": 1.0
+        }
+      }
+    },
+    {
+      "label": "gridsubset",
       "N": 96,
       "sampling": "grid",
-      "amp": 1.0,
-      "nu_mode": "coherent",
+      "sigma": 0.03,
+      "amp": 0.5,
+      "nu_mode": "ring",
+      "ring_hi": 30,
+      "offgrid": 0.5,
       "underdetermined": false,
-      "n_draws": 500,
-      "auc": 0.20074,
-      "tpr_at_0.1": 0.0,
-      "fpr_at_0.1": 0.004,
-      "h0_p95": 0.003244765308504529,
-      "tpr_at_h0_p95": 0.042
+      "n_cal": 300,
+      "n_test": 500,
+      "detectors": {
+        "ring": {
+          "auc": 0.996076,
+          "auc_ci95": [
+            0.990152,
+            1.0
+          ],
+          "pr_auc": 0.9840807480547822,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0033571455155806964,
+          "test_fpr_at_cal": 0.072,
+          "test_tpr_at_cal": 1.0
+        },
+        "residual": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0010271934264125028,
+          "test_fpr_at_cal": 0.046,
+          "test_tpr_at_cal": 1.0
+        },
+        "lomb": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 1.1158985506628838,
+          "test_fpr_at_cal": 0.056,
+          "test_tpr_at_cal": 1.0
+        },
+        "heldout": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0015537472545995355,
+          "test_fpr_at_cal": 0.046,
+          "test_tpr_at_cal": 1.0
+        },
+        "crossfit": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0005326437206395832,
+          "test_fpr_at_cal": 0.03,
+          "test_tpr_at_cal": 1.0
+        }
+      }
     },
     {
-      "label": "N36_jitter_underdetermined",
-      "N": 36,
+      "label": "outside_ring",
+      "N": 150,
       "sampling": "jitter",
+      "sigma": 0.03,
+      "amp": 0.5,
+      "nu_mode": "outside_ring",
+      "ring_hi": 30,
+      "offgrid": 0.5,
+      "underdetermined": false,
+      "n_cal": 300,
+      "n_test": 500,
+      "detectors": {
+        "ring": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.00041843695381187356,
+          "test_fpr_at_cal": 0.088,
+          "test_tpr_at_cal": 1.0
+        },
+        "residual": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0010231361487104775,
+          "test_fpr_at_cal": 0.036,
+          "test_tpr_at_cal": 1.0
+        },
+        "lomb": {
+          "auc": 0.865552,
+          "auc_ci95": [
+            0.8450519000000001,
+            0.8868771
+          ],
+          "pr_auc": 0.873052618437121,
+          "tpr_at_fpr01": 0.274,
+          "tpr_at_fpr05": 0.548,
+          "cal_threshold": 0.5035507662699586,
+          "test_fpr_at_cal": 0.034,
+          "test_tpr_at_cal": 0.398
+        },
+        "heldout": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.0013729270169030845,
+          "test_fpr_at_cal": 0.032,
+          "test_tpr_at_cal": 1.0
+        },
+        "crossfit": {
+          "auc": 1.0,
+          "auc_ci95": [
+            1.0,
+            1.0
+          ],
+          "pr_auc": 1.0,
+          "tpr_at_fpr01": 1.0,
+          "tpr_at_fpr05": 1.0,
+          "cal_threshold": 0.00035743387497627914,
+          "test_fpr_at_cal": 0.032,
+          "test_tpr_at_cal": 1.0
+        }
+      }
+    },
+    {
+      "label": "coherent_demo",
+      "N": 96,
+      "sampling": "grid",
+      "sigma": 0.03,
       "amp": 1.0,
-      "nu_mode": "on",
-      "underdetermined": true,
-      "n_draws": 500,
-      "auc": 0.99354,
-      "tpr_at_0.1": 1.0,
-      "fpr_at_0.1": 1.0,
-      "h0_p95": 0.46270894299116555,
-      "tpr_at_h0_p95": 0.98
+      "nu_mode": "coherent",
+      "ring_hi": 30,
+      "offgrid": 0.5,
+      "underdetermined": false,
+      "n_cal": 300,
+      "n_test": 500,
+      "detectors": {
+        "ring": {
+          "auc": 0.205896,
+          "auc_ci95": [
+            0.1770767,
+            0.2332077
+          ],
+          "pr_auc": 0.36317844165281876,
+          "tpr_at_fpr01": 0.004,
+          "tpr_at_fpr05": 0.026,
+          "cal_threshold": 0.004978542034840378,
+          "test_fpr_at_cal": 0.048,
+          "test_tpr_at_cal": 0.026
+        },
+        "residual": {
+          "auc": 0.460724,
+          "auc_ci95": [
+            0.4270797,
+            0.4974832
+          ],
+          "pr_auc": 0.47540162984047174,
+          "tpr_at_fpr01": 0.008,
+          "tpr_at_fpr05": 0.044,
+          "cal_threshold": 0.001032804264371344,
+          "test_fpr_at_cal": 0.058,
+          "test_tpr_at_cal": 0.046
+        },
+        "lomb": {
+          "auc": 0.806788,
+          "auc_ci95": [
+            0.7792503,
+            0.8331894
+          ],
+          "pr_auc": 0.8442679373309008,
+          "tpr_at_fpr01": 0.336,
+          "tpr_at_fpr05": 0.512,
+          "cal_threshold": 1.2034212814684544,
+          "test_fpr_at_cal": 0.038,
+          "test_tpr_at_cal": 0.466
+        },
+        "heldout": {
+          "auc": 0.464648,
+          "auc_ci95": [
+            0.4282061,
+            0.499224
+          ],
+          "pr_auc": 0.47964328690928965,
+          "tpr_at_fpr01": 0.004,
+          "tpr_at_fpr05": 0.05,
+          "cal_threshold": 0.0016091213163116776,
+          "test_fpr_at_cal": 0.03,
+          "test_tpr_at_cal": 0.034
+        },
+        "crossfit": {
+          "auc": 0.45999999999999996,
+          "auc_ci95": [
+            0.42278235,
+            0.49495475
+          ],
+          "pr_auc": 0.4698301478545341,
+          "tpr_at_fpr01": 0.004,
+          "tpr_at_fpr05": 0.042,
+          "cal_threshold": 0.0005401989285228665,
+          "test_fpr_at_cal": 0.046,
+          "test_tpr_at_cal": 0.038
+        }
+      }
     }
   ],
-  "note": "ring-diagnostic operating characteristic; the coherent grid-fold condition is the provably-undetectable worst case (AUC ~ 0.5 expected); the underdetermined condition documents the validity guard"
+  "note": "coherent_demo is the T4a indistinguishability demonstration, not an operating characteristic; underdetermined ring fits are flagged",
+  "_meta": {
+    "python": "3.11.2",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "numpy": "2.4.6",
+    "scipy": "1.17.1",
+    "torch": "2.13.0+cpu",
+    "cuda": null,
+    "git_commit": "3b406a4"
+  }
 }

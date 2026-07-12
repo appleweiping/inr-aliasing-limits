@@ -34,8 +34,43 @@ def ensure_dirs() -> None:
     FIGDIR.mkdir(parents=True, exist_ok=True)
 
 
+def run_metadata() -> dict:
+    """Environment + provenance stamp attached to every result JSON."""
+    import platform
+    import subprocess
+
+    import numpy
+    import scipy
+
+    meta = {
+        "python": platform.python_version(),
+        "platform": platform.platform(),
+        "numpy": numpy.__version__,
+        "scipy": scipy.__version__,
+    }
+    try:
+        import torch  # noqa
+
+        meta["torch"] = torch.__version__
+        meta["cuda"] = torch.version.cuda if torch.cuda.is_available() else None
+        if torch.cuda.is_available():
+            meta["gpu"] = torch.cuda.get_device_name(0)
+    except Exception:
+        meta["torch"] = None
+    try:
+        meta["git_commit"] = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            capture_output=True, text=True, cwd=RESULTS.parent, timeout=10,
+        ).stdout.strip() or None
+    except Exception:
+        meta["git_commit"] = None
+    return meta
+
+
 def save_json(name: str, obj: dict) -> Path:
     ensure_dirs()
+    if isinstance(obj, dict) and "_meta" not in obj:
+        obj = {**obj, "_meta": run_metadata()}
     p = RESULTS / name
     p.write_text(json.dumps(obj, indent=2))
     return p

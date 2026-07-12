@@ -1,0 +1,22 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.11"
+      - name: Install (locked)
+        run: |
+          uv venv
+          uv pip install -r requirements.lock
+          uv pip install -e . --no-deps
+      - name: Theorem <-> Monte Carlo test suite (CPU)
+        run: uv run python -m pytest -q

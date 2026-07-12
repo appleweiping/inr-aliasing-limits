@@ -4,7 +4,11 @@ import pytest
 
 from inralias.signals import lowpass_dictionary, nonuniform_times, evaluate, random_inband, out_of_band_atoms
 from inralias.inr import FixedFeatureINR, bandwidth_matched_freqs
-from inralias.diagnostics import extended_dictionary_test, crossfit_aliasing_energy
+from inralias.diagnostics import (
+    extended_dictionary_test,
+    crossfit_aliasing_energy,
+    null_calibrated_threshold,
+)
 
 
 def test_fixed_feature_inr_recovers_in_band_signal():
@@ -31,21 +35,25 @@ def test_bandwidth_matched_covers_true_band():
 
 
 def test_extended_dictionary_test_flags_out_of_band():
+    # decision threshold comes from an explicit null calibration, never a priori
     rng = np.random.default_rng(2)
     Lam = lowpass_dictionary(6)
     t = nonuniform_times(200, rng, "jitter")
     c = random_inband(Lam, rng, power=1.0)
     ring = np.concatenate([np.arange(7, 18), -np.arange(7, 18)]).astype(float)
+    thr = null_calibrated_threshold(Lam, t, ring, sigma=0.02, n_draws=100, q=0.95, rng=99)
 
     y_clean = evaluate(Lam, c, t, real=True) + rng.normal(0, 0.02, t.size)
     of, oc = out_of_band_atoms(Lam, ratio=2.0, n_atoms=4, rng=rng, power=0.7)
     y_alias = y_clean + evaluate(of, oc, t, real=True)
 
-    d_clean = extended_dictionary_test(Lam, t, y_clean, ring)
-    d_alias = extended_dictionary_test(Lam, t, y_alias, ring)
+    d_clean = extended_dictionary_test(Lam, t, y_clean, ring, threshold=thr)
+    d_alias = extended_dictionary_test(Lam, t, y_alias, ring, threshold=thr)
     assert not d_clean["flag"]
     assert d_alias["flag"]
     assert d_alias["out_of_band_frac"] > d_clean["out_of_band_frac"]
+    # without a threshold no flag is asserted
+    assert extended_dictionary_test(Lam, t, y_alias, ring)["flag"] is None
 
 
 def test_crossfit_flags_out_of_band_under_nonuniform_sampling():

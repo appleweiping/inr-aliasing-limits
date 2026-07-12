@@ -1,39 +1,44 @@
-r"""Closed-form achievability and converse limits.
+r"""Least-squares error identities for the fixed Fourier-feature coordinate model.
 
 We observe ``N`` samples of ``f = f_in + f_out`` where ``f_in`` has spectrum inside the
-INR's representable set :math:`\Lambda` (frequencies ``freqs``) and ``f_out`` has spectrum
-disjoint from :math:`\Lambda`.  With synthesis matrix :math:`\Phi` (see
-:mod:`inralias.sampling`) the least-squares INR fit is
+model's frequency set :math:`\Lambda` (``freqs``) and ``f_out`` is a finite exponential
+sum on frequencies outside :math:`\Lambda`.  With synthesis matrix :math:`\Phi` (see
+:mod:`inralias.sampling`) the ordinary-LS fit is
 :math:`\hat c=(\Phi^\ast\Phi)^{-1}\Phi^\ast y`, :math:`y=\Phi c^\star+g+\varepsilon`,
 :math:`g_j=f_{\text{out}}(t_j)`.
 
-* **Theorem 1 (achievability).**  If :math:`f_{\text{out}}=0` and :math:`\sigma_{\min}(\Phi)>0`,
-  :math:`\lVert\hat c-c^\star\rVert\le\kappa\lVert\varepsilon\rVert` with noise gain
-  :math:`\kappa=1/\sigma_{\min}(\Phi)`, and :math:`\mathbb E\lVert\hat c-c^\star\rVert^2
-  =\sigma^2\,\mathrm{tr}((\Phi^\ast\Phi)^{-1})`.  (:func:`inralias.sampling.noise_gain`,
-  :func:`mmse_recoverable`.)
+These are *background* identities (standard LS perturbation / omitted-variable analysis,
+instantiated on the exponential dictionary); the paper's main results live in
+:mod:`inralias.identifiability` (visibility, aliasability, exact indistinguishability,
+random-sampling concentration, detection).
 
-* **Theorem 2 (converse / aliasing).**  With :math:`f_{\text{out}}\neq0`, the coefficient
-  estimate is biased by :math:`\Delta c=(\Phi^\ast\Phi)^{-1}\Phi^\ast g` (:func:`aliasing_bias`).
-  No INR in the class fits the samples better than :math:`\lVert(I-P)g\rVert`
-  (:func:`aliasing_floor`), yet the *spectral* corruption :math:`\lVert\Delta c\rVert`
-  can be large even when that residual is tiny -- **silent aliasing**
-  (:func:`silent_aliasing_ratio`).  An out-of-band tone folds onto the :math:`\Lambda`
-  frequency of :func:`folded_frequency`.
+* **LS stability (background).**  If :math:`f_{\text{out}}=0` and
+  :math:`\sigma_{\min}(\Phi)>0`,
+  :math:`\lVert\hat c-c^\star\rVert\le\kappa\lVert\varepsilon\rVert` with
+  :math:`\kappa=1/\sigma_{\min}(\Phi)` (:func:`inralias.sampling.noise_gain`), and
+  :math:`\mathbb E\lVert\hat c-c^\star\rVert^2=\sigma^2\,\mathrm{tr}((\Phi^\ast\Phi)^{-1})`
+  (:func:`ls_coefficient_mse`).  Coefficient-space quantities; convert to function space
+  with :func:`inralias.identifiability.riesz_bounds`.
 
-* **Theorem 3 (statistical).**  For random out-of-band content + Gaussian noise the MSE of
-  the least-squares estimator splits exactly into an estimation-variance term
-  :math:`\sigma^2\,\mathrm{tr}((\Phi^\ast\Phi)^{-1})` (:func:`mmse_recoverable`) and an
-  aliasing-variance term :math:`\mathrm{tr}(M\,\Sigma_g\,M^\ast)`,
-  :math:`M=(\Phi^\ast\Phi)^{-1}\Phi^\ast` (:func:`mmse_aliasing_floor`).  The aliasing term
-  is a fixed-``N`` quantity: it stays at full power along *coherent* folds (an out-of-band
-  atom with :math:`\lVert M\phi_\nu\rVert` bounded away from zero, e.g.
-  :math:`\nu\equiv\omega_k\ (\mathrm{mod}\ Q)` for samples on a rate-``Q`` grid), while for
-  a fixed tone it converges, as density grows, to the tone's window-leakage energy onto
-  :math:`\mathrm{span}\,\mathcal M_\Lambda` -- exactly zero for integer-disjoint tones
-  under uniform sampling, :math:`O(m/N)` in expectation under i.i.d. sampling, and a
-  positive constant :math:`\sum_k \mathrm{sinc}^2(\nu-\omega_k)` for non-integer tones.
-  Each regime is pinned in ``tests/test_theory_vs_sim.py``.
+* **Aliasing bias (background + T1 objects).**  With :math:`f_{\text{out}}\neq0` the LS
+  estimate is biased by :math:`\Delta c=(\Phi^\ast\Phi)^{-1}\Phi^\ast g`
+  (:func:`aliasing_bias`); no model in the class fits the noiseless samples better than
+  :math:`\lVert(I-P)g\rVert` (:func:`aliasing_floor` = :math:`\sqrt N\times` the
+  *visibility* of :mod:`inralias.identifiability`).  In the grid-coherent regime the
+  residual is exactly zero while :math:`\lVert\Delta c\rVert` carries the full tone
+  energy -- silent aliasing (:func:`silent_aliasing_ratio`, and T1/T4 for the
+  indistinguishability statements).
+
+* **Average-case decomposition (background).**  For zero-mean uncorrelated out-of-band
+  coefficients independent of white noise, the LS coefficient MSE splits exactly into
+  :math:`\sigma^2\,\mathrm{tr}((\Phi^\ast\Phi)^{-1})` (:func:`ls_coefficient_mse`) plus
+  :math:`\mathrm{tr}(M\,\Sigma_g\,M^\ast)` (:func:`aliasing_variance_term`).  The second
+  term stays at full power along coherent folds (:math:`\nu\equiv\omega_k\pmod Q` on a
+  rate-``Q`` grid) and, for a fixed tone under growing density, converges to the tone's
+  window-leakage energy -- exactly zero for integer-disjoint tones under uniform
+  sampling, :math:`O(m/N)` in expectation under i.i.d. sampling, and
+  :math:`\sum_k\mathrm{sinc}^2(\nu-\omega_k)` for non-integer tones.  Each regime is
+  pinned in ``tests/test_theory_vs_sim.py``.
 """
 from __future__ import annotations
 
@@ -47,13 +52,36 @@ __all__ = [
     "reconstruction_error",
     "folded_frequency",
     "silent_aliasing_ratio",
-    "mmse_recoverable",
-    "mmse_aliasing_floor",
+    "ls_coefficient_mse",
+    "bayes_coefficient_mmse",
+    "aliasing_variance_term",
 ]
+
+_COND_WARN = 1e8
 
 
 def _ls_operator(Phi: np.ndarray) -> np.ndarray:
-    r"""The least-squares operator :math:`M=(\Phi^\ast\Phi)^{-1}\Phi^\ast` (m x N)."""
+    r"""The least-squares operator :math:`M=(\Phi^\ast\Phi)^{-1}\Phi^\ast` (m x N).
+
+    Requires full column rank; raises ``LinAlgError`` if the synthesis matrix is
+    (numerically) rank deficient and warns when its condition number exceeds
+    ``1e8`` (theory statements assume well-posed ordinary least squares).
+    """
+    import warnings
+
+    s = np.linalg.svd(Phi, compute_uv=False)
+    tol = max(Phi.shape) * np.finfo(float).eps * (s[0] if s.size else 0.0)
+    if s.size == 0 or s[-1] <= tol:
+        raise np.linalg.LinAlgError(
+            "synthesis matrix is rank deficient; the ordinary-LS operator does not "
+            "exist (use pinv_apply for the minimum-norm estimator)"
+        )
+    if s[0] / s[-1] > _COND_WARN:
+        warnings.warn(
+            f"synthesis matrix condition number {s[0]/s[-1]:.2e} > {_COND_WARN:.0e}; "
+            "least-squares quantities may be numerically fragile",
+            stacklevel=2,
+        )
     G = Phi.conj().T @ Phi
     return np.linalg.solve(G, Phi.conj().T)
 
@@ -102,13 +130,15 @@ def reconstruction_error(
     in_freqs: np.ndarray | None = None,
     in_coeffs: np.ndarray | None = None,
 ) -> dict:
-    r"""Full noiseless picture of Theorem 2 for a planted signal.
+    r"""Full noiseless picture of the converse for a planted signal.
 
-    Fits the INR (frequencies ``freqs``) by least squares to samples of ``f_in+f_out`` at
-    ``t_fit``, then evaluates on a dense grid ``t_eval``.  Returns a dict with the
-    sample-domain residual (the floor), the global reconstruction MSE, and the spectral
-    bias ``||Delta c||`` -- exposing "silent aliasing" when global MSE is small but the
-    spectrum is corrupted.
+    Fits the model (frequencies ``freqs``) by least squares to samples of ``f_in+f_out``
+    at ``t_fit``, then evaluates on a dense grid ``t_eval``.  Returns a dict with the
+    sample-domain residual, the global reconstruction MSE, and the coefficient bias
+    ``||Delta c||``.  In the *silent aliasing* regime (grid-coherent out-of-band content)
+    the sample residual is at the noise level while both the coefficient bias and the
+    global reconstruction error are large -- the fit looks good only where it was
+    evaluated.
     """
     freqs = np.asarray(freqs, float)
     Phi_fit = synthesis_matrix(freqs, t_fit)
@@ -185,22 +215,31 @@ def silent_aliasing_ratio(
     return float(np.linalg.norm(dc) / (floor + 1e-12))
 
 
-def mmse_recoverable(
-    Phi: np.ndarray,
-    sigma2: float,
-    prior_var: np.ndarray | float | None = None,
-) -> float:
-    r"""Recoverable-regime MMSE (Theorem 3 variance term).
+def ls_coefficient_mse(Phi: np.ndarray, sigma2: float) -> float:
+    r"""Coefficient-space MSE of ordinary least squares under white noise:
+    :math:`\mathbb E\lVert\hat c-c^\star\rVert_2^2=\sigma^2\,\mathrm{tr}((\Phi^\ast\Phi)^{-1})`.
 
-    * If ``prior_var`` is ``None`` (unbiased LS): :math:`\sigma^2\,\mathrm{tr}((\Phi^\ast\Phi)^{-1})`.
-    * If a Gaussian prior with per-coefficient variance ``prior_var`` is given, returns the
-      Bayes posterior-covariance trace
-      :math:`\mathrm{tr}\big((\Sigma_0^{-1}+\Phi^\ast\Phi/\sigma^2)^{-1}\big)`.
+    This is a **coefficient** quantity for the **LS estimator**; it is not a Bayes MMSE
+    and, for non-orthonormal dictionaries, not a function-space error either -- convert
+    with :func:`inralias.identifiability.riesz_bounds` /
+    :func:`inralias.identifiability.function_error_decomposition`.
+    """
+    G = Phi.conj().T @ Phi
+    return float(np.real(np.trace(np.linalg.inv(G))) * sigma2)
+
+
+def bayes_coefficient_mmse(
+    Phi: np.ndarray, sigma2: float, prior_var: np.ndarray | float
+) -> float:
+    r"""Bayes MMSE of the coefficients in the conjugate linear-Gaussian model.
+
+    For :math:`c\sim\mathcal{CN}(0,\Sigma_0)` (diagonal ``prior_var``) and white Gaussian
+    noise, the posterior is Gaussian and the MMSE equals the posterior-covariance trace
+    :math:`\mathrm{tr}\big((\Sigma_0^{-1}+\Phi^\ast\Phi/\sigma^2)^{-1}\big)` (standard
+    conjugacy).  Kept separate from :func:`ls_coefficient_mse`, which assumes no prior.
     """
     m = Phi.shape[1]
     G = Phi.conj().T @ Phi
-    if prior_var is None:
-        return float(np.real(np.trace(np.linalg.inv(G))) * sigma2)
     if np.isscalar(prior_var):
         Sig0_inv = np.eye(m) / float(prior_var)
     else:
@@ -209,7 +248,7 @@ def mmse_recoverable(
     return float(np.real(np.trace(post)))
 
 
-def mmse_aliasing_floor(
+def aliasing_variance_term(
     freqs: np.ndarray,
     t: np.ndarray,
     out_freqs: np.ndarray,
