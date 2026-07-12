@@ -15,9 +15,16 @@ Protocol (strictly honest):
   test-H0-quantile FPR 1% and 5%, and FPR/TPR at the calibrated threshold.
 * **sweeps**: tone amplitude, noise, N, ring width, off-grid distance, sampling family
   (jittered / i.i.d. / grid subset), and the ring-miss case (true frequency outside the
-  ring).  The exactly grid-coherent condition is reported *separately* as the
-  indistinguishability demonstration (T4a) -- by construction no detector can beat
-  chance there, and that is the point, not a headline operating characteristic.
+  ring).
+* **indistinguishability demonstration (T4a)**: the ``coherent_demo`` condition
+  instantiates the theorem's two-point pair EXACTLY -- H1 = in-band signal + tone at the
+  grid-coherent out-of-band frequency ``nu = 111``; H0 = the same signal + the same
+  -amplitude tone at the *in-band twin* ``nu - Q = -17``.  On grid samples the two
+  hypotheses have identical sample vectors (T1), so every detector provably sits at
+  AUC 0.5 / TPR = FPR; this is reported separately from the operating characteristics.
+  (A no-tone null would NOT instantiate the theorem: adding a coherent tone changes the
+  total in-band energy, which energy-sensitive statistics can flag -- they detect *a
+  change*, but cannot attribute it to out-of-band content.)
 
 CPU-only.  Usage: python experiments/run_diagnostic_roc.py
 """
@@ -57,15 +64,25 @@ def _sample_times(rng, N, sampling):
     raise ValueError(sampling)
 
 
-def _draw(rng, N, sampling, sigma, amp, nu_mode, ring_hi, offgrid):
-    """One draw; returns (t, y).  H0 when amp == 0."""
+def _draw(rng, N, sampling, sigma, amp, nu_mode, ring_hi, offgrid, h0=False):
+    """One draw; returns (t, y).
+
+    Generic conditions: H0 (``h0=True``) is the in-band signal + noise; H1 adds an
+    out-of-band tone of RMS ``amp``.  The ``coherent`` condition instantiates the T4a
+    two-point pair instead: BOTH hypotheses contain a tone of the same amplitude and
+    phase law -- at the grid-coherent out-of-band frequency ``NU_COH`` under H1, and at
+    its in-band twin ``NU_COH - Q`` under H0 -- so on grid samples the observation laws
+    are identical (T1) and no detector can beat chance.
+    """
     t = _sample_times(rng, N, sampling)
     c = random_inband(LAMBDA, rng, power=1.0)
     y = evaluate(LAMBDA, c, t, real=True) + rng.normal(0, sigma, N)
-    if amp > 0:
-        if nu_mode == "coherent":
-            nu = NU_COH
-        elif nu_mode == "outside_ring":
+    if nu_mode == "coherent":
+        nu = (NU_COH - Q) if h0 else NU_COH
+        ph = rng.uniform(0, 2 * np.pi)
+        return t, y + amp * np.sqrt(2) * np.cos(2 * np.pi * nu * t + ph)
+    if not h0 and amp > 0:
+        if nu_mode == "outside_ring":
             nu = float(rng.uniform(ring_hi * 2 + 2, ring_hi * 2 + 15))
         else:  # inside ring reach, off-grid by `offgrid`
             base = int(rng.integers(24, min(45, ring_hi - 1)))
@@ -135,8 +152,8 @@ def run_condition(label, N=150, sampling="jitter", sigma=0.03, amp=0.5,
     def batch(n, with_tone):
         rows = {k: [] for k in DETECTORS}
         for _ in range(n):
-            t, y = _draw(rng, N, sampling, sigma, amp if with_tone else 0.0,
-                         nu_mode, ring_hi, offgrid)
+            t, y = _draw(rng, N, sampling, sigma, amp, nu_mode, ring_hi, offgrid,
+                         h0=not with_tone)
             s = _scores(t, y, ring, sigma)
             for k in DETECTORS:
                 rows[k].append(s[k])
@@ -195,10 +212,12 @@ def make_figure(conditions):
             vals.append(residual_test_power(D, s, sigma=0.1, alpha=0.05)["power"])
         theo.append(float(np.mean(vals)))
     ax.plot(power_amps, theo, "k--", lw=1.4, label="T4b residual-test power (theory)")
-    coh = by_label["coherent_demo"]["detectors"]["ring"]["tpr_at_fpr05"]
+    coh = max(by_label["coherent_demo"]["detectors"][k]["tpr_at_fpr05"]
+              for k in DETECTORS)
     ax.axhline(0.05, color="0.75", lw=0.8, ls=":")
     ax.plot([power_amps[0], power_amps[-1]], [coh, coh], color="k", lw=1.0, alpha=0.5,
-            ls="-", label=f"coherent fold, any amp (TPR {coh:.2f})")
+            ls="-", label=f"coherent fold vs in-band twin\n(best of 5 detectors: "
+                          f"TPR {coh:.2f}; theory: = FPR at any amp)")
     ax.set_xscale("log")
     ax.set_xticks(power_amps)
     ax.set_xticklabels([str(a) for a in power_amps])
@@ -256,8 +275,11 @@ def main():
                         "threshold_rule": "95th percentile of calibration H0 scores",
                         "separation": "calibration, test-H0, test-H1 all disjoint draws"},
            "conditions": conditions,
-           "note": "coherent_demo is the T4a indistinguishability demonstration, not an "
-                   "operating characteristic; underdetermined ring fits are flagged"}
+           "note": "coherent_demo instantiates the T4a two-point pair (H1: tone at "
+                   "nu=111; H0: same-amplitude tone at the in-band twin -17; identical "
+                   "sample laws on grid samples) -- every detector must sit at "
+                   "AUC~0.5, TPR~FPR; it is a demonstration, not an operating "
+                   "characteristic; underdetermined ring fits are flagged"}
     save_json("diagnostic_roc.json", out)
     for c in conditions:
         r = c["detectors"]["ring"]

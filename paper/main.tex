@@ -11,7 +11,7 @@
 \newtheorem{corollary}{Corollary}
 \newtheorem{remark}{Remark}
 
-\emergencystretch=1em
+\emergencystretch=3em
 \DeclareMathOperator{\tr}{tr}
 \DeclareMathOperator{\range}{range}
 \newcommand{\R}{\mathbb{R}}
@@ -25,12 +25,12 @@
 \newcommand{\at}{a_T}
 
 % ---- volatile experiment numbers (single source for easy re-sync with results/) ----
-\newcommand{\NumCohAUC}{0.21}          % coherent-demo ring AUC
-\newcommand{\NumCohTPR}{0.03}          % coherent-demo TPR at 5% FPR
+\newcommand{\NumCohAUC}{0.51}          % coherent-demo best-of-5 AUC (chance; CI covers 0.5)
+\newcommand{\NumCohTPR}{0.06}          % coherent-demo best-of-5 TPR at 5% FPR
 \newcommand{\NumCoTwoLS}{0.167}        % CO2 sample-only LS-periodogram RMSE
-\newcommand{\NumCoTwoOracle}{0.171}    % CO2 true-oracle (best-in-grid) RMSE
+\newcommand{\NumCoTwoOracle}{0.161}    % CO2 oracle RMSE (grid + selector-choice union)
 \newcommand{\NumSpeechOracle}{1.00}    % speech oracle RMSE (truncation-dominated)
-\newcommand{\NumSpeechLS}{1.46}        % speech LS-periodogram RMSE
+\newcommand{\NumSpeechLS}{1.65}        % speech LS-periodogram RMSE
 
 \title{Silent Aliasing in Fixed Fourier-Feature Coordinate Models}
 \name{Weiping Yan\thanks{Code, data provenance, and the supplement with full proofs:
@@ -52,16 +52,17 @@ argument---no estimator whatsoever can avoid the error (\emph{silent aliasing}).
 visibility follows the jitter's characteristic function ($v\approx2\pi|r|Q\sigma_t$ for
 small Gaussian jitter), and under i.i.d.\ sampling the worst-case aliasability over a
 finite candidate set concentrates at $O(\sqrt{m\log(mK/\delta)/N})$.  (iii)~Detection is
-dichotomous: exactly coherent folds are undetectable by \emph{any} sample-only test
-(identical observation laws), while visible tones admit exact noncentral-$\chi^2$
-detection power, which calibrated sample-only detectors match empirically.  Every closed
+dichotomous: an exactly coherent fold is indistinguishable from its in-band twin by
+\emph{any} sample-only test (identical observation laws), while visible tones admit
+exact noncentral-$\chi^2$ detection power, which calibrated sample-only detectors match
+empirically.  Every closed
 form is validated against Monte Carlo; trained nonlinear networks (Fourier-feature MLPs,
 SIRENs) are studied strictly as empirical extrapolation, with fold patterns predicted by
 each network's own NTK linearization and all seed-level failures reported.
 \end{abstract}
 
 \begin{keywords}
-Sampling theory, aliasing, identifiability, Fourier features, coordinate models.
+Sampling theory, aliasing, identifiability, Fourier features.
 \end{keywords}
 
 \section{Introduction}
@@ -81,8 +82,8 @@ the sampling design (grids, jitter, i.i.d.\ draws) change this?  \textbf{Q3}: wh
 practitioner \emph{detect} the problem from the samples alone?
 
 \emph{Contributions.}  (1)~An identifiability framework---sample atoms, equivalence
-classes, \emph{visibility} $\vt(\nu)$, \emph{aliasability} $\at(\nu)$---in which exact
-silent aliasing is classified on arbitrary subsets of sampling grids, with an
+classes, \emph{visibility} $\vt(\nu)$, \emph{aliasability} $\at(\nu)$---classifying exact
+silent aliasing on arbitrary subsets of sampling grids, with an
 estimator-independent two-point lower bound (Thm.~\ref{thm:t1}).  (2)~Function-space
 accounting: a closed-form continuous Gram matrix with Riesz bounds and an exact error
 decomposition keeping coefficient error, aliasing-induced modeled-component error, and
@@ -101,7 +102,14 @@ we build on; the equivalence-class, sampling-design, and detection results are n
 of it.  The generalized aliasing decomposition of eGAD~\cite{transtrum2024gad} computes an
 aliasing operator for \emph{given} samples; our $\at(\nu)$ is a column norm of that
 operator, and our new content is probabilistic control of it \emph{over the sampling
-design} (Thm.~\ref{thm:t3}).  Basis mismatch~\cite{chi2011sensitivity} concerns tones
+design} (Thm.~\ref{thm:t3}).  That randomized timing suppresses aliasing is itself
+classical---Balakrishnan derived the characteristic-function attenuation of spectral
+replicas under jitter, and Shapiro--Silverman and Beutler established alias-free random
+sampling of stochastic processes~\cite{balakrishnan1962jitter,shapiro1960alias,beutler1970alias};
+those are asymptotic spectral-replica statements, whereas Thm.~\ref{thm:t3} gives
+finite-$N$, high-probability control of visibility and aliasability with respect to a
+fixed LS dictionary, uniformly over finite candidate sets.  Basis
+mismatch~\cite{chi2011sensitivity} concerns tones
 \emph{near} atoms; silent aliasing is the complementary far regime.  The Lomb--Scargle
 spectral window~\cite{vanderplas2018lomb} predicts periodogram leakage; we add the
 estimator-independent indistinguishability statement and detection theory.  The
@@ -110,7 +118,10 @@ but contains no sampling theory; INR sampling theorems to
 date~\cite{najaf2024sampling,najaf2025superres,saratchandran2024activations} are
 achievability results for realizable signals; an NTK bound from missing
 frequencies~\cite{ma2025robustifying} gives an error floor but not the fold structure,
-invisibility, or detection.  Empirical SIREN aliasing has been
+invisibility, or detection.  Anti-aliasing INR \emph{architectures}
+(band-limited/multiscale designs~\cite{lindell2022bacon,barron2021mipnerf,shabanov2024banf})
+prevent folds by construction; we characterize what happens when the features are not so
+constrained.  Empirical SIREN aliasing has been
 observed~\cite{chandravamsi2025spectral}; we supply theory for the linear core and a
 measured, calibrated diagnostic.
 
@@ -131,9 +142,8 @@ If $\sigma_{\min}(\Phimat)>0$ and $f_{\mathrm{out}}=0$ then
 $\norm{\hat{\bm c}-\bm c^\star}\le\norm{\bm\varepsilon}/\sigma_{\min}(\Phimat)$ and, for
 white noise, $\mathbb E\norm{\hat{\bm c}-\bm c^\star}^2=\sigma^2\tr((\Phimat^{*}\Phimat)^{-1})$.
 \end{lemma}
-This is textbook least-squares perturbation, stated for calibration of what follows; the
-average-case bias/variance decomposition under random out-of-band content is likewise
-standard bookkeeping and is deferred to the supplement (Prop.~S1).
+Textbook LS perturbation, stated for calibration; the average-case bias/variance
+decomposition is likewise standard and deferred to the supplement (Prop.~S1).
 
 \section{Main results}\label{sec:main}
 \subsection{T1: exact equivalence and silent aliasing}
@@ -189,11 +199,12 @@ $\lambda_{\min}\norm{\bm c}^2\le\norm{\sum_kc_ke_{\omega_k}}_{L^2}^2\le\lambda_{
 -2\,\mathrm{Re}\,\Delta\bm c^{*}G_{\Lam,\mathrm{out}}\,\bm a
 +\bm a^{*}G_{\mathrm{out}}\,\bm a,
 \end{equation}
-the three terms being the aliasing-induced \emph{modeled-component} error, a cross term
-(zero for all-integer frequencies), and the \emph{truncation} energy.
+the three terms being the \emph{modeled-component} error (aliasing bias plus in-band
+estimation noise), a cross term (zero for all-integer frequencies), and the
+\emph{truncation} energy.
 \end{theorem}
 Equation~\eqref{eq:dec} is elementary but load-bearing: truncation error exists for
-\emph{any} sampling and is not aliasing; only the first term is the model
+\emph{any} sampling and is not aliasing; only the first term contains the model
 \emph{misplacing} energy, and only that term responds to sampling design
 (Fig.~\ref{fig:matrix}d).
 
@@ -202,9 +213,11 @@ Equation~\eqref{eq:dec} is elementary but load-bearing: truncation error exists 
 Let $\Lam\subset\Z$ with $|\Lam|=m$.
 (a)~\emph{(jitter)}  Let $t_j=g_j/Q+\eta_j$ with $g_j$ grid points and $\eta_j$ i.i.d.,
 mean-zero, with characteristic function $\chi_\eta$, and let $\nu=\omega_k+rQ$,
-$r\in\Z\setminus\{0\}$.  Then the empirical fold coherence
+$r\in\Z\setminus\{0\}$.  For \emph{arbitrary} grid points, the empirical fold coherence
 $\frac1N\sum_je^{i2\pi(\nu-\omega_k)t_j}$ has mean $\chi_\eta(2\pi rQ)$ and concentrates
-around it at rate $2\sqrt{\log(4/\delta)/N}$; consequently
+around it at rate $2\sqrt{\log(4/\delta)/N}$.  If moreover the $g_j$ are drawn i.i.d.\
+uniformly from the grid (or as a uniformly random subset without replacement) and the
+elements of $\Lam$ are distinct modulo $Q$, then
 $\vt(\nu)^2=1-|\chi_\eta(2\pi rQ)|^2+O_P\!\big(m\sqrt{\log(m/\delta)/N}\big)$.  For
 Gaussian jitter of std $\sigma_t$, $\chi_\eta(2\pi rQ)=e^{-2(\pi rQ\sigma_t)^2}$, giving
 the small-jitter law $\vt(\nu)\approx2\pi|r|Q\sigma_t$.
@@ -226,13 +239,11 @@ $mK+m^2$ coherences, then a perturbation bound on
 $\at(\nu)=\norm{(\Phimat^{*}\Phimat/N)^{-1}(\Phimat^{*}\bm\phi_\nu/N)}$.  Proofs in the
 supplement; both laws are verified to tight tolerance in Fig.~\ref{fig:matrix}(a,b).
 
-Three honest distinctions follow.  \emph{Exact} grid equivalence persists at every $N$
-\emph{if the design stays on the grid} (Thm.~\ref{thm:t1}); for a \emph{fixed} separated
-tone, randomized designs make aliasing vanish at explicit rates (Thm.~\ref{thm:t3}); and
-at any finite $N$ an adversary may still pick near-invisible alternatives---but under
-i.i.d.\ sampling even the adversarial candidate within a finite set becomes visible
-(Fig.~\ref{fig:matrix}c).  We make no claim that ``no sampling density removes
-aliasing''; what no design removes is the truncation term of~\eqref{eq:dec}.
+Three honest distinctions follow: exact grid equivalence persists at every $N$ \emph{if
+the design stays on the grid} (Thm.~\ref{thm:t1}); for a fixed tone, randomized designs
+kill aliasing at explicit rates---including the per-$N$ \emph{adversarial} candidate
+within a finite set (Fig.~\ref{fig:matrix}c); and what no design removes is the
+truncation term of~\eqref{eq:dec}, not aliasing.
 
 \subsection{T4: detection---impossibility and power}
 \begin{theorem}[Detection dichotomy]\label{thm:t4}
@@ -246,9 +257,8 @@ $\chi^2_{N-p}(\lambda)$ with $\lambda=\norm{(\bm I-\bm P_D)\bm s}^2/\sigma^2$ un
 detection power is driven by \emph{amplitude times visibility}, and is exactly the size
 $\alpha$ when $\lambda=0$ (coherent fold).
 \end{theorem}
-Sample-only detectors must be \emph{calibrated}: in all experiments, thresholds come from
-an independent null calibration set and are then frozen; test-set FPR/TPR are reported
-separately (Sec.~\ref{sec:exp}).
+Sample-only detectors must be \emph{calibrated}: thresholds come from an independent
+null calibration set and are frozen; test-set FPR/TPR are reported separately.
 
 \section{Experiments}\label{sec:exp}
 All identities and bounds above are validated against Monte Carlo in the released test
@@ -278,9 +288,11 @@ but not under a random mask of equal density.}
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{diagnostic_roc.png}
-\caption{Detection power (TPR at 5\% FPR, calibration/test separated) vs tone amplitude
-at $\sigma{=}0.1$: five sample-only detectors against the exact Thm.~\ref{thm:t4}(b)
-power curve; the coherent fold stays at chance at any amplitude (Thm.~\ref{thm:t4}(a)).}
+\caption{Detection power vs tone amplitude at $\sigma{=}0.1$ (TPR at the 5\% quantile of
+\emph{test-set} H0 scores; calibrated-threshold operating points are in the released
+results): five sample-only detectors against the exact Thm.~\ref{thm:t4}(b) power curve.
+The coherent fold, tested against its indistinguishable in-band twin, sits at chance---at
+any amplitude, by Thm.~\ref{thm:t4}(a).}
 \label{fig:roc}
 \end{figure}
 
@@ -307,16 +319,25 @@ drives the aliasing-bias term to the noise level while the truncation floor is u
 \emph{Detection (Fig.~\ref{fig:roc}).}  With calibration/test separation, sample-only
 detectors (ring test, residual, Lomb--Scargle band test, held-out prediction, cross-fit)
 track the exact Thm.~\ref{thm:t4}(b) power curve; at the calibrated threshold the
-test-set FPR stays at its nominal 5\%.  On the exactly coherent grid fold every detector
-collapses (ring AUC $\NumCohAUC$, TPR at 5\% FPR $\NumCohTPR$)---the
-indistinguishability of Thm.~\ref{thm:t4}(a) made visible, reported separately from the
-operating characteristics by design.
+test-set FPR stays at its nominal 5\%.  The indistinguishability demonstration
+instantiates Thm.~\ref{thm:t4}(a)'s two-point pair exactly: H1 places a tone at the
+grid-coherent $\nu{=}111$, H0 the \emph{same-amplitude} tone at its in-band twin
+$\nu-Q=-17$; the grid sample laws are identical, and all five detectors sit at chance
+(best-of-five AUC $\NumCohAUC$ with every CI covering $0.5$; best TPR at 5\% FPR
+$\NumCohTPR$), at any amplitude by Thm.~\ref{thm:t4}(a).  Against a \emph{no-tone} null, energy-sensitive statistics can
+flag that something changed---but cannot attribute it to out-of-band content; it is
+this attribution that is impossible.  Reported separately from the operating
+characteristics by design.
 
 \emph{Real signals, sample-only.}  On real series (Mauna Loa CO$_2$, sunspots, and nine
 2-s speech segments from three Open Speech Repository recordings; anti-aliased
 \texttt{resample\_poly} decimation; full records, no window selection), bandwidth
-selectors that see \emph{only the training samples} are compared against a true oracle
-(the bandwidth minimizing the actual reconstruction error; evaluation-only upper bound).
+selectors that see \emph{only the training samples} are compared against an oracle that
+minimizes the \emph{actual} reconstruction error over the selector grid \emph{and} every
+band the selectors chose in that draw---an evaluation-only upper bound that dominates
+each selector per draw by construction.  Speech CIs use segment-level $t$-intervals
+(the honest replication unit; sampling masks and noise are drawn independently per
+segment).
 On CO$_2$ the sample-only Lomb--Scargle selector attains RMSE $\NumCoTwoLS$ vs the
 oracle's $\NumCoTwoOracle$ (means over 10 draws; paired CIs released)---deployable
 selection is not the bottleneck.  On broadband speech \emph{no} selector beats
@@ -331,7 +352,8 @@ explicitly band-limited head, tone attribution is measured by an ablation (ident
 initialization trained with/without the tone) and compared to the prediction of
 \emph{each network's own NTK linearization}---no arbitrary reference band.  Across
 $\ge20$ sampling seeds per condition, with label-permutation, amplitude, and weight-seed
-controls, the linear picture extrapolates well to \emph{lazy-regime} networks---FF-MLP:
+controls (FF-MLP spot checks, $n{=}5$ each), the linear picture extrapolates well to
+\emph{lazy-regime} networks---FF-MLP:
 exact fold match $77\%$, top-3 $98\%$, pattern correlation median $0.96$
 ($n{=}60$); band-limited head: correlation median $0.98$---but \emph{fails} for
 SIRENs (exact match $20\%$, correlation median $0.49$, $n{=}20$): trained SIRENs leave
@@ -340,10 +362,11 @@ them (Fig.~\ref{fig:nl}).  In
 2-D (Fig.~\ref{fig:img}), the linear model reproduces the predicted frequency-vector
 fold exactly ((a): planted $(27,3)$ on a rate-32 grid subset folds to $(-5,3)$, residual
 $10^{-15}$), and trained 2-D networks show the predicted DFT replicas under
-\emph{lattice} (coherent) masks---replica-energy ratio $40{\pm}32$ at the predicted
-shifts, vs $0.99{\pm}0.09$ under random masks of equal density ($3$ images, $12$/$24$
-mask draws)---while fitting the observed pixels to $66$~dB against $12$~dB on held-out
-pixels (2-D silent aliasing).  Ridge and early stopping do \emph{not} remove the
+\emph{lattice} (coherent) masks---replica-energy ratio $40{\pm}32$ ($\pm$s.d.) at the
+predicted shifts, vs $0.99{\pm}0.09$ under random masks of equal density and $\le0.6$
+at matched scale ($3$ images, $12$/$24$ mask draws)---while fitting the observed pixels
+to $66$~dB against $12$~dB on held-out pixels (2-D silent aliasing; over-parameterized
+scale only).  Ridge and early stopping do \emph{not} remove the
 replicas (ratios $89$ and $25$): structured aliasing is a sampling-design property, not
 an overfitting artifact; clean/noisy/held-out/full-field PSNR are reported separately in
 the released results.
@@ -358,10 +381,9 @@ correction is $O_P(m\sqrt{\log/N})$.  Within that scope the theory is complete a
 mechanically verified: exact silent aliasing is a property of \emph{grid designs} and is
 classified by congruence; randomized sampling provably destroys it at explicit rates;
 detectability is dichotomous and quantitatively matched by calibrated sample-only
-detectors.  Practical guidance: avoid pure grid designs when out-of-band content is
-possible; jitter of std $\sigma_t$ buys visibility $\approx2\pi|r|Q\sigma_t$; calibrate
-diagnostics on explicit nulls; and never read training residual as reconstruction
-fidelity.
+detectors.  Practical guidance: avoid pure grid designs; jitter of std $\sigma_t$ buys
+visibility $\approx2\pi|r|Q\sigma_t$; calibrate diagnostics on explicit nulls; never
+read training residual as reconstruction fidelity.
 
 \vfill\pagebreak
 \bibliographystyle{IEEEbib}

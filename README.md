@@ -48,8 +48,8 @@ decomposition is background Prop. S1 in the supplement).
 | E4 trained nets | `experiments/run_nonlinear.py` | 20 sampling seeds × 3 tones × 3 architectures; ablation-measured fold vs **NTK-linearization** prediction; label-permutation / amplitude / weight-seed controls; failures reported |
 | E5 2-D | `experiments/run_image2d.py` | Part A: exact 2-D frequency-vector fold on the linear model. Part B: lattice (coherent) vs random masks on 3 images — predicted DFT replicas appear only under lattice masks; ridge/early-stop baselines; clean/noisy/held-out/full-field PSNR reported separately |
 
-Every result JSON carries a `_meta` stamp (git commit, seeds in config, Python/NumPy/
-SciPy/torch/CUDA/GPU versions).
+Every result JSON carries a `_meta` stamp (git commit, Python/NumPy/SciPy/torch/CUDA/
+GPU versions); seeds are fixed in the released scripts (recorded per-run for E4).
 
 ## Reproduction
 
@@ -78,7 +78,7 @@ pdflatex supplement && pdflatex supplement
 
 | Data | Source | License / terms | Processing |
 |---|---|---|---|
-| Speech (3 recordings) | Open Speech Repository, Harvard sentences (`OSR_us_000_00{10,11,12}_8k.wav`) | Free for research use per OSR site; **not** covered by this repo's MIT license | SHA-256 checksums + per-file metadata in `data/speech_provenance.json`; 2-s segments; `resample_poly` anti-aliased decimation |
+| Speech (3 recordings) | Open Speech Repository, Harvard sentences (`OSR_us_000_00{10,11,12}_8k.wav`) | Made freely available by the OSR (see source page for terms); **not** covered by this repo's MIT license | SHA-256 checksums + per-file metadata in `data/speech_provenance.json`; 2-s segments; `resample_poly` anti-aliased decimation |
 | Mauna Loa CO₂ | NOAA GML (`co2_mm_mlo.csv`) | Public (NOAA data disclaimer) | monthly means, full record, linear detrend |
 | Sunspots (daily + 13-month smoothed) | SILSO, Royal Observatory of Belgium | CC BY-NC 4.0 — check before commercial reuse | the *smoothed* series is an intentionally low-pass **proxy** and is labelled as such everywhere |
 
@@ -93,7 +93,7 @@ src/inralias/     identifiability.py (T1-T4 core)  sampling.py  limits.py (backg
 experiments/      run_synthetic_matrix.py  run_diagnostic_roc.py  run_real_signal.py
                   run_nonlinear.py  run_image2d.py  run_all.py
 tests/            test_identifiability.py  test_theory_vs_sim.py  test_sampling.py
-                  test_diagnostics_inr.py          (34 tests, CI on every push)
+                  test_diagnostics_inr.py          (34 tests; GitHub Actions runs them on every push)
 paper/            main.tex + supplement.tex (full proofs) + figures + refs.bib
 docs/             novelty-matrix.md (prior-art audit)
 results/          *.json (with _meta provenance) + figures/

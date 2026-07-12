@@ -4,7 +4,7 @@
 \usepackage{amsmath,amssymb,amsthm,bm}
 \newtheorem{theorem}{Theorem}
 \newtheorem{lemma}{Lemma}
-\newtheorem{proposition}{Proposition}
+\newtheorem{proposition}{Proposition~S}
 \newtheorem{remark}{Remark}
 \DeclareMathOperator{\tr}{tr}
 \DeclareMathOperator{\range}{range}
@@ -125,9 +125,12 @@ $\bm G_N=\Phimat^{*}\Phimat/N$.  Then
 \vt(\nu)^2=\frac1N\norm{\bm\phi_\nu}^2-\frac1N\bm\phi_\nu^{*}\bm P_\Lam\bm\phi_\nu
 =1-\bm b^{*}\bm G_N^{-1}\bm b .
 \]
-Assume additionally that the grid points $g_j$ are drawn i.i.d.\ uniformly from the grid
-(a uniformly random subset drawn without replacement obeys the same bounds with the same
-constants by Serfling's inequality for sampling without replacement).  Each entry of
+Assume additionally---as in the theorem statement---that the grid points $g_j$ are drawn
+i.i.d.\ uniformly from the grid (a uniformly random subset drawn without replacement
+obeys the same bounds with the same constants by Serfling's inequality for sampling
+without replacement) and that the elements of $\Lam$ are distinct modulo $Q$ (otherwise
+two Gram columns coincide on every grid subset and $\bm G_\infty\neq\bm I$, breaking the
+perturbation step below).  Each entry of
 $\bm b$ other than the fold entry, and each off-diagonal entry of $\bm G_N$, is an
 empirical mean of independent unit-modulus terms whose expectation vanishes (distinct
 residues modulo $Q$ average to zero over the uniform grid, and the jitter factor only

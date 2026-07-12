@@ -64,6 +64,11 @@ def run_metadata() -> dict:
         ).stdout.strip() or None
     except Exception:
         meta["git_commit"] = None
+    if not meta["git_commit"]:
+        # server checkouts are tarball syncs, not git repos: deploy.sh ships GIT_COMMIT
+        stamp = RESULTS.parent / "GIT_COMMIT"
+        if stamp.exists():
+            meta["git_commit"] = stamp.read_text().strip() or None
     return meta
 
 

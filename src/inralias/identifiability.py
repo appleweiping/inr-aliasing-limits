@@ -252,7 +252,7 @@ def expected_jitter_coherence(k: int, Q: int, scale: float, dist: str = "gaussia
     * ``gaussian`` (std ``scale`` seconds): :math:`e^{-2\pi^2k^2Q^2\,\mathrm{scale}^2}`;
     * ``uniform`` (width ``scale`` seconds): :math:`\mathrm{sinc}(kQ\,\mathrm{scale})`.
 
-    Small-jitter law (T3b): visibility :math:`\approx\sqrt{1-\chi^2}\approx
+    Small-jitter law (T3a): visibility :math:`\approx\sqrt{1-\chi^2}\approx
     2\pi|k|Q\sigma_t` -- jitter *continuously breaks* the exact fold.
     """
     x = float(k) * float(Q) * float(scale)
@@ -264,7 +264,7 @@ def expected_jitter_coherence(k: int, Q: int, scale: float, dist: str = "gaussia
 
 
 def coherence_epsilon(N: int, delta: float, n_events: int = 1) -> float:
-    r"""Hoeffding radius for empirical coherences (T3a).
+    r"""Hoeffding radius for empirical coherences (T3b).
 
     For i.i.d. samples and unit-modulus terms, each empirical coherence
     :math:`\tfrac1N\sum_j e^{i2\pi\delta t_j}` deviates from its mean by more than
@@ -279,7 +279,7 @@ def coherence_epsilon(N: int, delta: float, n_events: int = 1) -> float:
 def aliasability_concentration_bound(
     m: int, n_candidates: int, N: int, delta: float, lam_min: float = 1.0
 ) -> float:
-    r"""High-probability uniform aliasability bound over a finite candidate set (T3a).
+    r"""High-probability uniform aliasability bound over a finite candidate set (T3b).
 
     Assume i.i.d. samples whose infinite-:math:`N` normalized Gram
     :math:`G_\infty=\lim\Phi^{*}\Phi/N` satisfies :math:`G_\infty\succeq\lambda_{\min}I`

@@ -6,10 +6,15 @@ and documented in the README.  Runs are idempotent (skips existing files).
 
 Signals
 -------
-* ``speech``    -- Open Speech Repository "Harvard sentences" (public domain), 8 kHz. Broadband.
-* ``sunspots``  -- SILSO daily total sunspot number (Royal Observatory of Belgium). Smooth,
-                   quasi-periodic -> recoverable-side science signal.
-* ``seismic``   -- ObsPy bundled example seismogram if available (broadband transient).
+* ``speech``    -- three full Open Speech Repository "Harvard sentences" recordings
+                   (~33 s each, 8 kHz; made freely available by the OSR -- see the
+                   source page for terms), saved as ``speech_rec{0,1,2}.npz`` at native
+                   resolution with sha256 provenance in ``speech_provenance.json``.
+* ``sunspots``  -- SILSO daily total sunspot number (Royal Observatory of Belgium,
+                   CC BY-NC 4.0).
+* ``sunspots_smooth`` / ``co2`` -- smoothed sunspots (intentionally low-pass proxy) and
+                   NOAA Mauna Loa monthly CO2.
+* ``seismic``   -- ObsPy bundled example seismogram if available (unused by the paper).
 """
 from __future__ import annotations
 
@@ -47,9 +52,9 @@ def _get(url: str) -> bytes:
 
 
 def fetch_speech(path: Path) -> bool:
-    """Fetch the three full Open Speech Repository recordings (public domain) used by
-    the experiments, saving ``speech_rec{0,1,2}.npz`` at native resolution plus a
-    provenance file with sha256 checksums.  ``path`` is ``speech_rec0.npz``."""
+    """Fetch the three full Open Speech Repository recordings used by the experiments,
+    saving ``speech_rec{0,1,2}.npz`` at native resolution plus a provenance file with
+    sha256 checksums (terms: see the OSR source page)."""
     import hashlib
     import json
 
@@ -66,8 +71,7 @@ def fetch_speech(path: Path) -> bool:
             meta[name] = {"sha256": hashlib.sha256(raw).hexdigest(),
                           "n_samples": int(x.size), "fs": float(fs),
                           "duration_s": round(x.size / fs, 2), "source": url,
-                          "license": "public domain (Open Speech Repository, "
-                                     "Harvard sentences)"}
+                          "license": "made freely available by the Open Speech Repository (Harvard sentences); see the source page for terms"}
             print(f"  speech_rec{i}: {x.size} samples @ {fs} Hz")
         (HERE / "speech_provenance.json").write_text(json.dumps(meta, indent=2))
         return True
@@ -169,7 +173,7 @@ def main(names=None):
     names = names or list(fetchers)
     ok = {}
     for n in names:
-        p = HERE / f"{n}.npz"
+        p = HERE / ("speech_rec0.npz" if n == "speech" else f"{n}.npz")
         if p.exists():
             print(f"{n}: exists, skip")
             ok[n] = True

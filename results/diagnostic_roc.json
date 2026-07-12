@@ -1714,74 +1714,74 @@
       "n_test": 500,
       "detectors": {
         "ring": {
-          "auc": 0.205896,
+          "auc": 0.506404,
           "auc_ci95": [
-            0.1770767,
-            0.2332077
+            0.4722226,
+            0.5417299999999999
           ],
-          "pr_auc": 0.36317844165281876,
-          "tpr_at_fpr01": 0.004,
+          "pr_auc": 0.48985796219872896,
+          "tpr_at_fpr01": 0.002,
           "tpr_at_fpr05": 0.026,
-          "cal_threshold": 0.004978542034840378,
-          "test_fpr_at_cal": 0.048,
-          "test_tpr_at_cal": 0.026
-        },
-        "residual": {
-          "auc": 0.460724,
-          "auc_ci95": [
-            0.4270797,
-            0.4974832
-          ],
-          "pr_auc": 0.47540162984047174,
-          "tpr_at_fpr01": 0.008,
-          "tpr_at_fpr05": 0.044,
-          "cal_threshold": 0.001032804264371344,
-          "test_fpr_at_cal": 0.058,
+          "cal_threshold": 0.0018241656008900844,
+          "test_fpr_at_cal": 0.092,
           "test_tpr_at_cal": 0.046
         },
-        "lomb": {
-          "auc": 0.806788,
+        "residual": {
+          "auc": 0.48226,
           "auc_ci95": [
-            0.7792503,
-            0.8331894
+            0.4457284,
+            0.5189687
           ],
-          "pr_auc": 0.8442679373309008,
-          "tpr_at_fpr01": 0.336,
-          "tpr_at_fpr05": 0.512,
-          "cal_threshold": 1.2034212814684544,
-          "test_fpr_at_cal": 0.038,
-          "test_tpr_at_cal": 0.466
+          "pr_auc": 0.4799988776530864,
+          "tpr_at_fpr01": 0.008,
+          "tpr_at_fpr05": 0.03,
+          "cal_threshold": 0.001031556638943024,
+          "test_fpr_at_cal": 0.044,
+          "test_tpr_at_cal": 0.022
+        },
+        "lomb": {
+          "auc": 0.49872,
+          "auc_ci95": [
+            0.464564,
+            0.5322502
+          ],
+          "pr_auc": 0.49428484979149795,
+          "tpr_at_fpr01": 0.016,
+          "tpr_at_fpr05": 0.044,
+          "cal_threshold": 2.8416252210061277,
+          "test_fpr_at_cal": 0.06,
+          "test_tpr_at_cal": 0.048
         },
         "heldout": {
-          "auc": 0.464648,
+          "auc": 0.503508,
           "auc_ci95": [
-            0.4282061,
-            0.499224
+            0.4674917,
+            0.5387367
           ],
-          "pr_auc": 0.47964328690928965,
-          "tpr_at_fpr01": 0.004,
-          "tpr_at_fpr05": 0.05,
-          "cal_threshold": 0.0016091213163116776,
-          "test_fpr_at_cal": 0.03,
-          "test_tpr_at_cal": 0.034
+          "pr_auc": 0.49880488151333746,
+          "tpr_at_fpr01": 0.006,
+          "tpr_at_fpr05": 0.058,
+          "cal_threshold": 0.001512052201795405,
+          "test_fpr_at_cal": 0.062,
+          "test_tpr_at_cal": 0.062
         },
         "crossfit": {
-          "auc": 0.45999999999999996,
+          "auc": 0.49421,
           "auc_ci95": [
-            0.42278235,
-            0.49495475
+            0.45716935,
+            0.53073115
           ],
-          "pr_auc": 0.4698301478545341,
+          "pr_auc": 0.4871979783755291,
           "tpr_at_fpr01": 0.004,
-          "tpr_at_fpr05": 0.042,
-          "cal_threshold": 0.0005401989285228665,
-          "test_fpr_at_cal": 0.046,
-          "test_tpr_at_cal": 0.038
+          "tpr_at_fpr05": 0.046,
+          "cal_threshold": 0.0005558335344133544,
+          "test_fpr_at_cal": 0.03,
+          "test_tpr_at_cal": 0.03
         }
       }
     }
   ],
-  "note": "coherent_demo is the T4a indistinguishability demonstration, not an operating characteristic; underdetermined ring fits are flagged",
+  "note": "coherent_demo instantiates the T4a two-point pair (H1: tone at nu=111; H0: same-amplitude tone at the in-band twin -17; identical sample laws on grid samples) -- every detector must sit at AUC~0.5, TPR~FPR; it is a demonstration, not an operating characteristic; underdetermined ring fits are flagged",
   "_meta": {
     "python": "3.11.2",
     "platform": "Windows-10-10.0.26200-SP0",
@@ -1789,6 +1789,6 @@
     "scipy": "1.17.1",
     "torch": "2.13.0+cpu",
     "cuda": null,
-    "git_commit": "3b406a4"
+    "git_commit": "c9857ef"
   }
 }

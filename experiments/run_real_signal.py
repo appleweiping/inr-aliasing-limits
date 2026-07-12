@@ -120,11 +120,14 @@ def _cv_error(B, t, y, ridge=0.0, k=5, rng=None):
 
 
 def select_bandwidths(t, y, N, x_ref, t_ref, seed):
-    """All selectors; only `oracle` sees x_ref (evaluation-only upper bound)."""
+    """All selectors; only `oracle` sees x_ref (evaluation-only upper bound).
+
+    The oracle minimizes the TRUE error over the union of the selector grid and every
+    band chosen by the sample-only selectors in the same draw, so it dominates every
+    selector per draw BY CONSTRUCTION (no off-grid escape)."""
     out = {}
     Bmax_est = N // 4
     Bgrid = np.unique(np.geomspace(4, Bmax_est, 16).astype(int))
-    out["oracle"] = (_oracle_best_band(Bgrid, t, y, t_ref, x_ref), 0.0)
     out["ls_periodogram"] = (
         int(np.max(bandwidth_matched_freqs(t, y, Bmax_est, 0.95, method="lombscargle"))), 0.0)
     out["corr_periodogram"] = (
@@ -136,27 +139,48 @@ def select_bandwidths(t, y, N, x_ref, t_ref, seed):
     lam_grid = [1e-6, 1e-4, 1e-2, 1.0]
     lam_errs = [_cv_error(N // 3, t, y, ridge=lam, rng=seed) for lam in lam_grid]
     out["ridge_wide"] = (N // 3, float(lam_grid[int(np.argmin(lam_errs))]))
+    cand = np.unique(np.concatenate(
+        [Bgrid, [b for (b, _lam) in out.values()]]).astype(int))
+    out["oracle"] = (_oracle_best_band(cand, t, y, t_ref, x_ref), 0.0)
     return out
 
 
 def run(name: str):
     segs = load_segments(name)
     rows = {m: [] for m in METHODS}          # RMSE per (segment, seed)
+    seg_of = []                              # segment index per row (for clustered CIs)
     bands = {m: [] for m in METHODS}
-    for seg in segs:
+    for gi, seg in enumerate(segs):
         x_ref = seg["x"]
         M = x_ref.size
         t_ref = np.arange(M) / M
         N = int(SAMPLE_FRAC * M)
         noise_std = np.sqrt(np.mean(x_ref**2) / 10 ** (SNR_DB / 10))
         for seed in range(N_SEEDS):
-            rng = np.random.default_rng(1000 + seed)
+            # decorrelated stream per (segment, seed): masks/noise differ across segments
+            rng = np.random.default_rng(1000 * (gi + 1) + seed)
             idx = np.sort(rng.choice(M, size=N, replace=False))
             t, y = t_ref[idx], x_ref[idx] + rng.normal(0, noise_std, N)
             sel = select_bandwidths(t, y, N, x_ref, t_ref, seed)
             for meth, (B, lam) in sel.items():
                 rows[meth].append(_fit_eval(B, t, y, t_ref, x_ref, ridge=lam))
                 bands[meth].append(int(B))
+            seg_of.append(gi)
+    seg_of = np.asarray(seg_of)
+
+    def _ci(values):
+        """95% CI half-width.  Rows are clustered by segment: with >1 segment, use the
+        t-interval on SEGMENT-LEVEL means (the honest replication unit); with a single
+        segment, seeds are the replication unit (normal interval)."""
+        v = np.asarray(values)
+        if len(segs) > 1:
+            from scipy.stats import t as tdist
+
+            means = np.array([v[seg_of == g].mean() for g in range(len(segs))])
+            return float(tdist.ppf(0.975, len(segs) - 1)
+                         * means.std(ddof=1) / np.sqrt(len(segs)))
+        return float(CI * v.std(ddof=1) / np.sqrt(v.size))
+
     summary = {}
     oracle = np.asarray(rows["oracle"])
     for m in METHODS:
@@ -164,12 +188,12 @@ def run(name: str):
         diff = v - oracle
         summary[m] = {
             "rmse_mean": float(v.mean()),
-            "rmse_ci95": float(CI * v.std(ddof=1) / np.sqrt(v.size)),
+            "rmse_ci95": _ci(v),
             "paired_diff_vs_oracle_mean": float(diff.mean()),
-            "paired_diff_ci95": float(CI * diff.std(ddof=1) / np.sqrt(diff.size))
-            if m != "oracle" else 0.0,
+            "paired_diff_ci95": _ci(diff) if m != "oracle" else 0.0,
             "band_mean": float(np.mean(bands[m])),
             "n": int(v.size),
+            "n_clusters": len(segs),
         }
     out = {
         "name": name,

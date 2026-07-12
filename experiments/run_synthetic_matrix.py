@@ -2,11 +2,11 @@ r"""E1 -- the synthetic theorem-validation matrix (T1--T3).
 
 One experiment, four panels, closing the theory--experiment loop:
 
-(a) **Jitter breaks the exact fold (T3b).**  Grid-coherent tone (``nu = -17 + Q`` on a
+(a) **Jitter breaks the exact fold (T3a).**  Grid-coherent tone (``nu = -17 + Q`` on a
     rate-``Q`` grid subset): visibility vs jitter std, empirical mean +- 95% CI over
     draws, against the characteristic-function law ``v = sqrt(1 - chi^2)``.
 
-(b) **i.i.d. concentration (T3a).**  Worst-case aliasability over a finite out-of-band
+(b) **i.i.d. concentration (T3b).**  Worst-case aliasability over a finite out-of-band
     candidate set vs ``N`` under i.i.d. uniform sampling, with the proved
     Hoeffding/union bound and the ``N^{-1/2}`` reference slope.
 
@@ -70,7 +70,7 @@ def _mean_ci(vals):
 
 
 def panel_a_jitter(rng):
-    """Visibility of the grid-coherent tone vs Gaussian jitter std (T3b)."""
+    """Visibility of the grid-coherent tone vs Gaussian jitter std (T3a)."""
     sig_ts = np.concatenate([[0.0], np.geomspace(2e-5, 4e-3, 12)])
     emp_mean, emp_ci, pred = [], [], []
     for st in sig_ts:
@@ -87,7 +87,7 @@ def panel_a_jitter(rng):
 
 
 def panel_b_concentration(rng):
-    """Worst-case aliasability over a candidate set vs N, iid uniform sampling (T3a)."""
+    """Worst-case aliasability over a candidate set vs N, iid uniform sampling (T3b)."""
     cands = np.setdiff1d(np.arange(24, 55).astype(float), LAMBDA)
     K = cands.size
     Ns = [400, 800, 1600, 3200, 6400, 12800, 25600]
@@ -240,7 +240,7 @@ def main():
     ax = axes[3]
     st = np.array(D["sigma_t"])
     for key, col, lbl in (("total", "C0", "total $L^2$ error"),
-                          ("modeled", "C3", "aliasing-bias part"),
+                          ("modeled", "C3", "modeled-component error"),
                           ("residual", "0.5", "sample residual")):
         mu = np.array(D["curves"][key]); ci = np.array(D["cis"][key])
         ax.errorbar(st[1:], mu[1:], yerr=ci[1:], fmt="o-", ms=3.5, color=col, label=lbl)
@@ -261,8 +261,8 @@ def main():
            "panel_a_jitter": A, "panel_b_concentration": B,
            "panel_c_fixed_vs_adversarial": C, "panel_d_decomposition": D,
            "sampling_type_table": table,
-           "note": "theorem-validation matrix: (a) T3b characteristic-function law; "
-                   "(b) T3a concentration + proved bound; (c) T1 grid persistence vs "
+           "note": "theorem-validation matrix: (a) T3a characteristic-function law; "
+                   "(b) T3b concentration + proved bound; (c) T1 grid persistence vs "
                    "iid visibility of fixed AND adversarial tones; (d) T2 decomposition "
                    "separating aliasing bias from truncation error"}
     save_json("synthetic_matrix.json", out)

@@ -5,7 +5,7 @@
     "fs": 8000.0,
     "duration_s": 33.62,
     "source": "https://www.voiptroubleshooter.com/open_speech/american/OSR_us_000_0010_8k.wav",
-    "license": "public domain (Open Speech Repository, Harvard sentences)"
+    "license": "made freely available by the Open Speech Repository (Harvard sentences); see the source page for terms"
   },
   "OSR_us_000_0011_8k.wav": {
     "sha256": "3b3b791dc1eda4ed9ae7869c6adff95cbd9a0a4b0f45e31be31324024279b739",
@@ -13,7 +13,7 @@
     "fs": 8000.0,
     "duration_s": 32.78,
     "source": "https://www.voiptroubleshooter.com/open_speech/american/OSR_us_000_0011_8k.wav",
-    "license": "public domain (Open Speech Repository, Harvard sentences)"
+    "license": "made freely available by the Open Speech Repository (Harvard sentences); see the source page for terms"
   },
   "OSR_us_000_0012_8k.wav": {
     "sha256": "68c2cb1c146119c12b06a209665d17bb310c4e780dd19313bdca2d03b633878e",
@@ -21,6 +21,6 @@
     "fs": 8000.0,
     "duration_s": 33.27,
     "source": "https://www.voiptroubleshooter.com/open_speech/american/OSR_us_000_0012_8k.wav",
-    "license": "public domain (Open Speech Repository, Harvard sentences)"
+    "license": "made freely available by the Open Speech Repository (Harvard sentences); see the source page for terms"
   }
 }
