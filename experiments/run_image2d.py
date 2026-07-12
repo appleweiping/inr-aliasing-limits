@@ -59,7 +59,7 @@ def part_a_linear(rng):
 
     nu_out = np.array([27.0, 3.0])            # 27 = -5 (mod 32): predicted fold (-5, 3)
     pred_fold = np.array([-5.0, 3.0])         # Hermitian partner folds to (5, -3)
-    in_vecs = np.array([[2.0, 1.0], [-2.0, -1.0], [4.0, -3.0], [-4.0, 3.0]])
+    in_vecs = np.array([[2.0, 1.0], [-2.0, -1.0], [1.0, 4.0], [-1.0, -4.0]])
     in_c = np.array([1.0, 1.0, 0.5, 0.5]).astype(complex)
     a = 0.8
     Phi = _synthesis_2d(Lam, pts)
@@ -267,9 +267,10 @@ def figure(partA_pack, runs, imgs, dev):
     ax.set_title("(a) linear 2-D model: exact fold\n(circle = predicted alias vector)")
     fig.colorbar(im, ax=ax, shrink=0.85)
 
-    # panel (b)/(c): DFT of over-scale reconstructions, lattice vs random (ascent)
+    # panel (b)/(c): DFT of over-scale reconstructions, lattice vs random masks, on the
+    # synthetic image (sharp spectral lines -> replicas are visually unambiguous)
     if torch_available():
-        img = imgs["ascent"]
+        img = imgs["synthetic"]
         rngm = np.random.default_rng(7)
         masks = _masks(rngm)
         lat = [m for n, m in masks if n == "lattice2_o00"][0]
@@ -278,10 +279,11 @@ def figure(partA_pack, runs, imgs, dev):
                                (axes[2], rnd, "random mask")):
             recon, _ = _train_2d(img, mask, SIZE / 2 / 1.2, dev,
                                  rng=np.random.default_rng(11))
-            F = np.log10(np.abs(np.fft.fftshift(np.fft.fft2(recon))) + 1e-3)
-            ax.imshow(F, cmap="magma")
+            Fm = np.abs(np.fft.fftshift(np.fft.fft2(recon)))
+            F = np.log10(Fm / Fm.max() + 1e-6)
+            ax.imshow(F, cmap="magma", vmin=-4.5, vmax=0)
             q = SIZE // 2
-            for (dy, dx) in ((q // 1, 0), (0, q // 1), (q // 1, q // 1)):
+            for (dy, dx) in ((q, 0), (0, q), (q, q)):
                 cy, cx = (SIZE // 2 + dy) % SIZE, (SIZE // 2 + dx) % SIZE
                 circ = plt.Circle((cx, cy), 13, fill=False, color="cyan", lw=1.6)
                 ax.add_patch(circ)
@@ -292,6 +294,20 @@ def figure(partA_pack, runs, imgs, dev):
 
 
 def main():
+    if "--figure-only" in sys.argv:
+        rng = np.random.default_rng(3)
+        partA = part_a_linear(rng)
+        print(f"[2d-linear] exact={partA[0]['exact']}", flush=True)
+        imgs = _load_images()
+        dev = "cpu"
+        if torch_available():
+            import torch
+
+            dev = "cuda" if torch.cuda.is_available() else "cpu"
+        figure(partA, [], imgs, dev)
+        print("[2d] figure regenerated", flush=True)
+        return
+
     quick = "--quick" in sys.argv
     rng = np.random.default_rng(3)
     partA = part_a_linear(rng)

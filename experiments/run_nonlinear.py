@@ -184,9 +184,46 @@ def _boot_ci(bools, rng, n=2000):
     return [float(np.quantile(stats, 0.025)), float(np.quantile(stats, 0.975))]
 
 
+def make_figure(runs, controls, n_seeds, dev):
+    """One representative run (spectra) + correlation distributions per architecture."""
+    perm_corr = [r["pattern_corr"] for r in controls
+                 if r.get("control") == "label_permutation"]
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(7.6, 3.0), layout="constrained")
+    r, diff, pred, _t = one_run("ffmlp", 50.0, 0, 200, dev=dev)
+    fr = np.arange(FMAX_SPEC + 1)
+    ax1.plot(fr, _spec(diff)[: FMAX_SPEC + 1], "C3-", lw=1.5,
+             label="measured (ablation)")
+    ax1.plot(fr, _spec(pred)[: FMAX_SPEC + 1], "C0--", lw=1.4,
+             label=f"NTK prediction (corr {r['pattern_corr']:.2f})")
+    ax1.set_xlabel("frequency"); ax1.set_ylabel("|X| (norm)")
+    ax1.set_title("FF-MLP: measured vs NTK")
+    ax1.legend(fontsize=9)
+    data = [[q["pattern_corr"] for q in runs if q["arch"] == a]
+            for a in ("ffmlp", "siren", "bandlimited")]
+    ax2.boxplot(data, tick_labels=["FF-MLP", "SIREN", "band-limited"], whis=(5, 95))
+    if perm_corr:
+        ax2.axhline(float(np.mean(perm_corr)), color="0.5", ls=":",
+                    label="label-permutation control")
+        ax2.legend(fontsize=9)
+    ax2.set_ylabel("pattern correlation")
+    ax2.set_title(f"correlation over {n_seeds} seeds")
+    savefig(fig, "nonlinear_folds.png")
+
+
 def main():
     if not torch_available():
         print("[nonlinear] torch unavailable -- run on the GPU server", flush=True)
+        return
+    if "--figure-only" in sys.argv:
+        import json
+        from _util import RESULTS
+
+        d = json.loads((RESULTS / "nonlinear.json").read_text())
+        import torch
+
+        make_figure(d["runs"], d["controls"], d["n_seeds"],
+                    "cuda" if torch.cuda.is_available() else "cpu")
+        print("[nl] figure regenerated", flush=True)
         return
     import torch
 
@@ -244,27 +281,7 @@ def main():
     perm_corr = [r["pattern_corr"] for r in controls
                  if r.get("control") == "label_permutation"]
 
-    # figure: one representative run (spectra) + corr distributions per arch
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(7.6, 3.0), layout="constrained")
-    r, diff, pred, t = one_run("ffmlp", 50.0, 0, 200, dev=dev)
-    fr = np.arange(FMAX_SPEC + 1)
-    ax1.plot(fr, _spec(diff)[: FMAX_SPEC + 1], "C3-", lw=1.5,
-             label="measured attribution (ablation)")
-    ax1.plot(fr, _spec(pred)[: FMAX_SPEC + 1], "C0--", lw=1.4,
-             label=f"NTK prediction (corr {r['pattern_corr']:.2f})")
-    ax1.set_xlabel("frequency"); ax1.set_ylabel("|X| (norm)")
-    ax1.set_title("tone attribution: trained FF-MLP vs its NTK")
-    ax1.legend(fontsize=9)
-    data = [[r["pattern_corr"] for r in runs if r["arch"] == a]
-            for a in ("ffmlp", "siren", "bandlimited")]
-    ax2.boxplot(data, tick_labels=["FF-MLP", "SIREN", "band-limited"], whis=(5, 95))
-    if perm_corr:
-        ax2.axhline(float(np.mean(perm_corr)), color="0.5", ls=":",
-                    label="label-permutation control")
-        ax2.legend(fontsize=9)
-    ax2.set_ylabel("pattern correlation")
-    ax2.set_title(f"attribution vs prediction ({n_seeds} sampling seeds)")
-    savefig(fig, "nonlinear_folds.png")
+    make_figure(runs, controls, n_seeds, dev)
 
     out = {"N": N, "sigma": SIGMA, "epochs": EPOCHS, "n_seeds": n_seeds,
            "f_outs": list(F_OUTS), "device": dev, "quick": quick,

@@ -1,7 +1,10 @@
-r"""Theory-vs-simulation validation.
+r"""Theory-vs-simulation validation of the background LS identities.
 
-Every closed-form limit used in the paper is asserted against a Monte-Carlo experiment
-here.  A theorem is not allowed into the manuscript until its test passes.
+Naming note: the ``thm1``/``thm2``/``thm3`` prefixes below are historical.  In the
+current manuscript, old Theorem 1 is background Lemma 1, the grid-fold content of old
+Theorem 2 lives in Theorem T1 (see ``test_identifiability.py`` for the T1--T4 suite),
+and old Theorem 3 is supplement Prop.~S1.  The assertions themselves remain valid and
+are kept: every closed form shipped in :mod:`inralias.limits` stays Monte-Carlo-pinned.
 """
 import numpy as np
 import pytest

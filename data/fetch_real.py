@@ -23,6 +23,12 @@ import numpy as np
 HERE = Path(__file__).resolve().parent
 TIMEOUT = 40
 
+SPEECH_RECORDINGS = [
+    "OSR_us_000_0010_8k.wav",
+    "OSR_us_000_0011_8k.wav",
+    "OSR_us_000_0012_8k.wav",
+]
+
 SOURCES = {
     "speech": "https://www.voiptroubleshooter.com/open_speech/american/OSR_us_000_0010_8k.wav",
     "sunspots": "https://www.sidc.be/SILSO/INFO/sndtotcsv.php",
@@ -41,16 +47,29 @@ def _get(url: str) -> bytes:
 
 
 def fetch_speech(path: Path) -> bool:
+    """Fetch the three full Open Speech Repository recordings (public domain) used by
+    the experiments, saving ``speech_rec{0,1,2}.npz`` at native resolution plus a
+    provenance file with sha256 checksums.  ``path`` is ``speech_rec0.npz``."""
+    import hashlib
+    import json
+
     try:
         import soundfile as sf
-        raw = _get(SOURCES["speech"])
-        x, fs = sf.read(io.BytesIO(raw))
-        if x.ndim > 1:
-            x = x.mean(axis=1)
-        x = x[: int(2.0 * fs)]  # first ~2 s
-        x = (x - x.mean()) / (np.std(x) + 1e-9)
-        np.savez(path, x=x.astype(np.float32), fs=float(fs))
-        print(f"  speech: {x.size} samples @ {fs} Hz")
+        meta = {}
+        for i, name in enumerate(SPEECH_RECORDINGS):
+            url = f"https://www.voiptroubleshooter.com/open_speech/american/{name}"
+            raw = _get(url)
+            x, fs = sf.read(io.BytesIO(raw))
+            if x.ndim > 1:
+                x = x.mean(axis=1)
+            np.savez(HERE / f"speech_rec{i}.npz", x=x.astype(np.float32), fs=float(fs))
+            meta[name] = {"sha256": hashlib.sha256(raw).hexdigest(),
+                          "n_samples": int(x.size), "fs": float(fs),
+                          "duration_s": round(x.size / fs, 2), "source": url,
+                          "license": "public domain (Open Speech Repository, "
+                                     "Harvard sentences)"}
+            print(f"  speech_rec{i}: {x.size} samples @ {fs} Hz")
+        (HERE / "speech_provenance.json").write_text(json.dumps(meta, indent=2))
         return True
     except Exception as e:  # pragma: no cover
         print(f"  speech FAILED: {e}")

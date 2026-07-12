@@ -89,11 +89,17 @@ def load_segments(name: str):
     return segs
 
 
-def _band_from_reference(x_ref, keep=0.95):
-    X = np.abs(np.fft.rfft(x_ref)) ** 2
-    X[0] = 0
-    csum = np.cumsum(X) / (X.sum() + 1e-30)
-    return max(2, min(int(np.searchsorted(csum, keep)), x_ref.size // 4))
+def _oracle_best_band(Bgrid, t, y, t_ref, x_ref):
+    """TRUE-error-minimizing bandwidth over the selector grid.
+
+    Uses the full reference signal, so it is an evaluation-only UPPER BOUND on what any
+    bandwidth selector in this family can achieve at this sampling budget -- by
+    construction it is at least as good as every sample-only selector on the same grid.
+    (A reference-spectrum energy heuristic is NOT an oracle: for broadband signals it
+    picks bands near the sample budget and explodes the noise gain.)
+    """
+    errs = [_fit_eval(B, t, y, t_ref, x_ref) for B in Bgrid]
+    return int(Bgrid[int(np.argmin(errs))])
 
 
 def _fit_eval(B, t, y, t_ref, x_ref, ridge=0.0):
@@ -113,16 +119,16 @@ def _cv_error(B, t, y, ridge=0.0, k=5, rng=None):
     return float(np.mean(errs))
 
 
-def select_bandwidths(t, y, N, x_ref, seed):
-    """All selectors; only `oracle` sees x_ref."""
+def select_bandwidths(t, y, N, x_ref, t_ref, seed):
+    """All selectors; only `oracle` sees x_ref (evaluation-only upper bound)."""
     out = {}
     Bmax_est = N // 4
-    out["oracle"] = (_band_from_reference(x_ref), 0.0)
+    Bgrid = np.unique(np.geomspace(4, Bmax_est, 16).astype(int))
+    out["oracle"] = (_oracle_best_band(Bgrid, t, y, t_ref, x_ref), 0.0)
     out["ls_periodogram"] = (
         int(np.max(bandwidth_matched_freqs(t, y, Bmax_est, 0.95, method="lombscargle"))), 0.0)
     out["corr_periodogram"] = (
         int(np.max(bandwidth_matched_freqs(t, y, Bmax_est, 0.95, method="correlation"))), 0.0)
-    Bgrid = np.unique(np.geomspace(4, Bmax_est, 16).astype(int))
     cv_errs = [_cv_error(B, t, y, rng=seed) for B in Bgrid]
     out["cv"] = (int(Bgrid[int(np.argmin(cv_errs))]), 0.0)
     out["fixed_narrow"] = (8, 0.0)
@@ -147,7 +153,7 @@ def run(name: str):
             rng = np.random.default_rng(1000 + seed)
             idx = np.sort(rng.choice(M, size=N, replace=False))
             t, y = t_ref[idx], x_ref[idx] + rng.normal(0, noise_std, N)
-            sel = select_bandwidths(t, y, N, x_ref, seed)
+            sel = select_bandwidths(t, y, N, x_ref, t_ref, seed)
             for meth, (B, lam) in sel.items():
                 rows[meth].append(_fit_eval(B, t, y, t_ref, x_ref, ridge=lam))
                 bands[meth].append(int(B))

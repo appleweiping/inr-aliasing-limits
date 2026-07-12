@@ -28,7 +28,9 @@
 \newcommand{\NumCohAUC}{0.21}          % coherent-demo ring AUC
 \newcommand{\NumCohTPR}{0.03}          % coherent-demo TPR at 5% FPR
 \newcommand{\NumCoTwoLS}{0.167}        % CO2 sample-only LS-periodogram RMSE
-\newcommand{\NumCoTwoOracle}{0.204}    % CO2 oracle RMSE
+\newcommand{\NumCoTwoOracle}{0.171}    % CO2 true-oracle (best-in-grid) RMSE
+\newcommand{\NumSpeechOracle}{1.00}    % speech oracle RMSE (truncation-dominated)
+\newcommand{\NumSpeechLS}{1.46}        % speech LS-periodogram RMSE
 
 \title{Silent Aliasing in Fixed Fourier-Feature Coordinate Models}
 \name{Weiping Yan\thanks{Code, data provenance, and the supplement with full proofs:
@@ -59,7 +61,7 @@ each network's own NTK linearization and all seed-level failures reported.
 \end{abstract}
 
 \begin{keywords}
-Sampling theory, aliasing, identifiability, Fourier features, coordinate networks.
+Sampling theory, aliasing, identifiability, Fourier features, coordinate models.
 \end{keywords}
 
 \section{Introduction}
@@ -83,7 +85,7 @@ classes, \emph{visibility} $\vt(\nu)$, \emph{aliasability} $\at(\nu)$---in which
 silent aliasing is classified on arbitrary subsets of sampling grids, with an
 estimator-independent two-point lower bound (Thm.~\ref{thm:t1}).  (2)~Function-space
 accounting: a closed-form continuous Gram matrix with Riesz bounds and an exact error
-decomposition that keeps coefficient error, aliasing-induced modeled-component error, and
+decomposition keeping coefficient error, aliasing-induced modeled-component error, and
 truncation error \emph{separate} (Thm.~\ref{thm:t2}).  (3)~Proof that \emph{random
 sampling breaks exact aliasing}, with explicit rates: a characteristic-function law for
 jitter and a finite-candidate concentration bound for i.i.d.\ sampling
@@ -252,6 +254,45 @@ separately (Sec.~\ref{sec:exp}).
 All identities and bounds above are validated against Monte Carlo in the released test
 suite (34 tests); experiment JSONs carry seeds, configs, and environment stamps.
 
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.99\textwidth]{synthetic_matrix.png}
+\caption{Theorem validation (mean $\pm$ 95\% CI over 20 draws).  (a)~T3a jitter law;
+(b)~T3b concentration with the proved bound; (c)~T1 grid persistence vs i.i.d.\ sampling
+(fixed and adversarial tones); (d)~T2 decomposition: jitter removes aliasing bias, not
+truncation.}
+\label{fig:matrix}
+\end{figure*}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.92\textwidth]{image2d_aliasing.png}
+\caption{2-D structured aliasing.  (a)~linear model: the planted out-of-band frequency
+vector folds exactly onto the predicted atom (circle; the Hermitian partner appears
+mirrored) on a grid subset; (b,c)~trained 2-D networks: DFT of over-scaled
+reconstructions shows the predicted replicas (circles) under a lattice (coherent) mask
+but not under a random mask of equal density.}
+\label{fig:img}
+\end{figure*}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{diagnostic_roc.png}
+\caption{Detection power (TPR at 5\% FPR, calibration/test separated) vs tone amplitude
+at $\sigma{=}0.1$: five sample-only detectors against the exact Thm.~\ref{thm:t4}(b)
+power curve; the coherent fold stays at chance at any amplitude (Thm.~\ref{thm:t4}(a)).}
+\label{fig:roc}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{nonlinear_folds.png}
+\caption{Trained networks (empirical): ablation-measured tone attribution vs each
+network's NTK prediction; right: pattern-correlation distributions over 20 sampling
+seeds (whiskers 5--95\%), with the label-permutation control.}
+\label{fig:nl}
+\end{figure}
+
 \emph{Theorem validation (Fig.~\ref{fig:matrix}).}  (a)~the jitter law: empirical
 visibility of a grid-coherent tone matches $\sqrt{1-\chi_\eta^2}$ across two decades,
 with the exact fold ($v\approx10^{-13}$) at $\sigma_t=0$; (b)~worst-case aliasability
@@ -274,31 +315,44 @@ operating characteristics by design.
 \emph{Real signals, sample-only.}  On real series (Mauna Loa CO$_2$, sunspots, and nine
 2-s speech segments from three Open Speech Repository recordings; anti-aliased
 \texttt{resample\_poly} decimation; full records, no window selection), bandwidth
-selectors that see \emph{only the training samples} are compared against an
-oracle that reads the reference spectrum.  On CO$_2$ the sample-only Lomb--Scargle
-selector attains RMSE $\NumCoTwoLS$ vs the oracle heuristic's $\NumCoTwoOracle$
-(mean over 10 draws; paired CIs in the released results)---deployable selection is not
-the bottleneck; cross-validated selection is markedly less stable under gappy sampling.
-Full per-method, per-signal tables with paired 95\% CIs are in the repository.
+selectors that see \emph{only the training samples} are compared against a true oracle
+(the bandwidth minimizing the actual reconstruction error; evaluation-only upper bound).
+On CO$_2$ the sample-only Lomb--Scargle selector attains RMSE $\NumCoTwoLS$ vs the
+oracle's $\NumCoTwoOracle$ (means over 10 draws; paired CIs released)---deployable
+selection is not the bottleneck.  On broadband speech \emph{no} selector beats
+RMSE${}\approx\NumSpeechOracle$ (oracle $\NumSpeechOracle$, periodogram
+$\NumSpeechLS$): at this sampling budget the truncation term of~\eqref{eq:dec}
+dominates, the real-data face of the converse.  Cross-validated selection is markedly
+less stable under gappy sampling.  Full per-method, per-signal tables with paired 95\%
+CIs are in the repository.
 
 \emph{Trained networks (empirical extrapolation only).}  For FF-MLPs, SIRENs, and an
 explicitly band-limited head, tone attribution is measured by an ablation (identical
 initialization trained with/without the tone) and compared to the prediction of
-\emph{each network's own NTK linearization}---no arbitrary reference band.  Across 20
-sampling seeds per condition we report exact-match and top-3 fold agreement rates,
-pattern-correlation distributions with bootstrap CIs, and controls (label permutation,
-amplitude, weight-seed stability); seed-level disagreements are reported, not hidden
-(Fig.~\ref{fig:nl}, left: a representative run; right: correlation distributions).  In
+\emph{each network's own NTK linearization}---no arbitrary reference band.  Across
+$\ge20$ sampling seeds per condition, with label-permutation, amplitude, and weight-seed
+controls, the linear picture extrapolates well to \emph{lazy-regime} networks---FF-MLP:
+exact fold match $77\%$, top-3 $98\%$, pattern correlation median $0.96$
+($n{=}60$); band-limited head: correlation median $0.98$---but \emph{fails} for
+SIRENs (exact match $20\%$, correlation median $0.49$, $n{=}20$): trained SIRENs leave
+their initialization NTK, and we accordingly make \emph{no} claim that the theory covers
+them (Fig.~\ref{fig:nl}).  In
 2-D (Fig.~\ref{fig:img}), the linear model reproduces the predicted frequency-vector
 fold exactly ((a): planted $(27,3)$ on a rate-32 grid subset folds to $(-5,3)$, residual
 $10^{-15}$), and trained 2-D networks show the predicted DFT replicas under
-\emph{lattice} (coherent) masks but not under random masks of equal density---with
-ridge/early-stopping baselines and clean/noisy/held-out/full-field PSNR reported
-separately in the released results.
+\emph{lattice} (coherent) masks---replica-energy ratio $40{\pm}32$ at the predicted
+shifts, vs $0.99{\pm}0.09$ under random masks of equal density ($3$ images, $12$/$24$
+mask draws)---while fitting the observed pixels to $66$~dB against $12$~dB on held-out
+pixels (2-D silent aliasing).  Ridge and early stopping do \emph{not} remove the
+replicas (ratios $89$ and $25$): structured aliasing is a sampling-design property, not
+an overfitting artifact; clean/noisy/held-out/full-field PSNR are reported separately in
+the released results.
 
 \section{Limitations and conclusion}
 Our theorems cover fixed-feature, linear-coefficient Fourier models; trained nonlinear
-networks are studied only empirically, and adaptive/learned frequency sets are open.  The
+networks are studied only empirically---and the extrapolation has an empirical boundary:
+it holds for lazy-regime FF-MLPs but \emph{fails for SIRENs}, whose training leaves the
+initialization NTK.  Adaptive/learned frequency sets are open.  The
 concentration bound is a union bound (loose constants); the jitter law's multi-atom
 correction is $O_P(m\sqrt{\log/N})$.  Within that scope the theory is complete and
 mechanically verified: exact silent aliasing is a property of \emph{grid designs} and is
@@ -308,45 +362,6 @@ detectors.  Practical guidance: avoid pure grid designs when out-of-band content
 possible; jitter of std $\sigma_t$ buys visibility $\approx2\pi|r|Q\sigma_t$; calibrate
 diagnostics on explicit nulls; and never read training residual as reconstruction
 fidelity.
-
-\begin{figure*}[t]
-\centering
-\includegraphics[width=0.99\textwidth]{synthetic_matrix.png}
-\caption{Theorem validation (mean $\pm$ 95\% CI over 20 draws).  (a)~T3a jitter law;
-(b)~T3b concentration with the proved bound; (c)~T1 grid persistence vs i.i.d.\ sampling
-(fixed and adversarial tones); (d)~T2 decomposition: jitter removes aliasing bias, not
-truncation.}
-\label{fig:matrix}
-\end{figure*}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\linewidth]{diagnostic_roc.png}
-\caption{Detection power (TPR at 5\% FPR, calibration/test separated) vs tone amplitude
-at $\sigma{=}0.1$: five sample-only detectors against the exact Thm.~\ref{thm:t4}(b)
-power curve; the coherent fold stays at chance at any amplitude (Thm.~\ref{thm:t4}(a)).}
-\label{fig:roc}
-\end{figure}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\linewidth]{nonlinear_folds.png}
-\caption{Trained networks (empirical): ablation-measured tone attribution vs each
-network's NTK prediction; right: pattern-correlation distributions over 20 sampling
-seeds (whiskers 5--95\%), with the label-permutation control.}
-\label{fig:nl}
-\end{figure}
-
-\begin{figure*}[t]
-\centering
-\includegraphics[width=0.92\textwidth]{image2d_aliasing.png}
-\caption{2-D structured aliasing.  (a)~linear model: the planted out-of-band frequency
-vector folds exactly onto the predicted atom (circle) on a grid subset;
-(b,c)~trained 2-D networks: DFT of over-scaled reconstructions shows the predicted
-replicas (circles) under a lattice (coherent) mask but not under a random mask of equal
-density.}
-\label{fig:img}
-\end{figure*}
 
 \vfill\pagebreak
 \bibliographystyle{IEEEbib}

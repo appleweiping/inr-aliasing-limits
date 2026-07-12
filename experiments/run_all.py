@@ -34,7 +34,11 @@ DATA = ROOT / "data"
 
 def _ensure_data():
     needed = ["co2", "sunspots_smooth", "speech", "sunspots"]
-    missing = [n for n in needed if not (DATA / f"{n}.npz").exists()]
+    def _have(n):
+        if n == "speech":
+            return (DATA / "speech_rec0.npz").exists()
+        return (DATA / f"{n}.npz").exists()
+    missing = [n for n in needed if not _have(n)]
     if missing:
         print(f"[run_all] fetching missing real data: {missing}", flush=True)
         import importlib.util

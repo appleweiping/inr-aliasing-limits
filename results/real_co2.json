@@ -12,58 +12,58 @@
   ],
   "methods": {
     "oracle": {
-      "rmse_mean": 0.2039544631454207,
-      "rmse_ci95": 0.016509915283064464,
+      "rmse_mean": 0.17059333324384157,
+      "rmse_ci95": 0.0193289508396396,
       "paired_diff_vs_oracle_mean": 0.0,
       "paired_diff_ci95": 0.0,
-      "band_mean": 69.0,
+      "band_mean": 82.0,
       "n": 10
     },
     "ls_periodogram": {
       "rmse_mean": 0.16714526363873422,
       "rmse_ci95": 0.012024435900298367,
-      "paired_diff_vs_oracle_mean": -0.03680919950668645,
-      "paired_diff_ci95": 0.013016776361568729,
+      "paired_diff_vs_oracle_mean": -0.0034480696051073316,
+      "paired_diff_ci95": 0.014497046441172636,
       "band_mean": 72.9,
       "n": 10
     },
     "corr_periodogram": {
       "rmse_mean": 0.16767580637395307,
       "rmse_ci95": 0.012150031908264575,
-      "paired_diff_vs_oracle_mean": -0.0362786567714676,
-      "paired_diff_ci95": 0.012479939913572323,
+      "paired_diff_vs_oracle_mean": -0.0029175268698884787,
+      "paired_diff_ci95": 0.01400102547892492,
       "band_mean": 72.9,
       "n": 10
     },
     "cv": {
       "rmse_mean": 0.299791515859505,
       "rmse_ci95": 0.07778425377558794,
-      "paired_diff_vs_oracle_mean": 0.0958370527140843,
-      "paired_diff_ci95": 0.0850706296191612,
+      "paired_diff_vs_oracle_mean": 0.1291981826156634,
+      "paired_diff_ci95": 0.0846106699013655,
       "band_mean": 44.2,
       "n": 10
     },
     "fixed_narrow": {
       "rmse_mean": 0.41302946197129753,
       "rmse_ci95": 0.0011457177881919066,
-      "paired_diff_vs_oracle_mean": 0.20907499882587688,
-      "paired_diff_ci95": 0.0161888662370976,
+      "paired_diff_vs_oracle_mean": 0.24243612872745599,
+      "paired_diff_ci95": 0.018925155528288624,
       "band_mean": 8.0,
       "n": 10
     },
     "fixed_wide": {
       "rmse_mean": 0.4126773046734721,
       "rmse_ci95": 0.3743788754933188,
-      "paired_diff_vs_oracle_mean": 0.20872284152805146,
-      "paired_diff_ci95": 0.3621425672454137,
+      "paired_diff_vs_oracle_mean": 0.24208397142963056,
+      "paired_diff_ci95": 0.35835903869407937,
       "band_mean": 102.0,
       "n": 10
     },
     "ridge_wide": {
       "rmse_mean": 0.3658792005130761,
       "rmse_ci95": 0.034933183654210276,
-      "paired_diff_vs_oracle_mean": 0.1619247373676554,
-      "paired_diff_ci95": 0.04078492177938858,
+      "paired_diff_vs_oracle_mean": 0.19528586726923453,
+      "paired_diff_ci95": 0.04319363188266489,
       "band_mean": 136.0,
       "n": 10
     }
@@ -77,6 +77,6 @@
     "scipy": "1.17.1",
     "torch": "2.13.0+cpu",
     "cuda": null,
-    "git_commit": "3b406a4"
+    "git_commit": "f913abc"
   }
 }
