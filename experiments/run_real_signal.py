@@ -135,22 +135,24 @@ def run(name: str, density: float = 3.0, snr_db: float = 30.0, n_seeds: int = 10
     B_knee = int(grid[knee_idx])
 
     # ---- figures (mean curve with +-1 s.d. band) ----
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8.6, 3.2))
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(7.0, 2.7), layout="constrained")
     ax1.plot(grid, rmse, "o-", ms=3, color="C3", label=f"mean of {n_seeds} draws")
-    ax1.fill_between(grid, rmse - rmse_std, rmse + rmse_std, color="C3", alpha=0.2,
+    # clip the lower band edge to stay positive on the log axis (avoids broken fill)
+    lo = np.maximum(rmse - rmse_std, 0.05 * rmse)
+    ax1.fill_between(grid, lo, rmse + rmse_std, color="C3", alpha=0.2,
                      label="$\\pm 1$ s.d.")
     ax1.axvline(B_sig, color="C0", ls="--", lw=1.2, label=f"$B_{{sig}}$={B_sig}")
     ax1.axvline(B_knee, color="k", ls=":", lw=1.0, label=f"knee={B_knee}")
     ax1.set_xlabel("INR bandwidth $B_{INR}$"); ax1.set_ylabel("reconstruction RMSE")
-    ax1.set_yscale("log"); ax1.set_title(f"{name}: error vs INR bandwidth"); ax1.legend(fontsize=7)
+    ax1.set_yscale("log"); ax1.set_title(f"{name}: error vs bandwidth"); ax1.legend(fontsize=9)
 
     Xref = np.abs(np.fft.rfft(x_ref)); fr = np.arange(Xref.size)
     ax2.plot(fr, Xref / Xref.max(), color="0.6", lw=1.0, label="true spectrum")
-    ax2.axvline(B_narrow, color="C1", ls="--", lw=1.0, label=f"narrow $B$={B_narrow}")
-    ax2.axvline(B_match, color="C2", ls="--", lw=1.0, label=f"matched $B$={B_match}")
+    ax2.axvline(B_narrow, color="C1", ls=":", lw=1.4, label=f"narrow $B_{{INR}}$={B_narrow}")
+    ax2.axvline(B_match, color="C2", ls="--", lw=1.4, label=f"matched $B_{{INR}}$={B_match}")
     ax2.set_xlim(0, min(Bmax * 1.5, Xref.size))
     ax2.set_xlabel("frequency (cycles/record)"); ax2.set_ylabel("|X| (norm)")
-    ax2.set_title("spectrum & INR bands"); ax2.legend(fontsize=7)
+    ax2.set_title("spectrum and INR bands"); ax2.legend(fontsize=9)
     savefig(fig, f"real_{name}.png")
 
     out = {

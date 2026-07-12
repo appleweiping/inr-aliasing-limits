@@ -131,22 +131,28 @@ def figure_A():
     ]
     plateaus = {f"r={r}": _plateau_rmse(r) for r in ratios if r > 1.0}
 
-    fig, ax = plt.subplots(figsize=(5.2, 3.4))
+    fig, ax = plt.subplots(figsize=(5.2, 3.6), layout="constrained")
     se = 1.0 / np.sqrt(N_TRIALS)
+    styles = {1.0: ("-", "o"), 1.25: ("--", "s"), 1.5: ("-.", "^")}
     for r in ratios:
         mu = np.array(curves[f"r={r}"]); sd = np.array(stds[f"r={r}"])
-        (line,) = ax.plot(densities, mu, marker="o", ms=3, label=f"$B_{{sig}}/B_{{INR}}={r}$")
+        ls, mk = styles.get(r, ("-", "o"))
+        (line,) = ax.plot(densities, mu, ls=ls, marker=mk, ms=4,
+                          label=f"$B_{{sig}}/B_{{INR}}={r}$")
         ax.fill_between(densities, mu - se * sd, mu + se * sd, color=line.get_color(), alpha=0.2)
     ax.plot(densities, noise_floor_curve, color="0.4", ls="--", lw=1.0,
             label="Thm 1 noise floor ($r{=}1$)")
+    first = True
     for key, val in plateaus.items():
-        ax.axhline(val, color="0.4", ls=":", lw=0.9)
+        ax.axhline(val, color="0.4", ls=(0, (3, 1, 1, 1)), lw=1.0,
+                   label="predicted $\\|f_{out}\\|$ floors" if first else None)
+        first = False
     ax.axvline(1.0, color="k", ls=":", lw=1, label="stable rate $\\rho=1$")
     ax.set_xlabel("sampling density $\\rho = N/(2 B_{INR})$")
     ax.set_ylabel("reconstruction RMSE")
     ax.set_yscale("log")
     ax.set_title("Achievability ($r{=}1$) vs aliasing floor ($r{>}1$)")
-    ax.legend(fontsize=6.5)
+    ax.legend(fontsize=9.5, loc="lower left")
     savefig(fig, "phase_transition_A.png")
     return {"densities": densities.tolist(), "curves": curves, "stds": stds,
             "n_trials": N_TRIALS,

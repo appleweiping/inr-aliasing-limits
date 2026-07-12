@@ -46,7 +46,8 @@ the manuscript.
       silent aliasing (20-seed statistics)
 - [x] Real data (mean ± s.d. over 10 draws): CO₂ recovers (0.42→0.17), speech is the converse
       side (no width approaches the noise floor: truncation floor, then noise-gain blow-up)
-- [x] 2-D image demo (learned aliasing persists; sample-PSNR vs full-field PSNR on-figure)
+- [x] 2-D image demo (aliasing persists across 3 pixel-mask draws: over-scaled band fits observed
+      pixels to 49–64 dB while the full field stays ~16 dB; sample-PSNR vs full-field PSNR on-figure)
 - [x] Paper (IEEE ICASSP, spconf) — `paper/main.pdf`, compiles clean (4 pages + refs-only p.5)
 
 All theorem ↔ Monte-Carlo checks pass (`python -m pytest -q`, 22 tests).

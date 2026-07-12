@@ -65,7 +65,7 @@ def _radial_spectrum(img):
     return prof / (prof.max() + 1e-12)
 
 
-def run(size=128, sample_frac=0.5, seed=0):
+def run(size=128, sample_frac=0.5, seed=0, make_fig=True, save=True):
     if not torch_available():
         print("[image2d] torch unavailable -- skipping (run on server)", flush=True)
         return None
@@ -117,35 +117,62 @@ def run(size=128, sample_frac=0.5, seed=0):
               f"full_PSNR={metrics[tag]['full_psnr']:.1f} hf_PSNR={metrics[tag]['hf_psnr']:.1f}",
               flush=True)
 
+    if not make_fig:
+        return {"seed": seed, "metrics": metrics}
+
     # ---- figure: original | under | matched | over | radial spectrum ----
     # constrained_layout keeps the spectrum panel's y-label off the neighbouring image
-    fig, axes = plt.subplots(1, 5, figsize=(13.5, 2.9), layout="constrained")
+    fig, axes = plt.subplots(1, 5, figsize=(13.5, 3.0), layout="constrained")
     axes[0].imshow(img, cmap="gray"); axes[0].set_title("original"); axes[0].axis("off")
-    for ax, tag, lbl in ((axes[1], "under", "under-scaled\n(safe)"),
-                         (axes[2], "matched", "matched\n(safe)"),
-                         (axes[3], "over", "over-scaled\n(silent alias)")):
+    for ax, tag, lbl in ((axes[1], "under", "under-scaled (safe)"),
+                         (axes[2], "matched", "matched (safe)"),
+                         (axes[3], "over", "over-scaled (silent alias)")):
         ax.imshow(recon[tag], cmap="gray")
-        ax.set_title(f"{lbl}\nsmp {metrics[tag]['sample_psnr']:.0f} / full "
-                     f"{metrics[tag]['full_psnr']:.1f} / hf "
-                     f"{metrics[tag]['hf_psnr']:.1f} dB", fontsize=8)
+        ax.set_title(f"{lbl}\n{metrics[tag]['sample_psnr']:.0f} / "
+                     f"{metrics[tag]['full_psnr']:.1f} / "
+                     f"{metrics[tag]['hf_psnr']:.1f} dB", fontsize=12)
         ax.axis("off")
     fr = np.arange(_radial_spectrum(img).size)
     axes[4].semilogy(fr, _radial_spectrum(img) + 1e-6, color="0.5", label="true")
-    axes[4].semilogy(fr, _radial_spectrum(recon["under"]) + 1e-6, color="C0", label="under")
+    axes[4].semilogy(fr, _radial_spectrum(recon["under"]) + 1e-6, color="C0", ls=":", label="under")
     axes[4].semilogy(fr, _radial_spectrum(recon["matched"]) + 1e-6, color="C2", ls="--", label="matched")
     axes[4].semilogy(fr, _radial_spectrum(recon["over"]) + 1e-6, color="C1", label="over")
     axes[4].set_xlabel("radial freq"); axes[4].set_ylabel("power"); axes[4].set_title("radial spectrum")
-    axes[4].legend(fontsize=7)
+    axes[4].legend(fontsize=11)
     savefig(fig, "image2d_aliasing.png")
 
     out = {"size": size, "sample_frac": sample_frac, "N": N, "device": dev,
            "B_img": B_img, "metrics": metrics,
            "note": "2-D INR band vs sampling: an OVER-scaled band silently aliases under sparse "
                    "pixels (high sample-PSNR ~50dB but low full/hf-PSNR, moire); a band matched to "
-                   "or below the sampling is safe (~21dB). Single seed, scipy ascent image."}
+                   "or below the sampling is safe (~21dB). Figure from seed 0; see extra_seeds "
+                   "for pixel-mask/noise stability. Scipy ascent image."}
+    if save:
+        save_json("image2d_aliasing.json", out)
+    return out
+
+
+def main(seeds=(0, 1, 2)):
+    """Seed 0 draws the figure; extra seeds check pixel-mask/noise stability of the metrics."""
+    out = run(seed=seeds[0], make_fig=True, save=False)
+    if out is None:
+        return None
+    extra = [run(seed=s, make_fig=False, save=False) for s in seeds[1:]]
+    out["extra_seeds"] = extra
+    # per-regime ranges across all seeds, for the paper caption
+    allm = [out["metrics"]] + [e["metrics"] for e in extra]
+    ranges = {}
+    for tag in ("under", "matched", "over"):
+        ranges[tag] = {
+            k: [min(m[tag][k] for m in allm), max(m[tag][k] for m in allm)]
+            for k in ("sample_psnr", "full_psnr", "hf_psnr")
+        }
+    out["ranges"] = ranges
     save_json("image2d_aliasing.json", out)
+    print("[image2d] ranges over seeds:", {t: {k: [round(v, 1) for v in vv]
+          for k, vv in r.items()} for t, r in ranges.items()}, flush=True)
     return out
 
 
 if __name__ == "__main__":
-    run()
+    main()

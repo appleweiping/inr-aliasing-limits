@@ -100,13 +100,13 @@ def main():
     ring = np.setdiff1d(np.arange(-30, 31).astype(float), LAMBDA)
     diag = extended_dictionary_test(LAMBDA, d["t"], d["y"], ring)
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8.4, 3.2))
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(6.8, 2.7), layout="constrained")
     ax1.plot(d["t_dense"], d["f_true"], color="0.6", lw=1.2, label="true signal")
     ax1.plot(d["t_dense"], d["f_hat"], color="C3", lw=1.0, ls="--", label="INR fit")
     ax1.plot(d["t"], d["y"], "k.", ms=4, label="samples")
     ax1.set_xlabel("t"); ax1.set_ylabel("amplitude")
-    ax1.set_title(f"time domain (sample RMSE={resid:.3f}, recon RMSE={d['recon_rmse']:.2f})")
-    ax1.legend(fontsize=7)
+    ax1.set_title("time domain")
+    ax1.legend(fontsize=10)
 
     order = np.argsort(LAMBDA)
     ax2.stem(LAMBDA[order], np.abs(c_star)[order], linefmt="0.7", markerfmt="o",
@@ -115,11 +115,11 @@ def main():
              basefmt=" ", label="INR recovered")
     ax2.axvline(fold["fold_freq"], color="C0", ls=":", lw=1.5)
     ax2.annotate(f"$\\nu={NU:.0f}$ folds\nexactly to ${fold['fold_freq']:.0f}$",
-                 xy=(fold["fold_freq"], np.abs(c_hat)[int(np.argmin(np.abs(LAMBDA - fold['fold_freq'])))]),
-                 xytext=(fold["fold_freq"] - 9.5, 0.72), fontsize=11, color="k",
+                 xy=(fold["fold_freq"], np.abs(c_hat)[int(np.argmin(np.abs(LAMBDA - fold['fold_freq'])))] - 0.06),
+                 xytext=(-9.5, 0.38), fontsize=12, color="k",
                  arrowprops=dict(arrowstyle="->", color="k"))
-    ax2.set_xlabel("frequency ($\\Lambda$ is non-uniform)"); ax2.set_ylabel("|coefficient|")
-    ax2.set_title(f"spectrum (spectral err={spectral_err:.2f})"); ax2.legend(fontsize=7)
+    ax2.set_xlabel("frequency ($\\Lambda$ non-uniform)"); ax2.set_ylabel("|coefficient|")
+    ax2.set_title("recovered spectrum"); ax2.legend(fontsize=10, loc="upper left")
     savefig(fig, "silent_aliasing.png")
 
     out = {"Lambda": LAMBDA.tolist(), "m": int(LAMBDA.size), "Q": Q, "N": N, "nu": NU,

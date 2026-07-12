@@ -58,7 +58,7 @@ def main():
         import run_nonlinear
         print("\n=== nonlinear INR persistence (torch) ==="); run_nonlinear.main()
         import run_image2d
-        print("\n=== 2-D image demo (torch) ==="); run_image2d.run()
+        print("\n=== 2-D image demo (torch) ==="); run_image2d.main()
     else:
         print("\n[run_all] torch unavailable -- skipping nonlinear + 2-D demos "
               "(run experiments/run_nonlinear.py and run_image2d.py on the GPU server)", flush=True)

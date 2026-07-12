@@ -13,6 +13,17 @@ if str(_SRC) not in sys.path:
 import matplotlib  # noqa: E402
 
 matplotlib.use("Agg")  # headless / no window (respects window-management rules)
+# Print-size typography: figures are scaled to ~0.5x in the two-column paper, so fonts are
+# set large here to remain >=6-7pt effective at ICASSP column width.
+matplotlib.rcParams.update({
+    "font.size": 14,
+    "axes.titlesize": 14,
+    "axes.labelsize": 14,
+    "xtick.labelsize": 12,
+    "ytick.labelsize": 12,
+    "legend.fontsize": 12,
+    "lines.linewidth": 1.6,
+})
 import matplotlib.pyplot as plt  # noqa: E402,F401
 
 RESULTS = Path(__file__).resolve().parent.parent / "results"

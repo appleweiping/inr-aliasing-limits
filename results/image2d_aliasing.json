@@ -24,5 +24,97 @@
       "hf_psnr": 17.84586282649548
     }
   },
-  "note": "2-D INR band vs sampling: an OVER-scaled band silently aliases under sparse pixels (high sample-PSNR ~50dB but low full/hf-PSNR, moire); a band matched to or below the sampling is safe (~21dB). Single seed, scipy ascent image."
+  "note": "2-D INR band vs sampling: an OVER-scaled band silently aliases under sparse pixels (high sample-PSNR ~50dB but low full/hf-PSNR, moire); a band matched to or below the sampling is safe (~21dB). Figure from seed 0; see extra_seeds for pixel-mask/noise stability. Scipy ascent image.",
+  "extra_seeds": [
+    {
+      "seed": 1,
+      "metrics": {
+        "under": {
+          "scale": 5.333333333333333,
+          "sample_psnr": 53.83390349967661,
+          "full_psnr": 21.415810838291197,
+          "hf_psnr": 21.86351847260347
+        },
+        "matched": {
+          "scale": 16.0,
+          "sample_psnr": 72.98229714686514,
+          "full_psnr": 20.923048666984705,
+          "hf_psnr": 21.430042769962565
+        },
+        "over": {
+          "scale": 53.333333333333336,
+          "sample_psnr": 63.47825266910082,
+          "full_psnr": 16.642776366351914,
+          "hf_psnr": 18.151736851329197
+        }
+      }
+    },
+    {
+      "seed": 2,
+      "metrics": {
+        "under": {
+          "scale": 5.333333333333333,
+          "sample_psnr": 38.542228475787695,
+          "full_psnr": 21.34600496806585,
+          "hf_psnr": 21.923093935446502
+        },
+        "matched": {
+          "scale": 16.0,
+          "sample_psnr": 52.823261940533584,
+          "full_psnr": 20.900215717846265,
+          "hf_psnr": 21.480806338192863
+        },
+        "over": {
+          "scale": 53.333333333333336,
+          "sample_psnr": 48.63955882559538,
+          "full_psnr": 16.30956452757188,
+          "hf_psnr": 17.79015141714138
+        }
+      }
+    }
+  ],
+  "ranges": {
+    "under": {
+      "sample_psnr": [
+        38.542228475787695,
+        53.83390349967661
+      ],
+      "full_psnr": [
+        21.268330508465688,
+        21.415810838291197
+      ],
+      "hf_psnr": [
+        21.724350052868623,
+        21.923093935446502
+      ]
+    },
+    "matched": {
+      "sample_psnr": [
+        52.823261940533584,
+        72.98229714686514
+      ],
+      "full_psnr": [
+        20.821288895938178,
+        20.923048666984705
+      ],
+      "hf_psnr": [
+        21.31872198890798,
+        21.480806338192863
+      ]
+    },
+    "over": {
+      "sample_psnr": [
+        48.63955882559538,
+        63.47825266910082
+      ],
+      "full_psnr": [
+        16.30956452757188,
+        16.642776366351914
+      ],
+      "hf_psnr": [
+        17.79015141714138,
+        18.151736851329197
+      ]
+    }
+  }
 }
