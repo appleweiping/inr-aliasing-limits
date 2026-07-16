@@ -65,6 +65,11 @@ def main():
     sys.argv = ["run_real_signal", "speech", "co2", "sunspots", "sunspots_smooth"]
     run_real_signal.main()
 
+    import run_aliasguard
+    print("\n=== E6 certified anti-aliasing sampling design ===")
+    sys.argv = ["run_aliasguard"]
+    run_aliasguard.main()
+
     from inralias.inr import torch_available
     if full and torch_available():
         import run_nonlinear

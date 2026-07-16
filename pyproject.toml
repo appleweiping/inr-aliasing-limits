@@ -1,7 +1,7 @@
 [project]
 name = "inr-aliasing-limits"
-version = "0.2.0"
-description = "Silent aliasing in fixed Fourier-feature coordinate models: exact indistinguishability, random sampling, and detection"
+version = "0.3.0"
+description = "Silent aliasing and certified sampling design for fixed Fourier-feature models: identifiability, randomization, and constructive anti-aliasing design"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -15,7 +15,7 @@ dependencies = [
 # torch is only needed for the trained nonlinear-INR experiments (SIREN / learnable
 # frequencies). The theory core + its Monte-Carlo validation are pure numpy/scipy.
 torch = ["torch>=2.2"]
-dev = ["pytest>=8.0"]
+dev = ["pytest>=8.0", "pypdf>=4.0"]
 
 [build-system]
 requires = ["hatchling"]

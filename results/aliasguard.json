@@ -1,0 +1,573 @@
+{
+  "config": {
+    "LAMBDA": [
+      0.0,
+      5.0,
+      -5.0,
+      11.0,
+      -11.0,
+      17.0,
+      -17.0,
+      23.0,
+      -23.0
+    ],
+    "m": 9,
+    "Q_grid": 256,
+    "random_seeds": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "ag_seeds": [
+      0,
+      1,
+      2
+    ],
+    "concern": [
+      26.5,
+      33.0,
+      41.5,
+      -26.5,
+      -33.0,
+      -41.5,
+      279.0,
+      -279.0
+    ]
+  },
+  "A_regimes": {
+    "coherent_folds": {
+      "N": 40,
+      "K": 16,
+      "methods": {
+        "random_grid_subset": {
+          "min_visibility": 3.518512691967391e-14,
+          "min_visibility_ci": 1.6507427515940605e-15,
+          "max_aliasability": 1.0000000000000042,
+          "max_aliasability_ci": 1.4259170314536652e-15,
+          "condition_number": 2.1628635941183494,
+          "condition_number_ci": 0.22015259161164044
+        },
+        "iid_uniform": {
+          "min_visibility": 0.8364356833934959,
+          "min_visibility_ci": 0.015189410468482833,
+          "max_aliasability": 0.6524251165719727,
+          "max_aliasability_ci": 0.046596573932199355,
+          "condition_number": 2.199544200348965,
+          "condition_number_ci": 0.20889551874335774
+        },
+        "random_jitter": {
+          "min_visibility": 0.8445578027630689,
+          "min_visibility_ci": 0.016919861281058674,
+          "max_aliasability": 0.6049120054265265,
+          "max_aliasability_ci": 0.03902351990810668,
+          "condition_number": 1.8318932518140814,
+          "condition_number_ci": 0.11440035774199221
+        },
+        "full_grid": {
+          "min_visibility": 5.610771788243084e-15,
+          "min_visibility_ci": 0.0,
+          "max_aliasability": 1.0000000000000018,
+          "max_aliasability_ci": 0.0,
+          "condition_number": 2.500069379326925,
+          "condition_number_ci": 0.0
+        },
+        "fixed_jitter": {
+          "min_visibility": 3.9998207136551136e-14,
+          "min_visibility_ci": 0.0,
+          "max_aliasability": 1.000000000000002,
+          "max_aliasability_ci": 0.0,
+          "condition_number": 1.4508490870588027,
+          "condition_number_ci": 0.0
+        },
+        "condition_only": {
+          "min_visibility": 0.8752744280097253,
+          "min_visibility_ci": 0.0,
+          "max_aliasability": 0.48975687620021735,
+          "max_aliasability_ci": 0.0,
+          "condition_number": 1.1225001508483672,
+          "condition_number_ci": 0.0
+        },
+        "coherence_only": {
+          "min_visibility": 0.9652035292063218,
+          "min_visibility_ci": 0.0,
+          "max_aliasability": 0.34090351995724677,
+          "max_aliasability_ci": 0.0,
+          "condition_number": 2.383609699083146,
+          "condition_number_ci": 0.0
+        },
+        "e_optimal": {
+          "min_visibility": 0.8781231105152577,
+          "min_visibility_ci": 0.0,
+          "max_aliasability": 0.5030109120270393,
+          "max_aliasability_ci": 0.0,
+          "condition_number": 1.690030821857429,
+          "condition_number_ci": 0.0
+        },
+        "random_search": {
+          "min_visibility": 0.9045620519783316,
+          "min_visibility_ci": 0.0,
+          "max_aliasability": 0.4654896741001322,
+          "max_aliasability_ci": 0.0,
+          "condition_number": 2.2097323992977755,
+          "condition_number_ci": 0.0
+        },
+        "aliasguard_greedy": {
+          "min_visibility": 3.079167283680814e-14,
+          "min_visibility_ci": 0.0,
+          "max_aliasability": 1.0000000000000007,
+          "max_aliasability_ci": 0.0,
+          "condition_number": 1.0747690130223226,
+          "condition_number_ci": 0.0
+        },
+        "aliasguard": {
+          "min_visibility": 0.9879962157941815,
+          "min_visibility_ci": 0.003463318300567049,
+          "max_aliasability": 0.15604857897835925,
+          "max_aliasability_ci": 0.024807217042191174,
+          "condition_number": 1.1587562790837003,
+          "condition_number_ci": 0.014733815101743297
+        }
+      }
+    },
+    "near_band": {
+      "N": 40,
+      "K": 16,
+      "methods": {
+        "random_grid_subset": {
+          "min_visibility": 0.8331290623948524,
+          "min_visibility_ci": 0.02312669286384811,
+          "max_aliasability": 0.6366793010095825,
+          "max_aliasability_ci": 0.04545797855540478,
+          "condition_number": 2.1628635941183494,
+          "condition_number_ci": 0.22015259161164044
+        },
+        "iid_uniform": {
+          "min_visibility": 0.8195378417191389,
+          "min_visibility_ci": 0.029705860712090967,
+          "max_aliasability": 0.655734164470261,
+          "max_aliasability_ci": 0.050189933348686856,
+          "condition_number": 2.199544200348965,
+          "condition_number_ci": 0.20889551874335774
+        },
+        "random_jitter": {
+          "min_visibility": 0.8717641466835584,
+          "min_visibility_ci": 0.015047998188183318,
+          "max_aliasability": 0.5499031806234331,
+          "max_aliasability_ci": 0.03551372140975202,
+          "condition_number": 1.8318932518140814,
+          "condition_number_ci": 0.11440035774199221
+        },
+        "full_grid": {
+          "min_visibility": 0.026774894734763188,
+          "min_visibility_ci": 0.0,
+          "max_aliasability": 1.1480158439083676,
+          "max_aliasability_ci": 0.0,
+          "condition_number": 2.500069379326925,
+          "condition_number_ci": 0.0
+        },
+        "fixed_jitter": {
+          "min_visibility": 0.9168221543496352,
+          "min_visibility_ci": 0.0,
+          "max_aliasability": 0.4124650188949646,
+          "max_aliasability_ci": 0.0,
+          "condition_number": 1.4508490870588027,
+          "condition_number_ci": 0.0
+        },
+        "condition_only": {
+          "min_visibility": 0.7833339092650065,
+          "min_visibility_ci": 0.0,
+          "max_aliasability": 0.6396617946766324,
+          "max_aliasability_ci": 0.0,
+          "condition_number": 1.1225001508483672,
+          "condition_number_ci": 0.0
+        },
+        "coherence_only": {
+          "min_visibility": 0.9837138911773765,
+          "min_visibility_ci": 0.0,
+          "max_aliasability": 0.20326111377294206,
+          "max_aliasability_ci": 0.0,
+          "condition_number": 1.4192369895170867,
+          "condition_number_ci": 0.0
+        },
+        "e_optimal": {
+          "min_visibility": 0.8689820141858483,
+          "min_visibility_ci": 0.0,
+          "max_aliasability": 0.5645465892016788,
+          "max_aliasability_ci": 0.0,
+          "condition_number": 1.690030821857429,
+          "condition_number_ci": 0.0
+        },
+        "random_search": {
+          "min_visibility": 0.8843361247053266,
+          "min_visibility_ci": 0.0,
+          "max_aliasability": 0.5132729633089809,
+          "max_aliasability_ci": 0.0,
+          "condition_number": 1.8024782795312309,
+          "condition_number_ci": 0.0
+        },
+        "aliasguard_greedy": {
+          "min_visibility": 0.9635038124623665,
+          "min_visibility_ci": 0.0,
+          "max_aliasability": 0.26809926599457584,
+          "max_aliasability_ci": 0.0,
+          "condition_number": 1.1594865537682175,
+          "condition_number_ci": 0.0
+        },
+        "aliasguard": {
+          "min_visibility": 0.9919670419155325,
+          "min_visibility_ci": 0.0036935132219087516,
+          "max_aliasability": 0.12614160264236848,
+          "max_aliasability_ci": 0.033051229448807055,
+          "condition_number": 1.10908383408877,
+          "condition_number_ci": 0.02156980079428942
+        }
+      }
+    },
+    "broad_band": {
+      "N": 40,
+      "K": 30,
+      "methods": {
+        "random_grid_subset": {
+          "min_visibility": 0.8503655759265873,
+          "min_visibility_ci": 0.014825815770580552,
+          "max_aliasability": 0.6315320488347883,
+          "max_aliasability_ci": 0.040304577803007155,
+          "condition_number": 2.1628635941183494,
+          "condition_number_ci": 0.22015259161164044
+        },
+        "iid_uniform": {
+          "min_visibility": 0.823109272278833,
+          "min_visibility_ci": 0.00974615627252984,
+          "max_aliasability": 0.680339953748839,
+          "max_aliasability_ci": 0.038842666680497594,
+          "condition_number": 2.199544200348965,
+          "condition_number_ci": 0.20889551874335774
+        },
+        "random_jitter": {
+          "min_visibility": 0.8286805465859111,
+          "min_visibility_ci": 0.017146748643771272,
+          "max_aliasability": 0.6148794561351715,
+          "max_aliasability_ci": 0.032555224757129714,
+          "condition_number": 1.8318932518140814,
+          "condition_number_ci": 0.11440035774199221
+        },
+        "full_grid": {
+          "min_visibility": 0.15278810956432876,
+          "min_visibility_ci": 0.0,
+          "max_aliasability": 1.2980709863429825,
+          "max_aliasability_ci": 0.0,
+          "condition_number": 2.500069379326925,
+          "condition_number_ci": 0.0
+        },
+        "fixed_jitter": {
+          "min_visibility": 0.8284300856808904,
+          "min_visibility_ci": 0.0,
+          "max_aliasability": 0.5635752249696282,
+          "max_aliasability_ci": 0.0,
+          "condition_number": 1.4508490870588027,
+          "condition_number_ci": 0.0
+        },
+        "condition_only": {
+          "min_visibility": 0.7767162530537601,
+          "min_visibility_ci": 0.0,
+          "max_aliasability": 0.625948775714187,
+          "max_aliasability_ci": 0.0,
+          "condition_number": 1.1225001508483672,
+          "condition_number_ci": 0.0
+        },
+        "coherence_only": {
+          "min_visibility": 0.9254846584096682,
+          "min_visibility_ci": 0.0,
+          "max_aliasability": 0.5890835760595545,
+          "max_aliasability_ci": 0.0,
+          "condition_number": 2.73090179978359,
+          "condition_number_ci": 0.0
+        },
+        "e_optimal": {
+          "min_visibility": 0.8207725459431031,
+          "min_visibility_ci": 0.0,
+          "max_aliasability": 0.618483086536493,
+          "max_aliasability_ci": 0.0,
+          "condition_number": 1.690030821857429,
+          "condition_number_ci": 0.0
+        },
+        "random_search": {
+          "min_visibility": 0.8655228713097409,
+          "min_visibility_ci": 0.0,
+          "max_aliasability": 0.49762563649797886,
+          "max_aliasability_ci": 0.0,
+          "condition_number": 1.6669127739535115,
+          "condition_number_ci": 0.0
+        },
+        "aliasguard_greedy": {
+          "min_visibility": 0.9925082664692162,
+          "min_visibility_ci": 0.0,
+          "max_aliasability": 0.1221774978884044,
+          "max_aliasability_ci": 0.0,
+          "condition_number": 1.2097667584600342,
+          "condition_number_ci": 0.0
+        },
+        "aliasguard": {
+          "min_visibility": 0.960543663122979,
+          "min_visibility_ci": 0.03214733288936189,
+          "max_aliasability": 0.26934385597058,
+          "max_aliasability_ci": 0.12211603324777233,
+          "condition_number": 1.4769092914777284,
+          "condition_number_ci": 0.14564553235761227
+        }
+      }
+    }
+  },
+  "C_heldout": {
+    "K_design": 24,
+    "K_test": 16,
+    "N": 40,
+    "methods": {
+      "random_jitter": {
+        "min_visibility": 0.8231641917334472,
+        "min_visibility_ci": 0.01937619082072031,
+        "max_aliasability": 0.6344457051508516,
+        "max_aliasability_ci": 0.03756366761999071,
+        "condition_number": 1.8318932518140814,
+        "condition_number_ci": 0.11440035774199221
+      },
+      "iid_uniform": {
+        "min_visibility": 0.8286514884313875,
+        "min_visibility_ci": 0.008452844454701697,
+        "max_aliasability": 0.6769864529277897,
+        "max_aliasability_ci": 0.06482184834912363,
+        "condition_number": 2.199544200348965,
+        "condition_number_ci": 0.20889551874335774
+      },
+      "random_search": {
+        "min_visibility": 0.8710822027718842,
+        "min_visibility_ci": 0.0,
+        "max_aliasability": 0.5010548532821236,
+        "max_aliasability_ci": 0.0,
+        "condition_number": 1.9114914164973125,
+        "condition_number_ci": 0.0
+      },
+      "e_optimal": {
+        "min_visibility": 0.8402976720298474,
+        "min_visibility_ci": 0.0,
+        "max_aliasability": 0.5847521896622973,
+        "max_aliasability_ci": 0.0,
+        "condition_number": 1.690030821857429,
+        "condition_number_ci": 0.0
+      },
+      "aliasguard_heldout": {
+        "min_visibility": 0.9838665429189026,
+        "min_visibility_ci": 0.0037500149079339887,
+        "max_aliasability": 0.18614641871908574,
+        "max_aliasability_ci": 0.021708326397864276,
+        "condition_number": 1.2233894604663025,
+        "condition_number_ci": 0.00465702054730966
+      },
+      "aliasguard_misspecified": {
+        "min_visibility": 0.9796078901985997,
+        "min_visibility_ci": 0.009863960895098835,
+        "max_aliasability": 0.20000747156544518,
+        "max_aliasability_ci": 0.05206846965615113,
+        "condition_number": 1.2160872379890666,
+        "condition_number_ci": 0.019098500618696352
+      }
+    }
+  },
+  "D_budget": {
+    "aliasguard": [
+      0.6061312040066427,
+      0.3316472734227162,
+      0.22545591497436157,
+      0.16530030162430986,
+      0.1259910813912831
+    ],
+    "aliasguard_ci": [
+      0.08511854797881162,
+      0.06337891755497498,
+      0.013817211692819709,
+      0.034884839428366406,
+      0.022896533496609667
+    ],
+    "random_jitter": [
+      1.6656778167858766,
+      0.8719274776299931,
+      0.6675941291635032,
+      0.5188413480241421,
+      0.4479948505233486
+    ],
+    "random_jitter_ci": [
+      0.3002351252439835,
+      0.049370387561040764,
+      0.05236577517763249,
+      0.028208589680245998,
+      0.01833198065370412
+    ],
+    "e_optimal": [
+      0.9755894609638364,
+      0.7929417566563377,
+      0.6651183650024934,
+      0.5037852227110516,
+      0.4272790653790879
+    ],
+    "N": [
+      16,
+      24,
+      32,
+      48,
+      64
+    ]
+  },
+  "E_downstream": {
+    "amps": [
+      0.25,
+      0.5,
+      1.0
+    ],
+    "sigma": 0.03,
+    "N": 40,
+    "methods": {
+      "random_jitter": {
+        "condition_number": 1.9193110182385358,
+        "by_amp": {
+          "0.25": {
+            "aliasing_bias_rmse": 0.08870415957685064,
+            "aliasing_bias_ci": 0.005620797269198378,
+            "total_rmse": 0.199057136224157,
+            "total_ci": 0.0025093320196802244
+          },
+          "0.5": {
+            "aliasing_bias_rmse": 0.1750822329758037,
+            "aliasing_bias_ci": 0.01136722482890242,
+            "total_rmse": 0.39720636772148205,
+            "total_ci": 0.005031349378026218
+          },
+          "1.0": {
+            "aliasing_bias_rmse": 0.34876621434634564,
+            "aliasing_bias_ci": 0.022908104102944228,
+            "total_rmse": 0.7938848864293968,
+            "total_ci": 0.010075299701110662
+          }
+        }
+      },
+      "e_optimal": {
+        "condition_number": 1.690030821857429,
+        "by_amp": {
+          "0.25": {
+            "aliasing_bias_rmse": 0.08614360401998215,
+            "aliasing_bias_ci": 0.003640362055387853,
+            "total_rmse": 0.19694821282230576,
+            "total_ci": 0.0015794703764217377
+          },
+          "0.5": {
+            "aliasing_bias_rmse": 0.17190616283692875,
+            "aliasing_bias_ci": 0.007260797185224402,
+            "total_rmse": 0.3937013389300355,
+            "total_ci": 0.0031288613188971905
+          },
+          "1.0": {
+            "aliasing_bias_rmse": 0.3431926815408834,
+            "aliasing_bias_ci": 0.014434985363547781,
+            "total_rmse": 0.7870973387974226,
+            "total_ci": 0.006254544191242525
+          }
+        }
+      },
+      "aliasguard": {
+        "condition_number": 1.2205652270924403,
+        "by_amp": {
+          "0.25": {
+            "aliasing_bias_rmse": 0.025388663876547455,
+            "aliasing_bias_ci": 0.0010268651023270928,
+            "total_rmse": 0.1786604212731778,
+            "total_ci": 0.0001754845631150372
+          },
+          "0.5": {
+            "aliasing_bias_rmse": 0.044280340330249725,
+            "aliasing_bias_ci": 0.0019526582651960465,
+            "total_rmse": 0.35646270546368725,
+            "total_ci": 0.00031186032546069416
+          },
+          "1.0": {
+            "aliasing_bias_rmse": 0.08491139258297069,
+            "aliasing_bias_ci": 0.004248851606794411,
+            "total_rmse": 0.712522520783228,
+            "total_ci": 0.0006487693279117499
+          }
+        }
+      }
+    }
+  },
+  "G_certificate": {
+    "band": [
+      [
+        25.0,
+        60.0
+      ],
+      [
+        -60.0,
+        -25.0
+      ]
+    ],
+    "N": 48,
+    "methods": {
+      "random_jitter": {
+        "certified_max_aliasability": 0.60087726812593,
+        "grid_max_aliasability": 0.5984923014429326,
+        "certified_min_visibility": 0.8260311711577293,
+        "condition_number": 1.5778335776374834
+      },
+      "e_optimal": {
+        "certified_max_aliasability": 0.5795986734912664,
+        "grid_max_aliasability": 0.5774324503448447,
+        "certified_min_visibility": 0.8243844915491401,
+        "condition_number": 1.4793212855319104
+      },
+      "aliasguard": {
+        "certified_max_aliasability": 0.29342902693768586,
+        "grid_max_aliasability": 0.29080084208384704,
+        "certified_min_visibility": 0.95396935459245,
+        "condition_number": 1.2315732716029422
+      }
+    }
+  },
+  "F_2d": {
+    "m": 10,
+    "K": 8,
+    "N": 48,
+    "random": {
+      "min_visibility": 0.8422895009562055,
+      "min_visibility_ci": 0.010891486382088648,
+      "max_aliasability": 0.6757780171102531,
+      "max_aliasability_ci": 0.04808197116688993,
+      "condition_number": 2.3962644669291566,
+      "condition_number_ci": 0.5303833109457275
+    },
+    "aliasguard": {
+      "min_visibility": 0.9857817431196153,
+      "min_visibility_ci": 0.00700848323732512,
+      "max_aliasability": 0.16610143234007643,
+      "max_aliasability_ci": 0.044059423155358615,
+      "condition_number": 1.1794163473959,
+      "condition_number_ci": 0.016773761812167026
+    }
+  },
+  "note": "AliasGuard constructive sampling design; all designs use only LAMBDA/Omega/N; held-out and misspecification reported; ablation shows the joint objective is necessary; grid-greedy inherits T1 (cannot break exact grid folds), continuous design can.",
+  "_meta": {
+    "python": "3.11.2",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "numpy": "2.4.6",
+    "scipy": "1.17.1",
+    "torch": "2.13.0+cpu",
+    "cuda": null,
+    "git_commit": "4ecc0f8"
+  }
+}
