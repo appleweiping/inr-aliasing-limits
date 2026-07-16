@@ -11,6 +11,7 @@ J = json.loads((ROOT / "results" / "aliasguard.json").read_text())
 C = J["C_heldout"]["methods"]
 G = J["G_certificate"]["methods"]
 F = J["F_2d"]
+NB = J["A_regimes"]["near_band"]["methods"]   # ablation regime used by Fig. 2a
 
 
 def r2(x):
@@ -28,6 +29,13 @@ lines = [
     f"\\newcommand{{\\AGcertR}}{{{r2(G['random_jitter']['certified_max_aliasability'])}}}",
     f"\\newcommand{{\\AGtwoD}}{{{r2(F['aliasguard']['max_aliasability'])}}}",
     f"\\newcommand{{\\AGtwoDR}}{{{r2(F['random']['max_aliasability'])}}}",
+    # ablation numbers (near-band regime, Fig. 2a) -- kept in sync to avoid prose drift
+    f"\\newcommand{{\\AblCohA}}{{{r2(NB['coherence_only']['max_aliasability'])}}}",
+    f"\\newcommand{{\\AblCohK}}{{{r2(NB['coherence_only']['condition_number'])}}}",
+    f"\\newcommand{{\\AblCondA}}{{{r2(NB['condition_only']['max_aliasability'])}}}",
+    f"\\newcommand{{\\AblCondK}}{{{r2(NB['condition_only']['condition_number'])}}}",
+    f"\\newcommand{{\\AblAgA}}{{{r2(NB['aliasguard']['max_aliasability'])}}}",
+    f"\\newcommand{{\\AblAgK}}{{{r2(NB['aliasguard']['condition_number'])}}}",
 ]
 out = ROOT / "paper" / "macros_ag.tex"
 out.write_text("\n".join(lines) + "\n")

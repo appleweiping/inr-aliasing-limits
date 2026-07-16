@@ -216,14 +216,16 @@ $J(T)=\tfrac1{N^2}\sum_{k,\nu}|(\Phimat^{*}\Psimat_\Om)_{k\nu}|^2
 +\beta\tfrac1{N^2}\sum_{k\ne l}|(\Phimat^{*}\Phimat)_{kl}|^2$, a function of the
 difference-frequency sums, by coordinate descent over continuous times (fast rank-one
 updates; deterministic given init; a grid-restricted greedy variant exists but inherits
-Thm.~\ref{thm:t1} and cannot break exact folds).  Both terms are needed:
-coherence-only design nulls aliasing but wrecks conditioning ($\kappa\!\approx\!2.1$),
-condition-only design keeps $\kappa\!\approx\!1.1$ but leaves $\max\at\!\approx\!0.53$;
-only the joint objective gets both (Fig.~\ref{fig:ag}a).
+Thm.~\ref{thm:t1} and cannot break exact folds).  Both terms are needed: on the near-band
+regime of Fig.~\ref{fig:ag}a, coherence-only design suppresses aliasing
+($\max\at\!=\!\AblCohA$) but at a worse condition number ($\kappa\!=\!\AblCohK$),
+condition-only keeps $\kappa\!=\!\AblCondK$ but leaves $\max\at\!=\!\AblCondA$; only the
+joint objective gets both ($\max\at\!=\!\AblAgA$ at $\kappa\!=\!\AblAgK$).
 
 \emph{Continuum certificate.}  $\at(\nu)^2=\bm\phi_\nu^{*}\bm M\bm\phi_\nu$,
 $\bm M=\Phimat(\Phimat^{*}\Phimat)^{-2}\Phimat^{*}$, is a real trigonometric polynomial in
-$\nu$ with frequencies $t_l-t_j$; by a Bernstein/Lipschitz bound (its derivative is
+$\nu$ with frequencies $t_l-t_j$; by a Bernstein/Lipschitz
+bound~\cite{devore1993constructive} (its derivative is
 $\le 2\pi\sum_{j,l}|\bm M_{jl}||t_l-t_j|$) a fine grid plus a slack term \emph{certifies}
 $\max_{\nu\in[a,b]}\at(\nu)$ over an entire continuous band from the samples alone
 (Prop.~\ref{prop:cert}; sound and tight in the tests).  This is exactly what
@@ -243,9 +245,11 @@ aliasability to $\AGheld{\pm}\AGheldCI$ vs.\ $\AGrand$ (random jitter) and $\AGe
 and translates to lower signal-domain aliasing bias at equal noise gain
 (Fig.~\ref{fig:ag}d).  Over a continuous band it \emph{certifies}
 $\max\at\le\AGcert$ vs.\ $\AGcertR$ for random.  It generalizes to 2-D frequency vectors
-($\max\at$ $\AGtwoD$ vs.\ $\AGtwoDR$).  Honest scope: the concern set must be focused
-($K\!=\!O(N)$); for a broad band densely covered with $K\!\gg\!N$ no design beats random
-much, and a badly misspecified set loses the edge.
+($\max\at$ $\AGtwoD$ vs.\ $\AGtwoDR$).  Honest scope: the tool applies where sample
+\emph{times are chosen}---active sampling, measurement/acquisition design, or scheduling
+a coordinate network's training queries---not to already-acquired data; it needs a
+focused concern set ($K\!=\!O(N)$), and for a broad band densely covered with $K\!\gg\!N$
+no design beats random much, while a badly misspecified set loses the edge.
 
 \begin{figure*}[t]
 \centering

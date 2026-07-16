@@ -4,4 +4,4 @@ numpy: 2.4.6
 scipy: 1.17.1
 matplotlib: 3.11.0
 torch: 2.13.0+cpu; cuda: None
-git_commit: 4ecc0f8a5ebba7ae7bcc38f64d6694c84ecc030c
+git_commit: 679e3ddcec5462801f70b87152586bb8ff93d7d6
