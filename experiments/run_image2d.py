@@ -379,7 +379,9 @@ def main():
     if torch_available():
         import torch
 
-        torch.use_deterministic_algorithms(True, warn_only=True)
+        # deterministic algorithms NOT enabled -- ~100x slower on CUDA; results reproduce
+        # statistically, not bitwise (stated in the README).
+        torch.manual_seed(0)
         dev = "cuda" if torch.cuda.is_available() else "cpu"
     imgs = _load_images()
 

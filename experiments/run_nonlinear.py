@@ -37,7 +37,7 @@ import matplotlib.pyplot as plt
 
 N = 46
 SIGMA = 0.02
-EPOCHS = 4000
+EPOCHS = 3000
 LR = 2e-4
 T_REF = np.linspace(0, 1, 2000, endpoint=False)
 N_SEEDS = 20
@@ -239,6 +239,20 @@ def one_run(arch, f_out, samp_seed, weight_seed, feature_seed=None, amp=0.8,
     return res, diff, pred_recon, t
 
 
+def _run_task(args):
+    """Process-pool worker: one attribution run on CPU (1 BLAS thread), tagged by kind so
+    the parent can split results into runs / controls / amp-sweep."""
+    import torch
+
+    torch.set_num_threads(1)
+    kind, arch, f_out, ss, ws, fs, amp, permute, drift, tag = args
+    r, *_ = one_run(arch, f_out, ss, ws, feature_seed=fs, amp=amp, permute=permute,
+                    measure_drift=drift, dev="cpu")
+    r["_kind"] = kind
+    r.update(tag)
+    return r
+
+
 def _boot_ci(bools, rng, n=2000):
     v = np.asarray(bools, float)
     stats = [v[rng.integers(0, v.size, v.size)].mean() for _ in range(n)]
@@ -302,67 +316,60 @@ def main():
                     "cuda" if torch.cuda.is_available() else "cpu")
         print("[nl] figure regenerated", flush=True)
         return
-    import torch
-
-    torch.use_deterministic_algorithms(True, warn_only=True)
-    dev = "cuda" if torch.cuda.is_available() else "cpu"
+    # These are TINY nets (46 points); the GPU's per-kernel launch latency makes it far
+    # slower than CPU here, and the runs are embarrassingly parallel -- so we run on CPU
+    # across a process pool (each worker 1 thread) instead of serially on the GPU.
+    dev = "cpu"
     quick = "--quick" in sys.argv
     n_seeds = 4 if quick else N_SEEDS
+    jobs = 1
+    if "--jobs" in sys.argv:
+        jobs = int(sys.argv[sys.argv.index("--jobs") + 1])
 
     # Independent seed pools: sampling, feature-init, and weight/optimizer seeds are drawn
     # from separate streams so they are NOT one-to-one bound to a single counter (P1-A).
     seedgen = np.random.default_rng(20260717)
     feat_pool = seedgen.integers(0, 1_000_000, n_seeds).tolist()
     wt_pool = seedgen.integers(0, 1_000_000, n_seeds).tolist()
+    step = max(1, n_seeds // 4)
+    AMPS = (0.05, 0.1, 0.2, 0.4, 0.8)
 
-    runs = []
-    # main grid: ffmlp x f_out x sampling scenario (each scenario an independent triple)
+    # (kind, arch, f_out, samp_seed, weight_seed, feature_seed, amp, permute, drift, tag)
+    tasks = []
     for f_out in F_OUTS:
         for s in range(n_seeds):
-            r, *_ = one_run("ffmlp", f_out, s, wt_pool[s], feature_seed=feat_pool[s],
-                            measure_drift=True, dev=dev)
-            runs.append(r)
-            print(f"[nl] ffmlp f={f_out} s={s}: meas={r['measured_fold']} "
-                  f"pred={r['predicted_fold']} corr={r['pattern_corr']:.2f} "
-                  f"drift={r.get('ntk_rel_drift', float('nan')):.2f}", flush=True)
-    # siren + bandlimited at f_out = 50
+            tasks.append(("run", "ffmlp", f_out, s, wt_pool[s], feat_pool[s], 0.8, False, True, {}))
     for arch in ("siren", "bandlimited"):
         for s in range(n_seeds):
-            r, *_ = one_run(arch, 50.0, s, wt_pool[s], feature_seed=feat_pool[s],
-                            measure_drift=True, dev=dev)
-            runs.append(r)
-            print(f"[nl] {arch} s={s}: meas={r['measured_fold']} pred={r['predicted_fold']} "
-                  f"corr={r['pattern_corr']:.2f} drift={r.get('ntk_rel_drift', float('nan')):.2f}",
-                  flush=True)
-
-    # controls
-    controls = []
-    step = max(1, n_seeds // 4)
+            tasks.append(("run", arch, 50.0, s, wt_pool[s], feat_pool[s], 0.8, False, True, {}))
     for s in range(0, n_seeds, step):
-        r, *_ = one_run("ffmlp", 50.0, s, wt_pool[s], feature_seed=feat_pool[s],
-                        permute=True, dev=dev)
-        r["control"] = "label_permutation"; controls.append(r)
-    # optimizer/weight-seed stability at FIXED sampling scenario (isolates weight variance,
-    # decoupled from sampling): vary only the weight seed with s and features held fixed.
+        tasks.append(("control", "ffmlp", 50.0, s, wt_pool[s], feat_pool[s], 0.8, True, False,
+                      {"control": "label_permutation"}))
     for j in range(min(5, n_seeds)):
-        r, *_ = one_run("ffmlp", 50.0, 0, 900 + j, feature_seed=feat_pool[0], dev=dev)
-        r["control"] = "weight_seed_stability"; controls.append(r)
-
-    # Amplitude sweep -> 0 (infinitesimal-influence test): the two-net difference is a clean
-    # linear attribution only in the small-amplitude limit.  Report pattern_corr and the
-    # linear-response energy (diff_energy / amp^2, which should stabilize as amp -> 0).
-    amp_sweep = []
-    AMPS = (0.05, 0.1, 0.2, 0.4, 0.8)
+        tasks.append(("control", "ffmlp", 50.0, 0, 900 + j, feat_pool[0], 0.8, False, False,
+                      {"control": "weight_seed_stability"}))
     for s in range(0, n_seeds, step):
         for amp in AMPS:
-            r, *_ = one_run("ffmlp", 50.0, s, wt_pool[s], feature_seed=feat_pool[s],
-                            amp=amp, dev=dev)
-            amp_sweep.append({"amp": amp, "samp_seed": s,
-                              "pattern_corr": r["pattern_corr"],
-                              "exact_match": r["exact_match"],
-                              "linear_response": r["linear_response"]})
-            print(f"[nl] amp-sweep s={s} amp={amp}: corr={r['pattern_corr']:.2f} "
-                  f"lin_resp={r['linear_response']:.3f}", flush=True)
+            tasks.append(("amp", "ffmlp", 50.0, s, wt_pool[s], feat_pool[s], amp, False, False,
+                          {"samp_seed": s}))
+
+    print(f"[nl] {len(tasks)} runs (CPU, jobs={jobs}) ...", flush=True)
+    if jobs > 1:
+        import multiprocessing as mp
+        from concurrent.futures import ProcessPoolExecutor
+        with ProcessPoolExecutor(max_workers=jobs, mp_context=mp.get_context("spawn")) as ex:
+            done = list(ex.map(_run_task, tasks))
+    else:
+        done = [_run_task(t) for t in tasks]
+
+    runs = [r for r in done if r["_kind"] == "run"]
+    controls = [r for r in done if r["_kind"] == "control"]
+    amp_sweep = [{"amp": r["amp"], "samp_seed": r["samp_seed"],
+                  "pattern_corr": r["pattern_corr"], "exact_match": r["exact_match"],
+                  "linear_response": r["linear_response"]}
+                 for r in done if r["_kind"] == "amp"]
+    print(f"[nl] done: {len(runs)} runs, {len(controls)} controls, {len(amp_sweep)} amp-sweep",
+          flush=True)
 
     rng = np.random.default_rng(0)
     summary = {}
