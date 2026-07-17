@@ -23,86 +23,86 @@
   "methods": {
     "oracle": {
       "rmse_mean": 1.0112985727522763,
-      "rmse_ci95": 0.008000203745758728,
+      "rmse_ci95": 0.01781107602937119,
       "paired_diff_vs_oracle_mean": 0.0,
       "paired_diff_ci95": 0.0,
       "band_mean": 7.037037037037037,
       "n": 54,
-      "n_clusters": 9
+      "n_clusters": 3
     },
     "ls_periodogram": {
-      "rmse_mean": 1.6569396987143223,
-      "rmse_ci95": 0.1784107641837356,
-      "paired_diff_vs_oracle_mean": 0.6456411259620465,
-      "paired_diff_ci95": 0.1792370989867218,
+      "rmse_mean": 1.6569396987143192,
+      "rmse_ci95": 0.35671166800516274,
+      "paired_diff_vs_oracle_mean": 0.6456411259620433,
+      "paired_diff_ci95": 0.3570620655575687,
       "band_mean": 236.46296296296296,
       "n": 54,
-      "n_clusters": 9
+      "n_clusters": 3
     },
     "corr_periodogram": {
-      "rmse_mean": 1.6533563047513824,
-      "rmse_ci95": 0.18193718293343344,
-      "paired_diff_vs_oracle_mean": 0.6420577319991067,
-      "paired_diff_ci95": 0.18254068055237752,
+      "rmse_mean": 1.6533563047513793,
+      "rmse_ci95": 0.36726800918378183,
+      "paired_diff_vs_oracle_mean": 0.6420577319991035,
+      "paired_diff_ci95": 0.3670659618371398,
       "band_mean": 236.5,
       "n": 54,
-      "n_clusters": 9
+      "n_clusters": 3
     },
     "cv": {
       "rmse_mean": 1.0121920948179215,
-      "rmse_ci95": 0.008389437329327855,
+      "rmse_ci95": 0.019324788132774856,
       "paired_diff_vs_oracle_mean": 0.0008935220656452901,
-      "paired_diff_ci95": 0.0010538737323441138,
+      "paired_diff_ci95": 0.0019083914809384975,
       "band_mean": 4.296296296296297,
       "n": 54,
-      "n_clusters": 9
+      "n_clusters": 3
     },
     "fixed_narrow": {
       "rmse_mean": 1.0132291944986282,
-      "rmse_ci95": 0.008091072258010387,
+      "rmse_ci95": 0.017865294673046886,
       "paired_diff_vs_oracle_mean": 0.0019306217463519685,
-      "paired_diff_ci95": 0.0007303749824024585,
+      "paired_diff_ci95": 0.0006485810253575358,
       "band_mean": 8.0,
       "n": 54,
-      "n_clusters": 9
+      "n_clusters": 3
     },
     "fixed_wide": {
-      "rmse_mean": 2.3497417527386393,
-      "rmse_ci95": 1.3329953325803259,
-      "paired_diff_vs_oracle_mean": 1.338443179986363,
-      "paired_diff_ci95": 1.33559321945303,
+      "rmse_mean": 2.349741752738615,
+      "rmse_ci95": 2.7746746015385533,
+      "paired_diff_vs_oracle_mean": 1.3384431799863388,
+      "paired_diff_ci95": 2.77787942947144,
       "band_mean": 250.0,
       "n": 54,
-      "n_clusters": 9
+      "n_clusters": 3
     },
     "ridge_wide": {
       "rmse_mean": 2.3789700687025994,
-      "rmse_ci95": 0.19576194370734853,
+      "rmse_ci95": 0.3574844856381186,
       "paired_diff_vs_oracle_mean": 1.3676714959503233,
-      "paired_diff_ci95": 0.1933483743521148,
+      "paired_diff_ci95": 0.3557296479860257,
       "band_mean": 333.0,
       "n": 54,
-      "n_clusters": 9
+      "n_clusters": 3
     }
   },
   "lowpass_proxy": false,
   "degradation": "50% uniform-random missing samples + AWGN at 30 dB SNR",
   "note": "oracle = best (B,ridge) in the family by TRUE error (evaluation upper bound only, dominates every selector per draw); all other methods are sample-only with detrend/standardization estimated from the training samples of each draw (no full-record leakage); CIs cluster on disjoint time blocks, not mask seeds; anti-aliased decimation (speech only).",
   "_meta": {
-    "git_commit": "a7db7ea9b63a4006fae6150984d52ce105f23f02",
-    "git_short": "a7db7ea9",
+    "git_commit": "3e4df1815503cb5a30a6e55e6bf5fc302884dcdf",
+    "git_short": "3e4df181",
     "git_dirty": false,
-    "source_tree_sha256": "1f28d5f0416a1197",
+    "source_tree_sha256": "03a901c5bc5e384f",
     "command": "experiments/run_real_signal.py",
-    "timestamp_utc": "2026-07-17T16:04:45.548675+00:00",
+    "timestamp_utc": "2026-07-17T19:23:32.117882+00:00",
     "hostname": "autodl-container-p48vc3ykfm-7ba3727f",
     "python": "3.12.3",
     "platform": "Linux-5.15.0-25-generic-x86_64-with-glibc2.35",
     "cpu_count": 128,
-    "numpy": "2.3.2",
-    "scipy": "1.18.0",
-    "torch": "2.8.0+cu128",
-    "cuda": "12.8",
+    "numpy": "1.26.4",
+    "scipy": "1.11.4",
+    "torch": "2.2.2+cu121",
+    "cuda": "12.1",
     "gpu": "NVIDIA GeForce RTX 4080 SUPER"
   }
 }

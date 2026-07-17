@@ -68,7 +68,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.5465403650870327,
+          "cal_threshold": 0.5465403650870337,
           "test_fpr_at_cal": 0.04,
           "test_tpr_at_cal": 1.0
         },
@@ -148,7 +148,7 @@
           "pr_auc": 0.9571631316315178,
           "tpr_at_fpr01": 0.536,
           "tpr_at_fpr05": 0.798,
-          "cal_threshold": 0.47920395771316004,
+          "cal_threshold": 0.47920395771315966,
           "test_fpr_at_cal": 0.062,
           "test_tpr_at_cal": 0.816
         },
@@ -228,7 +228,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.4332251018274297,
+          "cal_threshold": 0.4332251018274307,
           "test_fpr_at_cal": 0.048,
           "test_tpr_at_cal": 1.0
         },
@@ -308,7 +308,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.4671509469254564,
+          "cal_threshold": 0.46715094692545817,
           "test_fpr_at_cal": 0.058,
           "test_tpr_at_cal": 1.0
         },
@@ -388,7 +388,7 @@
           "pr_auc": 0.5064897064645639,
           "tpr_at_fpr01": 0.01,
           "tpr_at_fpr05": 0.06,
-          "cal_threshold": 0.5585690975349451,
+          "cal_threshold": 0.5585690975349419,
           "test_fpr_at_cal": 0.04,
           "test_tpr_at_cal": 0.04
         },
@@ -468,7 +468,7 @@
           "pr_auc": 0.5250374021211184,
           "tpr_at_fpr01": 0.012,
           "tpr_at_fpr05": 0.04,
-          "cal_threshold": 0.5151089317668482,
+          "cal_threshold": 0.5151089317668512,
           "test_fpr_at_cal": 0.06,
           "test_tpr_at_cal": 0.042
         },
@@ -548,7 +548,7 @@
           "pr_auc": 0.6496996925716387,
           "tpr_at_fpr01": 0.066,
           "tpr_at_fpr05": 0.162,
-          "cal_threshold": 0.4822712609967301,
+          "cal_threshold": 0.48227126099673,
           "test_fpr_at_cal": 0.07,
           "test_tpr_at_cal": 0.182
         },
@@ -628,7 +628,7 @@
           "pr_auc": 0.8606414718757851,
           "tpr_at_fpr01": 0.182,
           "tpr_at_fpr05": 0.46,
-          "cal_threshold": 0.494908162222532,
+          "cal_threshold": 0.49490816222253203,
           "test_fpr_at_cal": 0.068,
           "test_tpr_at_cal": 0.538
         },
@@ -708,7 +708,7 @@
           "pr_auc": 0.998884334019393,
           "tpr_at_fpr01": 0.984,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.5087515739771784,
+          "cal_threshold": 0.508751573977175,
           "test_fpr_at_cal": 0.062,
           "test_tpr_at_cal": 1.0
         },
@@ -788,7 +788,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.4977326359972762,
+          "cal_threshold": 0.49773263599729073,
           "test_fpr_at_cal": 0.066,
           "test_tpr_at_cal": 1.0
         },
@@ -868,7 +868,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.45328480572549185,
+          "cal_threshold": 0.45328480572549235,
           "test_fpr_at_cal": 0.044,
           "test_tpr_at_cal": 1.0
         },
@@ -948,7 +948,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.5190734653479296,
+          "cal_threshold": 0.5190734653479292,
           "test_fpr_at_cal": 0.062,
           "test_tpr_at_cal": 1.0
         },
@@ -1108,7 +1108,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.11101996024499555,
+          "cal_threshold": 0.11101996024499783,
           "test_fpr_at_cal": 0.086,
           "test_tpr_at_cal": 1.0
         },
@@ -1188,7 +1188,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 1.022067316371412,
+          "cal_threshold": 1.0220673163714094,
           "test_fpr_at_cal": 0.028,
           "test_tpr_at_cal": 1.0
         },
@@ -1268,7 +1268,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 1.4363011078961192,
+          "cal_threshold": 1.436301107896105,
           "test_fpr_at_cal": 0.052,
           "test_tpr_at_cal": 1.0
         },
@@ -1348,7 +1348,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.4216648029545806,
+          "cal_threshold": 0.4216648029545872,
           "test_fpr_at_cal": 0.094,
           "test_tpr_at_cal": 1.0
         },
@@ -1428,7 +1428,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.49817493741910124,
+          "cal_threshold": 0.4981749374191001,
           "test_fpr_at_cal": 0.046,
           "test_tpr_at_cal": 1.0
         },
@@ -1508,7 +1508,7 @@
           "pr_auc": 0.9967389469760488,
           "tpr_at_fpr01": 0.94,
           "tpr_at_fpr05": 0.988,
-          "cal_threshold": 4.665263016412956,
+          "cal_threshold": 4.6652630164130064,
           "test_fpr_at_cal": 0.034,
           "test_tpr_at_cal": 0.982
         },
@@ -1588,7 +1588,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 1.115898550662884,
+          "cal_threshold": 1.115898550662885,
           "test_fpr_at_cal": 0.056,
           "test_tpr_at_cal": 1.0
         },
@@ -1748,7 +1748,7 @@
           "pr_auc": 0.49428484979149795,
           "tpr_at_fpr01": 0.016,
           "tpr_at_fpr05": 0.044,
-          "cal_threshold": 2.8416252210061272,
+          "cal_threshold": 2.8416252210061237,
           "test_fpr_at_cal": 0.06,
           "test_tpr_at_cal": 0.048
         },
@@ -1790,20 +1790,20 @@
   },
   "note": "Exactly ONE detector (residual) has a closed-form power curve -- the exact noncentral chi-squared (T4b) plotted as 'theory'; ring/lomb/heldout/crossfit are alternative EMPIRICAL detectors shown for comparison and are NOT claimed to follow that curve. coherent_demo instantiates the T4a two-point pair (H1: tone at nu=111; H0: same-amplitude tone at the in-band twin -17; identical sample laws on grid samples) -- every detector must sit at AUC~0.5, TPR~FPR; it is a demonstration, not an operating characteristic; underdetermined ring fits are flagged",
   "_meta": {
-    "git_commit": "a7db7ea9b63a4006fae6150984d52ce105f23f02",
-    "git_short": "a7db7ea9",
+    "git_commit": "3e4df1815503cb5a30a6e55e6bf5fc302884dcdf",
+    "git_short": "3e4df181",
     "git_dirty": false,
-    "source_tree_sha256": "1f28d5f0416a1197",
+    "source_tree_sha256": "03a901c5bc5e384f",
     "command": "experiments/run_diagnostic_roc.py",
-    "timestamp_utc": "2026-07-17T16:02:28.191299+00:00",
+    "timestamp_utc": "2026-07-17T19:21:17.238210+00:00",
     "hostname": "autodl-container-p48vc3ykfm-7ba3727f",
     "python": "3.12.3",
     "platform": "Linux-5.15.0-25-generic-x86_64-with-glibc2.35",
     "cpu_count": 128,
-    "numpy": "2.3.2",
-    "scipy": "1.18.0",
-    "torch": "2.8.0+cu128",
-    "cuda": "12.8",
+    "numpy": "1.26.4",
+    "scipy": "1.11.4",
+    "torch": "2.2.2+cu121",
+    "cuda": "12.1",
     "gpu": "NVIDIA GeForce RTX 4080 SUPER"
   }
 }
