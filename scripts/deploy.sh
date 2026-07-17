@@ -6,8 +6,8 @@ set -e
 cd "$(dirname "$0")/.."
 PY="${PY:-C:/Python314/python.exe}"
 WINPWD="$(pwd -W 2>/dev/null || pwd)"
-# ship the current commit so server-produced result JSONs carry a provenance hash
-git rev-parse --short HEAD > GIT_COMMIT 2>/dev/null || true
+# ship the current commit + dirty flag so server-produced JSONs carry honest provenance
+{ git rev-parse HEAD 2>/dev/null; [ -n "$(git status --porcelain 2>/dev/null)" ] && echo "dirty" || echo "clean"; } > GIT_COMMIT || true
 tar czf ./_upload.tgz src experiments data/fetch_real.py tests pyproject.toml README.md \
   GIT_COMMIT $( [ -d paper ] && echo paper )
 rm -f GIT_COMMIT
