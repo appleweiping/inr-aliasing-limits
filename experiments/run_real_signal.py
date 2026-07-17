@@ -53,9 +53,12 @@ import matplotlib.pyplot as plt
 DATA = Path(__file__).resolve().parent.parent / "data"
 M_TARGET = 2000          # speech decimation target
 SNR_DB = 30.0            # additive white Gaussian noise level (stated degradation)
-N_SEEDS = 10             # mask/noise seeds per block (NOT the CI replication unit)
+N_SEEDS = 6              # mask/noise seeds per block (NOT the CI replication unit -- the
+                         # disjoint time BLOCKS are; seeds only average within a block)
 SAMPLE_FRAC = 0.5        # 50% uniform-random missingness (stated degradation)
 LAM_GRID = (0.0, 1e-4, 1e-2, 1.0)
+B_GRID_CAP = 128         # cap the bandwidth GRID (oracle/CV) to bound fit size; the
+                         # fixed_wide/ridge_wide baselines may still exceed it
 
 METHODS = ("oracle", "ls_periodogram", "corr_periodogram", "cv",
            "fixed_narrow", "fixed_wide", "ridge_wide")
@@ -144,7 +147,8 @@ def select_bandwidths(t, y, N, t_ref, x_ref_t, seed):
     this draw by construction (asserted by the caller)."""
     out = {}
     Bmax = max(8, N // 4)
-    Bgrid = np.unique(np.geomspace(4, Bmax, 12).astype(int))
+    # grid capped to bound the oracle/CV fit size; fixed_wide/ridge_wide (below) may exceed
+    Bgrid = np.unique(np.geomspace(4, min(Bmax, B_GRID_CAP), 10).astype(int))
     out["ls_periodogram"] = (
         int(np.max(bandwidth_matched_freqs(t, y, Bmax, 0.95, method="lombscargle"))), 0.0)
     out["corr_periodogram"] = (

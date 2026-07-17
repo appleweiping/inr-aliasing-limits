@@ -144,11 +144,14 @@ def _aa_resize(img, size):
 
 
 def _load_images(size=SIZE):
-    from scipy.datasets import ascent, face
-
     imgs = {}
-    imgs["ascent"] = _aa_resize(np.asarray(ascent(), float), size)
-    imgs["face"] = _aa_resize(np.asarray(face(gray=True), float), size)
+    try:                                   # real photographs (need scipy.datasets + pooch)
+        from scipy.datasets import ascent, face
+        imgs["ascent"] = _aa_resize(np.asarray(ascent(), float), size)
+        imgs["face"] = _aa_resize(np.asarray(face(gray=True), float), size)
+    except Exception as e:                 # offline / missing pooch: headline (synthetic) still runs
+        print(f"[2d] scipy.datasets unavailable ({type(e).__name__}); "
+              f"using synthetic image only", flush=True)
     yy, xx = np.mgrid[0:size, 0:size] / size
     imgs["synthetic"] = (np.sin(2 * np.pi * (6 * xx + 2 * yy))
                          + 0.7 * np.sin(2 * np.pi * (1 * xx - 9 * yy))
