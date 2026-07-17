@@ -18,6 +18,7 @@
 \newcommand{\vt}{v_T}
 \newcommand{\at}{a_T}
 \input{xref}
+\input{macros_ag.tex}   % auto-generated volatile numbers (shared with main; never hand-typed)
 
 \title{Supplement to ``\SharedTitle'':\\ Full Proofs and Additional Results}
 \author{Weiping Yan}
@@ -339,11 +340,14 @@ These support the compressed statements in Sec.~6 of the paper.  All figures are
 regenerated from the released \texttt{results/*.json} (seeds and environment stamped
 therein).
 
-\paragraph{Detection (T4).}  Fig.~\ref{fig:s-roc}.  With calibration/test separation,
-five sample-only detectors (extended-dictionary ring test, in-sample residual,
-Lomb--Scargle band test, held-out prediction, cross-fit) track the exact
-noncentral-$\chi^2$ power curve of T4(b); at the calibrated threshold the test-set false
-positive rate holds at its nominal $5\%$.  The indistinguishability demonstration
+\paragraph{Detection (T4).}  Fig.~\ref{fig:s-roc}.  With calibration/test separation, we
+report five sample-only detectors (extended-dictionary ring test, in-sample residual,
+Lomb--Scargle band test, held-out prediction, cross-fit).  \emph{Only} the residual
+detector has a closed-form operating characteristic---the exact noncentral-$\chi^2$ power
+curve of T4(b), which the empirical residual detector tracks; the other four are
+alternative empirical baselines shown for comparison and are \emph{not} claimed to follow
+that curve.  At the calibrated threshold the test-set false positive rate holds at its
+nominal $5\%$.  The indistinguishability demonstration
 instantiates T4(a)'s two-point pair exactly---H1 places a tone at the grid-coherent
 $\nu{=}111$, H0 the \emph{same-amplitude} tone at its in-band twin $\nu-Q=-17$, so the
 grid sample laws are identical---and all five detectors sit at chance (best-of-five
@@ -356,20 +360,29 @@ impossible.
 Fourier-feature MLPs, SIRENs, and a band-limited head, tone attribution (an ablation:
 identical initialization trained with and without the tone) is compared to each network's
 own NTK-linearization prediction---no arbitrary reference band.  Over $\ge20$ sampling
-seeds with label-permutation, amplitude, and weight-seed controls, the linear picture
-extrapolates to \emph{lazy-regime} FF-MLPs (exact fold match $77\%$, top-3 $98\%$, pattern
-correlation median $0.96$, $n{=}60$) and the band-limited head (median $0.98$), but
-\emph{fails for SIRENs} (exact match $20\%$, correlation median $0.49$): trained SIRENs
-leave their initialization NTK, so the theory makes no claim there.  All seed-level
-failures are released.
+scenarios---with sampling, feature, and weight seeds crossed independently, plus
+label-permutation, amplitude-sweep-to-zero (infinitesimal-influence), and weight-seed
+stability controls, and cluster-bootstrap CIs over sampling scenario---the linear picture
+extrapolates to \emph{lazy-regime} FF-MLPs (exact fold match $\NLffmatch$, top-3 $\NLfftop$,
+pattern correlation median $\NLffcorr$, $n{=}\NLffn$) and the band-limited head (median
+$\NLblcorr$), but the trained-\emph{SIREN} responses are \emph{inconsistent with the
+initialization-NTK prediction} (exact match $\NLsimatch$, correlation median $\NLsicorr$).
+We state this only because we \emph{measure} the init-vs-trained NTK drift: median relative
+Frobenius drift $\NLsidrift$ for SIREN vs.\ $\NLffdrift$ for FF-MLP, so where the drift is
+large the init-NTK prediction is not expected to hold and the fixed-feature theory makes no
+claim there---we do \emph{not} assert SIRENs ``leave'' a fixed kernel beyond the measured
+drift.  All seed-level failures are released.
 
 \paragraph{Two dimensions.}  Fig.~\ref{fig:s-2d}.  The linear model reproduces the
-predicted 2-D frequency-vector fold exactly (planted $(27,3)$ on a rate-$32$ grid subset
-folds to $(-5,3)$, residual $10^{-15}$); trained 2-D networks show the predicted DFT
-replicas under lattice (coherent) masks (replica-energy ratio $40{\pm}32$ at the predicted
-shifts) but not under random masks of equal density ($0.99{\pm}0.09$), and ridge and early
-stopping do not remove them---structured aliasing is a sampling-design property, not an
-overfitting artifact.
+predicted 2-D frequency-vector fold exactly over a \emph{held-out} tone set disjoint from
+the design dictionary (fold-exact rate $\IMfold$; e.g.\ planted $(27,3)$ on a rate-$32$ grid
+subset folds to $(-5,3)$, residual $10^{-15}$).  For trained 2-D networks (anti-aliased
+resize; images degraded with noise) the headline is the \emph{excess} coherent-replica
+energy of lattice masks over matched-density \emph{random} masks (the no-alias control),
+measured on the reconstruction-\emph{error} spectrum so true image content does not inflate
+it: over $\ge20$ paired seeds the excess is $\IMexcess$ and lattice exceeds random in
+$\IMrate$ of seeds; ridge and early stopping do not remove it---structured aliasing is a
+sampling-design property, not an overfitting artifact.
 
 \begin{figure}[t]\centering\includegraphics[width=0.7\linewidth]{diagnostic_roc.png}
 \caption{Detection power vs.\ tone amplitude; the coherent fold sits at chance.}

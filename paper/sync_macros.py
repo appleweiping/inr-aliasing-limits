@@ -60,20 +60,34 @@ if NL and "summary" in NL:
     def nlget(arch, key, default=0.0):
         return (nsum.get(arch, {}) or {}).get(key, default)
 
+    def nlcorr(arch):
+        return (nsum.get(arch, {}) or {}).get("pattern_corr_median", 0.0)
+
     lines += [
         f"\\newcommand{{\\NLffmatch}}{{{_pct(nlget('ffmlp', 'exact_match_rate'))}}}",
         f"\\newcommand{{\\NLsimatch}}{{{_pct(nlget('siren', 'exact_match_rate'))}}}",
+        f"\\newcommand{{\\NLfftop}}{{{_pct(nlget('ffmlp', 'top3_match_rate'))}}}",
+        f"\\newcommand{{\\NLffcorr}}{{{r2(nlcorr('ffmlp'))}}}",
+        f"\\newcommand{{\\NLsicorr}}{{{r2(nlcorr('siren'))}}}",
+        f"\\newcommand{{\\NLblcorr}}{{{r2(nlcorr('bandlimited'))}}}",
+        f"\\newcommand{{\\NLffn}}{{{int(nlget('ffmlp', 'n_runs') or 0)}}}",
         f"\\newcommand{{\\NLffdrift}}{{{r2(nlget('ffmlp', 'ntk_rel_drift_median') or 0.0)}}}",
         f"\\newcommand{{\\NLsidrift}}{{{r2(nlget('siren', 'ntk_rel_drift_median') or 0.0)}}}",
     ]
 else:
-    # placeholders so the paper still compiles before the GPU run lands
-    lines += [
-        "\\newcommand{\\NLffmatch}{\\textrm{[pending]}}",
-        "\\newcommand{\\NLsimatch}{\\textrm{[pending]}}",
-        "\\newcommand{\\NLffdrift}{\\textrm{[pending]}}",
-        "\\newcommand{\\NLsidrift}{\\textrm{[pending]}}",
-    ]
+    lines += ["\\newcommand{\\" + n + "}{\\textrm{[pending]}}" for n in
+              ("NLffmatch", "NLsimatch", "NLfftop", "NLffcorr", "NLsicorr", "NLblcorr",
+               "NLffn", "NLffdrift", "NLsidrift")]
+
+# 2-D image numbers (headline excess of coherent over no-alias control)
+IM = _load("image2d_aliasing.json")
+imx = (IM or {}).get("headline_excess") or {}
+ima = (IM or {}).get("part_a_linear") or {}
+lines += [
+    f"\\newcommand{{\\IMexcess}}{{{r3(imx['excess_mean']) if 'excess_mean' in imx else '[pending]'}}}",
+    f"\\newcommand{{\\IMrate}}{{{_pct(imx['lattice_gt_random_rate']) if 'lattice_gt_random_rate' in imx else '[pending]'}}}",
+    f"\\newcommand{{\\IMfold}}{{{_pct(ima['fold_exact_rate']) if 'fold_exact_rate' in ima else '[pending]'}}}",
+]
 
 # real-signal numbers (CO2 / speech) -- from results/real_*.json, never hand-entered
 CO2 = _load("real_co2.json")
