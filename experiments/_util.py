@@ -76,8 +76,13 @@ def run_metadata(config: dict | None = None) -> dict:
     porcelain = _git(["status", "--porcelain"])
     dirty = None if porcelain is None else (porcelain != "")
     if full is None:
-        stamp = RESULTS.parent / "GIT_COMMIT"      # server tarball sync ships this
-        full = stamp.read_text().strip() if stamp.exists() else None
+        # server tarball sync ships GIT_COMMIT as "<full-sha>\n<clean|dirty>"
+        stamp = RESULTS.parent / "GIT_COMMIT"
+        if stamp.exists():
+            parts = stamp.read_text().split()
+            full = parts[0] if parts else None
+            if dirty is None and len(parts) > 1:
+                dirty = (parts[1].strip().lower() == "dirty")
     meta = {
         "git_commit": full,
         "git_short": (full[:8] if full else None),
