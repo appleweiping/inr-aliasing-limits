@@ -1,89 +1,105 @@
 {
   "name": "sunspots_smooth",
-  "n_segments": 1,
-  "n_seeds": 10,
+  "n_blocks": 6,
+  "n_seeds": 6,
   "snr_db": 30.0,
   "sample_frac": 0.5,
-  "M": 1659,
-  "fs_eff_hz": 6.0,
-  "duration_s": 276.5,
-  "segments": [
-    "sunspots_smooth"
+  "block_len": 553,
+  "rate": 12.0,
+  "rate_unit": "1/yr",
+  "duration": 46.083333333333336,
+  "time_unit": "yr",
+  "blocks": [
+    "sunspots_smooth_blk0",
+    "sunspots_smooth_blk1",
+    "sunspots_smooth_blk2",
+    "sunspots_smooth_blk3",
+    "sunspots_smooth_blk4",
+    "sunspots_smooth_blk5"
   ],
   "methods": {
     "oracle": {
-      "rmse_mean": 0.06509071579767642,
-      "rmse_ci95": 0.0030511246519244442,
+      "rmse_mean": 0.07683217701112438,
+      "rmse_ci95": 0.03160070590221525,
       "paired_diff_vs_oracle_mean": 0.0,
       "paired_diff_ci95": 0.0,
-      "band_mean": 171.7,
-      "n": 10,
-      "n_clusters": 1
+      "band_mean": 49.27777777777778,
+      "n": 36,
+      "n_clusters": 6
     },
     "ls_periodogram": {
-      "rmse_mean": 0.07113093138414929,
-      "rmse_ci95": 0.0036250959887852343,
-      "paired_diff_vs_oracle_mean": 0.006040215586472869,
-      "paired_diff_ci95": 0.004063359822510273,
-      "band_mean": 156.7,
-      "n": 10,
-      "n_clusters": 1
+      "rmse_mean": 0.08257644430271674,
+      "rmse_ci95": 0.033201930549681014,
+      "paired_diff_vs_oracle_mean": 0.0057442672915923604,
+      "paired_diff_ci95": 0.0029826300155976274,
+      "band_mean": 52.361111111111114,
+      "n": 36,
+      "n_clusters": 6
     },
     "corr_periodogram": {
-      "rmse_mean": 0.0708424857243465,
-      "rmse_ci95": 0.003775007304723478,
-      "paired_diff_vs_oracle_mean": 0.0057517699266700865,
-      "paired_diff_ci95": 0.003928150220689426,
-      "band_mean": 156.5,
-      "n": 10,
-      "n_clusters": 1
+      "rmse_mean": 0.08252978378542643,
+      "rmse_ci95": 0.03337963217853963,
+      "paired_diff_vs_oracle_mean": 0.005697606774302055,
+      "paired_diff_ci95": 0.003155828606516727,
+      "band_mean": 52.25,
+      "n": 36,
+      "n_clusters": 6
     },
     "cv": {
-      "rmse_mean": 0.1075424300070893,
-      "rmse_ci95": 0.011444489269967308,
-      "paired_diff_vs_oracle_mean": 0.042451714209412884,
-      "paired_diff_ci95": 0.011227277516977125,
-      "band_mean": 100.8,
-      "n": 10,
-      "n_clusters": 1
+      "rmse_mean": 0.08971319574334996,
+      "rmse_ci95": 0.040772912795443504,
+      "paired_diff_vs_oracle_mean": 0.012881018732225588,
+      "paired_diff_ci95": 0.009593304032182186,
+      "band_mean": 33.333333333333336,
+      "n": 36,
+      "n_clusters": 6
     },
     "fixed_narrow": {
-      "rmse_mean": 0.9174058506216239,
-      "rmse_ci95": 0.0016705925728379679,
-      "paired_diff_vs_oracle_mean": 0.8523151348239477,
-      "paired_diff_ci95": 0.0025827061007630374,
+      "rmse_mean": 0.2659067254076229,
+      "rmse_ci95": 0.1103134795331588,
+      "paired_diff_vs_oracle_mean": 0.1890745483964985,
+      "paired_diff_ci95": 0.08018848514271293,
       "band_mean": 8.0,
-      "n": 10,
-      "n_clusters": 1
+      "n": 36,
+      "n_clusters": 6
     },
     "fixed_wide": {
-      "rmse_mean": 0.0966089808368221,
-      "rmse_ci95": 0.048298284990958444,
-      "paired_diff_vs_oracle_mean": 0.03151826503914568,
-      "paired_diff_ci95": 0.048262118708213265,
-      "band_mean": 207.0,
-      "n": 10,
-      "n_clusters": 1
+      "rmse_mean": 0.10680207921418111,
+      "rmse_ci95": 0.04232948449274333,
+      "paired_diff_vs_oracle_mean": 0.029969902203056717,
+      "paired_diff_ci95": 0.017975531365836822,
+      "band_mean": 69.0,
+      "n": 36,
+      "n_clusters": 6
     },
     "ridge_wide": {
-      "rmse_mean": 0.13795610466425087,
-      "rmse_ci95": 0.013018229760755718,
-      "paired_diff_vs_oracle_mean": 0.07286538886657445,
-      "paired_diff_ci95": 0.012968164514199862,
-      "band_mean": 276.0,
-      "n": 10,
-      "n_clusters": 1
+      "rmse_mean": 0.18096061387356954,
+      "rmse_ci95": 0.02520420857404436,
+      "paired_diff_vs_oracle_mean": 0.10412843686244518,
+      "paired_diff_ci95": 0.030131702056572236,
+      "band_mean": 92.0,
+      "n": 36,
+      "n_clusters": 6
     }
   },
   "lowpass_proxy": true,
-  "note": "oracle sees the full reference (upper bound only); all other methods are sample-only; anti-aliased resample_poly decimation; full records, no energy-based window selection",
+  "degradation": "50% uniform-random missing samples + AWGN at 30 dB SNR",
+  "note": "oracle = best (B,ridge) in the family by TRUE error (evaluation upper bound only, dominates every selector per draw); all other methods are sample-only with detrend/standardization estimated from the training samples of each draw (no full-record leakage); CIs cluster on disjoint time blocks, not mask seeds; anti-aliased decimation (speech only).",
   "_meta": {
-    "python": "3.11.2",
-    "platform": "Windows-10-10.0.26200-SP0",
-    "numpy": "2.4.6",
-    "scipy": "1.17.1",
-    "torch": "2.13.0+cpu",
-    "cuda": null,
-    "git_commit": "c9857ef"
+    "git_commit": "a7db7ea9b63a4006fae6150984d52ce105f23f02",
+    "git_short": "a7db7ea9",
+    "git_dirty": false,
+    "source_tree_sha256": "1f28d5f0416a1197",
+    "command": "experiments/run_real_signal.py",
+    "timestamp_utc": "2026-07-17T16:05:41.900690+00:00",
+    "hostname": "autodl-container-p48vc3ykfm-7ba3727f",
+    "python": "3.12.3",
+    "platform": "Linux-5.15.0-25-generic-x86_64-with-glibc2.35",
+    "cpu_count": 128,
+    "numpy": "2.3.2",
+    "scipy": "1.18.0",
+    "torch": "2.8.0+cu128",
+    "cuda": "12.8",
+    "gpu": "NVIDIA GeForce RTX 4080 SUPER"
   }
 }
