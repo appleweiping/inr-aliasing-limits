@@ -13,8 +13,21 @@ C = J["certificate"]
 TW = J["twod"]
 
 
+def _load(name):
+    p = ROOT / "results" / name
+    return json.loads(p.read_text()) if p.exists() else None
+
+
+def _pct(x):
+    return f"{round(float(x) * 100)}\\%"
+
+
 def r2(x):
     return f"{x:.2f}"
+
+
+def r3(x):
+    return f"{x:.3f}"
 
 
 def held(method, typ="near"):
@@ -37,6 +50,46 @@ lines = [
     f"\\newcommand{{\\AGtwoDR}}{{{r2(TW['random']['mean'])}}}",
     # honest off-target degradation (used in the limitations sentence)
     f"\\newcommand{{\\AGbroad}}{{{r2(held('aliasguard', 'broadband_ood')['mean'])}}}",
+]
+
+# nonlinear (trained-network) numbers -- also auto-generated, never hand-entered
+NL = _load("nonlinear.json")
+if NL and "summary" in NL:
+    nsum = NL["summary"]
+
+    def nlget(arch, key, default=0.0):
+        return (nsum.get(arch, {}) or {}).get(key, default)
+
+    lines += [
+        f"\\newcommand{{\\NLffmatch}}{{{_pct(nlget('ffmlp', 'exact_match_rate'))}}}",
+        f"\\newcommand{{\\NLsimatch}}{{{_pct(nlget('siren', 'exact_match_rate'))}}}",
+        f"\\newcommand{{\\NLffdrift}}{{{r2(nlget('ffmlp', 'ntk_rel_drift_median') or 0.0)}}}",
+        f"\\newcommand{{\\NLsidrift}}{{{r2(nlget('siren', 'ntk_rel_drift_median') or 0.0)}}}",
+    ]
+else:
+    # placeholders so the paper still compiles before the GPU run lands
+    lines += [
+        "\\newcommand{\\NLffmatch}{\\textrm{[pending]}}",
+        "\\newcommand{\\NLsimatch}{\\textrm{[pending]}}",
+        "\\newcommand{\\NLffdrift}{\\textrm{[pending]}}",
+        "\\newcommand{\\NLsidrift}{\\textrm{[pending]}}",
+    ]
+
+# real-signal numbers (CO2 / speech) -- from results/real_*.json, never hand-entered
+CO2 = _load("real_co2.json")
+SPE = _load("real_speech.json")
+
+
+def real_rmse(d, method):
+    return (((d or {}).get("methods", {}) or {}).get(method, {}) or {}).get("rmse_mean")
+
+
+co2_ls, co2_ora = real_rmse(CO2, "ls_periodogram"), real_rmse(CO2, "oracle")
+spe_ora = real_rmse(SPE, "oracle")
+lines += [
+    f"\\newcommand{{\\NumCoTwoLS}}{{{r3(co2_ls) if co2_ls is not None else '[pending]'}}}",
+    f"\\newcommand{{\\NumCoTwoOracle}}{{{r3(co2_ora) if co2_ora is not None else '[pending]'}}}",
+    f"\\newcommand{{\\NumSpeechOracle}}{{{r2(spe_ora) if spe_ora is not None else '[pending]'}}}",
 ]
 out = ROOT / "paper" / "macros_ag.tex"
 out.write_text("\n".join(lines) + "\n")

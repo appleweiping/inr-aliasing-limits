@@ -15,6 +15,7 @@ Checks:
      this to a warning for local iteration.
 """
 import json
+import os
 import pathlib
 import subprocess
 import sys
@@ -45,6 +46,31 @@ if before == after:
     ppass("paper macros == results/aliasguard.json (no drift)")
 else:
     fail("macros_ag.tex is stale vs results/aliasguard.json -- run paper/sync_macros.py")
+
+# 1b. claim ledger == JSON (numbers auto-extracted; fail if stale)
+ledger = ROOT / "docs" / "claim-ledger.md"
+lbefore = ledger.read_text(encoding="utf-8") if ledger.exists() else ""
+subprocess.run([sys.executable, str(PAPER / "gen_claim_ledger.py")], capture_output=True,
+               cwd=ROOT, env={**os.environ, "PYTHONUTF8": "1"})
+lafter = ledger.read_text(encoding="utf-8")
+if lbefore == lafter:
+    ppass("docs/claim-ledger.md == results/*.json (no drift)")
+else:
+    fail("claim-ledger.md is stale vs results/*.json -- run paper/gen_claim_ledger.py")
+
+# 1c. forbidden absolutes must not appear in the paper/ledger (audit: no overclaiming)
+FORBIDDEN = ["No unverified claim remains", "ready to submit", "all claims verified",
+             "guarantees optimal", "no analogue"]
+for rel in ("docs/claim-ledger.md", "paper/main.tex", "paper/supplement.tex", "README.md"):
+    fp = ROOT / rel
+    if not fp.exists():
+        continue
+    txt = fp.read_text(encoding="utf-8", errors="ignore").lower()
+    hit = [ph for ph in FORBIDDEN if ph.lower() in txt]
+    if hit:
+        fail(f"{rel} contains forbidden absolute/overclaim phrasing: {hit}")
+    else:
+        ppass(f"{rel}: no forbidden absolutes")
 
 # 2. undefined refs
 for name in ("main", "supplement"):

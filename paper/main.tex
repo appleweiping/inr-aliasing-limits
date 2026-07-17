@@ -1,6 +1,11 @@
-% ICASSP 2027 submission: spconf.sty + IEEEbib.bst.  Single-anonymous review (author
-% names shown).  Up to 4 pages incl. references; optional 5th page for references,
-% funding, and the Compliance-with-Ethical-Standards statement.  Full proofs: supplement.
+% ICASSP 2027 submission: spconf.sty + IEEEbib.bst.  Review model (single- vs
+% double-anonymous), the exact page budget, whether reviewers are guaranteed the
+% supplement, and the required placement of the AI-assistance disclosure are all PENDING
+% FINAL AUTHOR-KIT VERIFICATION for ICASSP 2027; the current layout (author names shown;
+% <=4 technical pages + a references-only 5th page; self-contained main text that does not
+% assume supplement access; AI disclosure in the Compliance statement) is the working
+% assumption, to be reconciled against the official kit before submission.  Full proofs:
+% supplement.
 \documentclass{article}
 \usepackage{spconf,amsmath,amssymb,amsthm,graphicx,bm}
 \ninept
@@ -27,12 +32,9 @@
 \newcommand{\at}{a_T}
 \input{xref}
 
-% ---- volatile experiment numbers (single source; re-synced from results/*.json) ----
-\newcommand{\NumCoTwoLS}{0.167}        % CO2 sample-only LS-periodogram RMSE
-\newcommand{\NumCoTwoOracle}{0.161}    % CO2 oracle RMSE (grid + selector-choice union)
-\newcommand{\NumSpeechOracle}{1.00}    % speech oracle RMSE (truncation-dominated)
-% AliasGuard numbers are AUTO-GENERATED from results/aliasguard.json by
-% paper/sync_macros.py -> paper/macros_ag.tex (no hand-entered numbers).
+% ALL volatile experiment numbers (AliasGuard, nonlinear, real-signal) are AUTO-GENERATED
+% from results/*.json by paper/sync_macros.py -> paper/macros_ag.tex (no hand-entered
+% numbers).  paper/check_consistency.py fails the build if this file is stale.
 \input{macros_ag.tex}
 
 \title{Silent Aliasing and Certified Sampling Design\\for Fixed Fourier-Feature Models}
@@ -299,14 +301,27 @@ term responds to the design).}
 \end{figure*}
 
 \section{Experiments}\label{sec:exp}
-All closed forms are Monte-Carlo validated (39 tests; CI on every push).  JSONs carry
-seeds, configs, and environment stamps; every figure is regenerated from them.
+Closed-form implementations are checked against independent simulations (a CPU test suite
+run by the GitHub Actions continuous-integration workflow on every push); the proofs are
+given separately in the supplement.  A separate integration job checks that every number in
+this paper, its claim ledger, and the README equals the committed result JSON.  Those JSONs
+carry seeds, configs, full-SHA/dirty-flag provenance, and host/CPU/GPU stamps; every figure
+is regenerated from them.  (``CI'' here means that integration workflow; the statistical
+confidence intervals below are a distinct quantity.)
 
 \emph{Theory (Fig.~\ref{fig:matrix}).}  (a)~the jitter law matches $\sqrt{1-\chi_\eta^2}$
 across two decades, exact fold ($v\!\approx\!10^{-14}$) at $\sigma_t{=}0$; (b)~i.i.d.\
 worst-case aliasability decays $N^{-1/2}$ beneath the bound; (c)~the grid-subset coherent
 tone stays invisible at every $N$ while i.i.d.\ sampling makes even the per-$N$ adversarial
 candidate visible; (d)~jitter removes the aliasing-bias term, never truncation.
+
+\emph{Statistical protocol.}  The design study uses $\ge20$ \emph{paired outer scenarios};
+each fixes its own dictionary (half non-orthonormal), concern set, held-out set, noise, and
+optimizer initialization, and \emph{every} method sees the identical scenarios.  We report
+paired-bootstrap CIs over scenarios (the replication unit), match compute budget across
+methods (equal objective-evaluation/restart budgets; wall-clock recorded), and evaluate
+generalization on five held-out band types (near / omitted / shifted / scaled / broadband),
+never a single fixed offset.
 
 \emph{Design (Fig.~\ref{fig:ag}).}  The four panels above; the joint objective, held-out
 generalization, budget sweep, and signal-domain payoff.
@@ -317,11 +332,15 @@ attains RMSE $\NumCoTwoLS$ vs.\ an evaluation-only oracle $\NumCoTwoOracle$ on C
 on broadband speech \emph{no} selector beats RMSE${\approx}\NumSpeechOracle$---the
 truncation term dominates at that budget (the real-data face of the converse).  Details,
 the detection dichotomy (a coherent fold is indistinguishable from its in-band twin by any
-sample-only test; visible tones follow an exact noncentral-$\chi^2$ power curve matched by
-calibrated detectors), and a trained-network extension (FF-MLP fold match $77\%$/corr
-$0.96$ over $\ge20$ seeds; \emph{SIREN fails}, corr $0.49$---trained SIRENs leave their
-init NTK, so the theory makes no claim there) with 2-D results are in the supplement, with
-all failing runs released.
+sample-only test; for visible tones \emph{only} the residual detector has a closed-form
+operating characteristic---the exact noncentral-$\chi^2$ power curve---while the other
+detectors are empirical baselines shown for comparison), and a trained-network extension
+(FF-MLP fold match $\NLffmatch$ over $\ge20$ crossed seeds; the trained \emph{SIREN}
+responses are \emph{inconsistent with the initialization-NTK prediction}, match
+$\NLsimatch$, a statement we make only because we \emph{measure} the init-vs-trained NTK
+drift---median relative drift $\NLsidrift$ vs.\ $\NLffdrift$ for FF-MLP---so the
+fixed-feature theory makes no claim there) with 2-D results are in the supplement, with all
+failing runs released.
 
 \section{Limitations and conclusion}
 The theory covers fixed-feature linear-coefficient models; nonlinear networks are an
@@ -330,7 +349,8 @@ concentration constants are loose (union bound); the design needs a focused conc
 Within that scope: irregular-on-a-grid sampling does not break exact aliasing
 (Thm.~\ref{thm:t1}); off-grid randomization does, at an explicit finite-$N$ rate
 (Thm.~\ref{thm:t3}); and a $D_s$-optimal / null-steering design with a continuum
-certificate turns the analysis into a deployable, guaranteed anti-aliasing sample pattern.
+certificate turns the analysis into a deployable, \emph{certified} anti-aliasing sample
+pattern (the certificate is a genuine deterministic upper bound, not an optimality claim).
 Practical guidance: never sample purely on a grid when out-of-band content is possible;
 target a focused concern set; and certify the band, not a finite list.
 

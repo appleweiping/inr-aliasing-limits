@@ -87,7 +87,7 @@ def build_design(method, LAM, Odes, N, seed, quick):
     ns = 60 if quick else 200
     t0 = time.perf_counter()
     if method == "aliasguard":
-        t, _ = aliasguard_continuous(LAM, Odes, N, n_sweeps=25, seed=seed)
+        t, _ = aliasguard_continuous(LAM, Odes, N, n_sweeps=15, grid_res=480, seed=seed)
     elif method == "ds_optimal":
         t = ds_optimal_design(LAM, Odes, N, n_sweeps=6, grid_res=224, seed=seed)
     elif method == "e_optimal":
@@ -106,7 +106,7 @@ def build_design(method, LAM, Odes, N, seed, quick):
     elif method == "condition_only":
         t = condition_only_design(LAM, N, seed=seed, n_sweeps=6, grid_res=224)
     elif method == "annealing":
-        t = annealing_design(LAM, Odes, N, maxiter=100 if not quick else 40, seed=seed)
+        t = annealing_design(LAM, Odes, N, maxiter=60 if not quick else 40, seed=seed)
     else:
         raise ValueError(method)
     return np.asarray(t, float), time.perf_counter() - t0
@@ -191,7 +191,7 @@ def process_scenario(args):
     for d in CERT_DESIGNS:
         if d == "aliasguard":
             band_grid = np.sort(np.concatenate([np.arange(25, 60.01, 0.5), -np.arange(25, 60.01, 0.5)]))
-            t, _ = aliasguard_continuous(LAM, band_grid, N, n_sweeps=20, seed=sc["s"])
+            t, _ = aliasguard_continuous(LAM, band_grid, N, n_sweeps=12, grid_res=480, seed=sc["s"])
         else:
             t = designs[d][0]
         c = aliasability_certificate(LAM, t, CERT_BAND, n_grid=cert_ng, metric="l2")
@@ -250,61 +250,96 @@ def aggregate(records, methods, amps):
     return summ, decomp, cert
 
 
-def section_pareto(scenarios, N, quick):
+# --- module-level task workers so the serial sections can run on the shared pool ----------
+def _pareto_ag_task(args):
+    b, sc, N = args
+    LAM = np.asarray(sc["LAMBDA"], float)
+    t, _ = aliasguard_continuous(LAM, np.asarray(sc["Odes"], float), N, beta=b,
+                                 n_sweeps=12, grid_res=480, seed=sc["s"])
+    return float(_worst_L2(LAM, t, np.asarray(sc["held"]["near"], float))), \
+        float(condition_number_of(LAM, t))
+
+
+def _pareto_ref_task(args):
+    ref, sc, N, quick = args
+    LAM = np.asarray(sc["LAMBDA"], float)
+    if ref == "ds_optimal":
+        t = ds_optimal_design(LAM, np.asarray(sc["Odes"], float), N, n_sweeps=5,
+                              grid_res=200, seed=sc["s"])
+    else:
+        t = e_optimal_design(LAM, N, n_restarts=120 if quick else 200, seed=sc["s"])
+    return ref, float(_worst_L2(LAM, t, np.asarray(sc["held"]["near"], float))), \
+        float(condition_number_of(LAM, t))
+
+
+def _budget_task(args):
+    mth, N, sc, quick = args
+    LAM = np.asarray(sc["LAMBDA"], float)
+    t, _ = build_design(mth, LAM, np.asarray(sc["Odes"], float), N, seed=sc["s"], quick=quick)
+    return mth, N, float(_worst_L2(LAM, t, np.asarray(sc["held"]["near"], float)))
+
+
+def _twod_task(args):
+    s, quick = args
+    from inralias.design import aliasguard_continuous_nd
+    N2 = 48
+    rng = np.random.default_rng(30_000 + s)
+    LAM2 = np.unique(rng.integers(-3, 4, size=(14, 2)), axis=0).astype(float)[:9]
+    des = rng.integers(-9, 10, size=(8, 2)).astype(float)
+    des = des[np.min(np.linalg.norm(des[:, None] - LAM2[None], axis=2), axis=1) > 1.0]
+    test = rng.integers(-9, 10, size=(8, 2)).astype(float)
+    test = test[np.min(np.linalg.norm(test[:, None] - LAM2[None], axis=2), axis=1) > 1.0]
+    tr = rng.uniform(0, 1, (N2, 2))
+    rd = max((aliasability_L2_of(LAM2, tr, test[i]) for i in range(len(test))), default=0.0)
+    t2, _ = aliasguard_continuous_nd(LAM2, des, N2, d=2, n_sweeps=5 if quick else 8,
+                                     grid_res=32 if quick else 44, seed=s)
+    ag = max((aliasability_L2_of(LAM2, t2, test[i]) for i in range(len(test))), default=0.0)
+    return float(ag), float(rd)
+
+
+def _pmap(ex, fn, tasks):
+    """Map via the shared executor if present, else serially."""
+    return list(ex.map(fn, tasks)) if ex is not None else [fn(t) for t in tasks]
+
+
+def section_pareto(scenarios, N, quick, ex=None):
     betas = [0.05, 0.2, 0.5, 1.0, 2.0, 5.0] if not quick else [0.2, 1.0, 5.0]
     pts = {"beta": betas, "aliasguard": [], "aliasguard_cond": []}
     sub = scenarios[: (4 if quick else 8)]
-    for b in betas:
-        al, cn = [], []
-        for sc in sub:
-            LAM = np.asarray(sc["LAMBDA"], float)
-            t, _ = aliasguard_continuous(LAM, np.asarray(sc["Odes"], float), N, beta=b, n_sweeps=20, seed=sc["s"])
-            al.append(_worst_L2(LAM, t, sc["held"]["near"])); cn.append(condition_number_of(LAM, t))
-        pts["aliasguard"].append(float(np.mean(al))); pts["aliasguard_cond"].append(float(np.mean(cn)))
-    for ref, fn in (("ds_optimal", lambda sc, LAM: ds_optimal_design(LAM, np.asarray(sc["Odes"], float), N, n_sweeps=5, grid_res=200, seed=sc["s"])),
-                    ("e_optimal", lambda sc, LAM: e_optimal_design(LAM, N, n_restarts=120 if quick else 200, seed=sc["s"]))):
-        al, cn = [], []
-        for sc in sub:
-            LAM = np.asarray(sc["LAMBDA"], float); t = fn(sc, LAM)
-            al.append(_worst_L2(LAM, t, sc["held"]["near"])); cn.append(condition_number_of(LAM, t))
-        pts[ref] = [float(np.mean(al)), float(np.mean(cn))]
+    ag_res = _pmap(ex, _pareto_ag_task, [(b, sc, N) for b in betas for sc in sub])
+    ag_res = [ag_res[i * len(sub):(i + 1) * len(sub)] for i in range(len(betas))]
+    for block in ag_res:
+        pts["aliasguard"].append(float(np.mean([a for a, _ in block])))
+        pts["aliasguard_cond"].append(float(np.mean([c for _, c in block])))
+    ref_res = _pmap(ex, _pareto_ref_task,
+                    [(ref, sc, N, quick) for ref in ("ds_optimal", "e_optimal") for sc in sub])
+    for ref in ("ds_optimal", "e_optimal"):
+        block = [r for r in ref_res if r[0] == ref]
+        pts[ref] = [float(np.mean([al for _, al, _ in block])),
+                    float(np.mean([cn for _, _, cn in block]))]
     return pts
 
 
-def section_budget(scenarios, quick):
+def section_budget(scenarios, quick, ex=None):
     Ns = [16, 24, 32, 48, 64] if not quick else [24, 40]
     sub = scenarios[: (6 if quick else 12)]
     curves = {"N": Ns}
-    for mth in ("aliasguard", "ds_optimal", "random_jitter"):
+    methods = ("aliasguard", "ds_optimal", "random_jitter")
+    tasks = [(mth, N, sc, quick) for mth in methods for N in Ns for sc in sub]
+    res = _pmap(ex, _budget_task, tasks)
+    for mth in methods:
         means, cis = [], []
         for N in Ns:
-            vals = []
-            for sc in sub:
-                LAM = np.asarray(sc["LAMBDA"], float)
-                t, _ = build_design(mth, LAM, np.asarray(sc["Odes"], float), N, seed=sc["s"], quick=quick)
-                vals.append(_worst_L2(LAM, t, sc["held"]["near"]))
-            m, lo, hi = _paired_bootstrap_ci(vals)
-            means.append(m); cis.append((hi - lo) / 2)
+            vals = [v for (m, n, v) in res if m == mth and n == N]
+            m_, lo, hi = _paired_bootstrap_ci(vals)
+            means.append(m_); cis.append((hi - lo) / 2)
         curves[mth] = means; curves[mth + "_ci"] = cis
     return curves
 
 
-def section_2d(quick):
-    from inralias.design import aliasguard_continuous_nd
-    N2 = 48
-    ag, rd = [], []
-    for s in range(6 if quick else 12):
-        rng = np.random.default_rng(30_000 + s)
-        LAM2 = np.unique(rng.integers(-3, 4, size=(14, 2)), axis=0).astype(float)[:9]
-        des = rng.integers(-9, 10, size=(8, 2)).astype(float)
-        des = des[np.min(np.linalg.norm(des[:, None] - LAM2[None], axis=2), axis=1) > 1.0]
-        test = rng.integers(-9, 10, size=(8, 2)).astype(float)
-        test = test[np.min(np.linalg.norm(test[:, None] - LAM2[None], axis=2), axis=1) > 1.0]
-        tr = rng.uniform(0, 1, (N2, 2))
-        rd.append(max((aliasability_L2_of(LAM2, tr, test[i]) for i in range(len(test))), default=0.0))
-        t2, _ = aliasguard_continuous_nd(LAM2, des, N2, d=2, n_sweeps=5 if quick else 8,
-                                         grid_res=32 if quick else 44, seed=s)
-        ag.append(max((aliasability_L2_of(LAM2, t2, test[i]) for i in range(len(test))), default=0.0))
+def section_2d(quick, ex=None):
+    res = _pmap(ex, _twod_task, [(s, quick) for s in range(6 if quick else 12)])
+    ag = [a for a, _ in res]; rd = [r for _, r in res]
     am, alo, ahi = _paired_bootstrap_ci(ag); rm, rlo, rhi = _paired_bootstrap_ci(rd)
     return {"aliasguard": {"mean": am, "ci_lo": alo, "ci_hi": ahi},
             "random": {"mean": rm, "ci_lo": rlo, "ci_hi": rhi},
@@ -359,7 +394,7 @@ def main():
         jobs = int(sys.argv[sys.argv.index("--jobs") + 1])
     N = N_DEFAULT
     amps = [0.5, 1.0] if quick else [0.25, 0.5, 1.0]
-    cert_ng = 3000 if quick else 5000
+    cert_ng = 2500 if quick else 3000
     methods = [m for m in METHODS if not (quick and m == "annealing")]
     scenarios = [make_scenario(s) for s in range(nsc)]
 
@@ -369,13 +404,19 @@ def main():
         from concurrent.futures import ProcessPoolExecutor
         with ProcessPoolExecutor(max_workers=jobs) as ex:
             records = list(ex.map(process_scenario, tasks))
+            records.sort(key=lambda r: r["s"])
+            summ, decomp, cert = aggregate(records, methods, amps)
+            # serial sections reuse the SAME pool (they were the wall-clock bottleneck)
+            print("[AG] pareto ...", flush=True); pareto = section_pareto(scenarios, N, quick, ex)
+            print("[AG] budget ...", flush=True); budget = section_budget(scenarios, quick, ex)
+            print("[AG] 2-D ...", flush=True); twod = section_2d(quick, ex)
     else:
         records = [process_scenario(t) for t in tasks]
-    records.sort(key=lambda r: r["s"])
-    summ, decomp, cert = aggregate(records, methods, amps)
-    print("[AG] pareto ...", flush=True); pareto = section_pareto(scenarios, N, quick)
-    print("[AG] budget ...", flush=True); budget = section_budget(scenarios, quick)
-    print("[AG] 2-D ...", flush=True); twod = section_2d(quick)
+        records.sort(key=lambda r: r["s"])
+        summ, decomp, cert = aggregate(records, methods, amps)
+        print("[AG] pareto ...", flush=True); pareto = section_pareto(scenarios, N, quick)
+        print("[AG] budget ...", flush=True); budget = section_budget(scenarios, quick)
+        print("[AG] 2-D ...", flush=True); twod = section_2d(quick)
     make_figure(summ, pareto, decomp, cert)
 
     out = {"config": {"N": N, "n_scenarios": nsc, "methods": methods,

@@ -275,11 +275,23 @@ def main():
                         "threshold_rule": "95th percentile of calibration H0 scores",
                         "separation": "calibration, test-H0, test-H1 all disjoint draws"},
            "conditions": conditions,
-           "note": "coherent_demo instantiates the T4a two-point pair (H1: tone at "
-                   "nu=111; H0: same-amplitude tone at the in-band twin -17; identical "
-                   "sample laws on grid samples) -- every detector must sit at "
-                   "AUC~0.5, TPR~FPR; it is a demonstration, not an operating "
-                   "characteristic; underdetermined ring fits are flagged"}
+           "detector_status": {
+               "residual": "the ONLY detector with a closed-form operating characteristic: "
+                           "its power is the exact noncentral chi-squared curve (T4b); the "
+                           "empirical residual detector is expected to track that curve",
+               "ring": "empirical baseline (no closed-form power)",
+               "lomb": "empirical baseline (no closed-form power)",
+               "heldout": "empirical baseline (no closed-form power)",
+               "crossfit": "empirical baseline (no closed-form power)"},
+           "note": "Exactly ONE detector (residual) has a closed-form power curve -- the "
+                   "exact noncentral chi-squared (T4b) plotted as 'theory'; ring/lomb/"
+                   "heldout/crossfit are alternative EMPIRICAL detectors shown for "
+                   "comparison and are NOT claimed to follow that curve. coherent_demo "
+                   "instantiates the T4a two-point pair (H1: tone at nu=111; H0: "
+                   "same-amplitude tone at the in-band twin -17; identical sample laws on "
+                   "grid samples) -- every detector must sit at AUC~0.5, TPR~FPR; it is a "
+                   "demonstration, not an operating characteristic; underdetermined ring "
+                   "fits are flagged"}
     save_json("diagnostic_roc.json", out)
     for c in conditions:
         r = c["detectors"]["ring"]
