@@ -1,513 +1,26 @@
 {
   "config": {
-    "LAMBDA": [
-      0.0,
-      5.0,
-      -5.0,
-      11.0,
-      -11.0,
-      17.0,
-      -17.0,
-      23.0,
-      -23.0
-    ],
-    "m": 9,
-    "Q_grid": 256,
-    "random_seeds": [
-      0,
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11
-    ],
-    "ag_seeds": [
-      0,
-      1,
-      2
-    ],
-    "concern": [
-      26.5,
-      33.0,
-      41.5,
-      -26.5,
-      -33.0,
-      -41.5,
-      279.0,
-      -279.0
-    ]
-  },
-  "A_regimes": {
-    "coherent_folds": {
-      "N": 40,
-      "K": 16,
-      "methods": {
-        "random_grid_subset": {
-          "min_visibility": 3.518512691967391e-14,
-          "min_visibility_ci": 1.6507427515940605e-15,
-          "max_aliasability": 1.0000000000000042,
-          "max_aliasability_ci": 1.4259170314536652e-15,
-          "condition_number": 2.1628635941183494,
-          "condition_number_ci": 0.22015259161164044
-        },
-        "iid_uniform": {
-          "min_visibility": 0.8364356833934959,
-          "min_visibility_ci": 0.015189410468482833,
-          "max_aliasability": 0.6524251165719727,
-          "max_aliasability_ci": 0.046596573932199355,
-          "condition_number": 2.199544200348965,
-          "condition_number_ci": 0.20889551874335774
-        },
-        "random_jitter": {
-          "min_visibility": 0.8445578027630689,
-          "min_visibility_ci": 0.016919861281058674,
-          "max_aliasability": 0.6049120054265265,
-          "max_aliasability_ci": 0.03902351990810668,
-          "condition_number": 1.8318932518140814,
-          "condition_number_ci": 0.11440035774199221
-        },
-        "full_grid": {
-          "min_visibility": 5.610771788243084e-15,
-          "min_visibility_ci": 0.0,
-          "max_aliasability": 1.0000000000000018,
-          "max_aliasability_ci": 0.0,
-          "condition_number": 2.500069379326925,
-          "condition_number_ci": 0.0
-        },
-        "fixed_jitter": {
-          "min_visibility": 3.9998207136551136e-14,
-          "min_visibility_ci": 0.0,
-          "max_aliasability": 1.000000000000002,
-          "max_aliasability_ci": 0.0,
-          "condition_number": 1.4508490870588027,
-          "condition_number_ci": 0.0
-        },
-        "condition_only": {
-          "min_visibility": 0.8752744280097253,
-          "min_visibility_ci": 0.0,
-          "max_aliasability": 0.48975687620021735,
-          "max_aliasability_ci": 0.0,
-          "condition_number": 1.1225001508483672,
-          "condition_number_ci": 0.0
-        },
-        "coherence_only": {
-          "min_visibility": 0.9652035292063218,
-          "min_visibility_ci": 0.0,
-          "max_aliasability": 0.34090351995724677,
-          "max_aliasability_ci": 0.0,
-          "condition_number": 2.383609699083146,
-          "condition_number_ci": 0.0
-        },
-        "e_optimal": {
-          "min_visibility": 0.8781231105152577,
-          "min_visibility_ci": 0.0,
-          "max_aliasability": 0.5030109120270393,
-          "max_aliasability_ci": 0.0,
-          "condition_number": 1.690030821857429,
-          "condition_number_ci": 0.0
-        },
-        "random_search": {
-          "min_visibility": 0.9045620519783316,
-          "min_visibility_ci": 0.0,
-          "max_aliasability": 0.4654896741001322,
-          "max_aliasability_ci": 0.0,
-          "condition_number": 2.2097323992977755,
-          "condition_number_ci": 0.0
-        },
-        "aliasguard_greedy": {
-          "min_visibility": 3.079167283680814e-14,
-          "min_visibility_ci": 0.0,
-          "max_aliasability": 1.0000000000000007,
-          "max_aliasability_ci": 0.0,
-          "condition_number": 1.0747690130223226,
-          "condition_number_ci": 0.0
-        },
-        "aliasguard": {
-          "min_visibility": 0.9879962157941815,
-          "min_visibility_ci": 0.003463318300567049,
-          "max_aliasability": 0.15604857897835925,
-          "max_aliasability_ci": 0.024807217042191174,
-          "condition_number": 1.1587562790837003,
-          "condition_number_ci": 0.014733815101743297
-        }
-      }
-    },
-    "near_band": {
-      "N": 40,
-      "K": 16,
-      "methods": {
-        "random_grid_subset": {
-          "min_visibility": 0.8331290623948524,
-          "min_visibility_ci": 0.02312669286384811,
-          "max_aliasability": 0.6366793010095825,
-          "max_aliasability_ci": 0.04545797855540478,
-          "condition_number": 2.1628635941183494,
-          "condition_number_ci": 0.22015259161164044
-        },
-        "iid_uniform": {
-          "min_visibility": 0.8195378417191389,
-          "min_visibility_ci": 0.029705860712090967,
-          "max_aliasability": 0.655734164470261,
-          "max_aliasability_ci": 0.050189933348686856,
-          "condition_number": 2.199544200348965,
-          "condition_number_ci": 0.20889551874335774
-        },
-        "random_jitter": {
-          "min_visibility": 0.8717641466835584,
-          "min_visibility_ci": 0.015047998188183318,
-          "max_aliasability": 0.5499031806234331,
-          "max_aliasability_ci": 0.03551372140975202,
-          "condition_number": 1.8318932518140814,
-          "condition_number_ci": 0.11440035774199221
-        },
-        "full_grid": {
-          "min_visibility": 0.026774894734763188,
-          "min_visibility_ci": 0.0,
-          "max_aliasability": 1.1480158439083676,
-          "max_aliasability_ci": 0.0,
-          "condition_number": 2.500069379326925,
-          "condition_number_ci": 0.0
-        },
-        "fixed_jitter": {
-          "min_visibility": 0.9168221543496352,
-          "min_visibility_ci": 0.0,
-          "max_aliasability": 0.4124650188949646,
-          "max_aliasability_ci": 0.0,
-          "condition_number": 1.4508490870588027,
-          "condition_number_ci": 0.0
-        },
-        "condition_only": {
-          "min_visibility": 0.7833339092650065,
-          "min_visibility_ci": 0.0,
-          "max_aliasability": 0.6396617946766324,
-          "max_aliasability_ci": 0.0,
-          "condition_number": 1.1225001508483672,
-          "condition_number_ci": 0.0
-        },
-        "coherence_only": {
-          "min_visibility": 0.9837138911773765,
-          "min_visibility_ci": 0.0,
-          "max_aliasability": 0.20326111377294206,
-          "max_aliasability_ci": 0.0,
-          "condition_number": 1.4192369895170867,
-          "condition_number_ci": 0.0
-        },
-        "e_optimal": {
-          "min_visibility": 0.8689820141858483,
-          "min_visibility_ci": 0.0,
-          "max_aliasability": 0.5645465892016788,
-          "max_aliasability_ci": 0.0,
-          "condition_number": 1.690030821857429,
-          "condition_number_ci": 0.0
-        },
-        "random_search": {
-          "min_visibility": 0.8843361247053266,
-          "min_visibility_ci": 0.0,
-          "max_aliasability": 0.5132729633089809,
-          "max_aliasability_ci": 0.0,
-          "condition_number": 1.8024782795312309,
-          "condition_number_ci": 0.0
-        },
-        "aliasguard_greedy": {
-          "min_visibility": 0.9635038124623665,
-          "min_visibility_ci": 0.0,
-          "max_aliasability": 0.26809926599457584,
-          "max_aliasability_ci": 0.0,
-          "condition_number": 1.1594865537682175,
-          "condition_number_ci": 0.0
-        },
-        "aliasguard": {
-          "min_visibility": 0.9919670419155325,
-          "min_visibility_ci": 0.0036935132219087516,
-          "max_aliasability": 0.12614160264236848,
-          "max_aliasability_ci": 0.033051229448807055,
-          "condition_number": 1.10908383408877,
-          "condition_number_ci": 0.02156980079428942
-        }
-      }
-    },
-    "broad_band": {
-      "N": 40,
-      "K": 30,
-      "methods": {
-        "random_grid_subset": {
-          "min_visibility": 0.8503655759265873,
-          "min_visibility_ci": 0.014825815770580552,
-          "max_aliasability": 0.6315320488347883,
-          "max_aliasability_ci": 0.040304577803007155,
-          "condition_number": 2.1628635941183494,
-          "condition_number_ci": 0.22015259161164044
-        },
-        "iid_uniform": {
-          "min_visibility": 0.823109272278833,
-          "min_visibility_ci": 0.00974615627252984,
-          "max_aliasability": 0.680339953748839,
-          "max_aliasability_ci": 0.038842666680497594,
-          "condition_number": 2.199544200348965,
-          "condition_number_ci": 0.20889551874335774
-        },
-        "random_jitter": {
-          "min_visibility": 0.8286805465859111,
-          "min_visibility_ci": 0.017146748643771272,
-          "max_aliasability": 0.6148794561351715,
-          "max_aliasability_ci": 0.032555224757129714,
-          "condition_number": 1.8318932518140814,
-          "condition_number_ci": 0.11440035774199221
-        },
-        "full_grid": {
-          "min_visibility": 0.15278810956432876,
-          "min_visibility_ci": 0.0,
-          "max_aliasability": 1.2980709863429825,
-          "max_aliasability_ci": 0.0,
-          "condition_number": 2.500069379326925,
-          "condition_number_ci": 0.0
-        },
-        "fixed_jitter": {
-          "min_visibility": 0.8284300856808904,
-          "min_visibility_ci": 0.0,
-          "max_aliasability": 0.5635752249696282,
-          "max_aliasability_ci": 0.0,
-          "condition_number": 1.4508490870588027,
-          "condition_number_ci": 0.0
-        },
-        "condition_only": {
-          "min_visibility": 0.7767162530537601,
-          "min_visibility_ci": 0.0,
-          "max_aliasability": 0.625948775714187,
-          "max_aliasability_ci": 0.0,
-          "condition_number": 1.1225001508483672,
-          "condition_number_ci": 0.0
-        },
-        "coherence_only": {
-          "min_visibility": 0.9254846584096682,
-          "min_visibility_ci": 0.0,
-          "max_aliasability": 0.5890835760595545,
-          "max_aliasability_ci": 0.0,
-          "condition_number": 2.73090179978359,
-          "condition_number_ci": 0.0
-        },
-        "e_optimal": {
-          "min_visibility": 0.8207725459431031,
-          "min_visibility_ci": 0.0,
-          "max_aliasability": 0.618483086536493,
-          "max_aliasability_ci": 0.0,
-          "condition_number": 1.690030821857429,
-          "condition_number_ci": 0.0
-        },
-        "random_search": {
-          "min_visibility": 0.8655228713097409,
-          "min_visibility_ci": 0.0,
-          "max_aliasability": 0.49762563649797886,
-          "max_aliasability_ci": 0.0,
-          "condition_number": 1.6669127739535115,
-          "condition_number_ci": 0.0
-        },
-        "aliasguard_greedy": {
-          "min_visibility": 0.9925082664692162,
-          "min_visibility_ci": 0.0,
-          "max_aliasability": 0.1221774978884044,
-          "max_aliasability_ci": 0.0,
-          "condition_number": 1.2097667584600342,
-          "condition_number_ci": 0.0
-        },
-        "aliasguard": {
-          "min_visibility": 0.960543663122979,
-          "min_visibility_ci": 0.03214733288936189,
-          "max_aliasability": 0.26934385597058,
-          "max_aliasability_ci": 0.12211603324777233,
-          "condition_number": 1.4769092914777284,
-          "condition_number_ci": 0.14564553235761227
-        }
-      }
-    }
-  },
-  "C_heldout": {
-    "K_design": 24,
-    "K_test": 16,
     "N": 40,
-    "methods": {
-      "random_jitter": {
-        "min_visibility": 0.8231641917334472,
-        "min_visibility_ci": 0.01937619082072031,
-        "max_aliasability": 0.6344457051508516,
-        "max_aliasability_ci": 0.03756366761999071,
-        "condition_number": 1.8318932518140814,
-        "condition_number_ci": 0.11440035774199221
-      },
-      "iid_uniform": {
-        "min_visibility": 0.8286514884313875,
-        "min_visibility_ci": 0.008452844454701697,
-        "max_aliasability": 0.6769864529277897,
-        "max_aliasability_ci": 0.06482184834912363,
-        "condition_number": 2.199544200348965,
-        "condition_number_ci": 0.20889551874335774
-      },
-      "random_search": {
-        "min_visibility": 0.8710822027718842,
-        "min_visibility_ci": 0.0,
-        "max_aliasability": 0.5010548532821236,
-        "max_aliasability_ci": 0.0,
-        "condition_number": 1.9114914164973125,
-        "condition_number_ci": 0.0
-      },
-      "e_optimal": {
-        "min_visibility": 0.8402976720298474,
-        "min_visibility_ci": 0.0,
-        "max_aliasability": 0.5847521896622973,
-        "max_aliasability_ci": 0.0,
-        "condition_number": 1.690030821857429,
-        "condition_number_ci": 0.0
-      },
-      "aliasguard_heldout": {
-        "min_visibility": 0.9838665429189026,
-        "min_visibility_ci": 0.0037500149079339887,
-        "max_aliasability": 0.18614641871908574,
-        "max_aliasability_ci": 0.021708326397864276,
-        "condition_number": 1.2233894604663025,
-        "condition_number_ci": 0.00465702054730966
-      },
-      "aliasguard_misspecified": {
-        "min_visibility": 0.9796078901985997,
-        "min_visibility_ci": 0.009863960895098835,
-        "max_aliasability": 0.20000747156544518,
-        "max_aliasability_ci": 0.05206846965615113,
-        "condition_number": 1.2160872379890666,
-        "condition_number_ci": 0.019098500618696352
-      }
-    }
-  },
-  "D_budget": {
-    "aliasguard": [
-      0.6061312040066427,
-      0.3316472734227162,
-      0.22545591497436157,
-      0.16530030162430986,
-      0.1259910813912831
+    "n_scenarios": 3,
+    "methods": [
+      "aliasguard",
+      "ds_optimal",
+      "e_optimal",
+      "random_jitter",
+      "iid_uniform",
+      "low_discrepancy",
+      "random_search",
+      "coherence_only",
+      "condition_only"
     ],
-    "aliasguard_ci": [
-      0.08511854797881162,
-      0.06337891755497498,
-      0.013817211692819709,
-      0.034884839428366406,
-      0.022896533496609667
+    "heldout_types": [
+      "near",
+      "omitted_band",
+      "severe_shift",
+      "scale_error",
+      "broadband_ood"
     ],
-    "random_jitter": [
-      1.6656778167858766,
-      0.8719274776299931,
-      0.6675941291635032,
-      0.5188413480241421,
-      0.4479948505233486
-    ],
-    "random_jitter_ci": [
-      0.3002351252439835,
-      0.049370387561040764,
-      0.05236577517763249,
-      0.028208589680245998,
-      0.01833198065370412
-    ],
-    "e_optimal": [
-      0.9755894609638364,
-      0.7929417566563377,
-      0.6651183650024934,
-      0.5037852227110516,
-      0.4272790653790879
-    ],
-    "N": [
-      16,
-      24,
-      32,
-      48,
-      64
-    ]
-  },
-  "E_downstream": {
-    "amps": [
-      0.25,
-      0.5,
-      1.0
-    ],
-    "sigma": 0.03,
-    "N": 40,
-    "methods": {
-      "random_jitter": {
-        "condition_number": 1.9193110182385358,
-        "by_amp": {
-          "0.25": {
-            "aliasing_bias_rmse": 0.08870415957685064,
-            "aliasing_bias_ci": 0.005620797269198378,
-            "total_rmse": 0.199057136224157,
-            "total_ci": 0.0025093320196802244
-          },
-          "0.5": {
-            "aliasing_bias_rmse": 0.1750822329758037,
-            "aliasing_bias_ci": 0.01136722482890242,
-            "total_rmse": 0.39720636772148205,
-            "total_ci": 0.005031349378026218
-          },
-          "1.0": {
-            "aliasing_bias_rmse": 0.34876621434634564,
-            "aliasing_bias_ci": 0.022908104102944228,
-            "total_rmse": 0.7938848864293968,
-            "total_ci": 0.010075299701110662
-          }
-        }
-      },
-      "e_optimal": {
-        "condition_number": 1.690030821857429,
-        "by_amp": {
-          "0.25": {
-            "aliasing_bias_rmse": 0.08614360401998215,
-            "aliasing_bias_ci": 0.003640362055387853,
-            "total_rmse": 0.19694821282230576,
-            "total_ci": 0.0015794703764217377
-          },
-          "0.5": {
-            "aliasing_bias_rmse": 0.17190616283692875,
-            "aliasing_bias_ci": 0.007260797185224402,
-            "total_rmse": 0.3937013389300355,
-            "total_ci": 0.0031288613188971905
-          },
-          "1.0": {
-            "aliasing_bias_rmse": 0.3431926815408834,
-            "aliasing_bias_ci": 0.014434985363547781,
-            "total_rmse": 0.7870973387974226,
-            "total_ci": 0.006254544191242525
-          }
-        }
-      },
-      "aliasguard": {
-        "condition_number": 1.2205652270924403,
-        "by_amp": {
-          "0.25": {
-            "aliasing_bias_rmse": 0.025388663876547455,
-            "aliasing_bias_ci": 0.0010268651023270928,
-            "total_rmse": 0.1786604212731778,
-            "total_ci": 0.0001754845631150372
-          },
-          "0.5": {
-            "aliasing_bias_rmse": 0.044280340330249725,
-            "aliasing_bias_ci": 0.0019526582651960465,
-            "total_rmse": 0.35646270546368725,
-            "total_ci": 0.00031186032546069416
-          },
-          "1.0": {
-            "aliasing_bias_rmse": 0.08491139258297069,
-            "aliasing_bias_ci": 0.004248851606794411,
-            "total_rmse": 0.712522520783228,
-            "total_ci": 0.0006487693279117499
-          }
-        }
-      }
-    }
-  },
-  "G_certificate": {
-    "band": [
+    "cert_band": [
       [
         25.0,
         60.0
@@ -517,50 +30,884 @@
         -25.0
       ]
     ],
-    "N": 48,
-    "methods": {
-      "random_jitter": {
-        "certified_max_aliasability": 0.60087726812593,
-        "grid_max_aliasability": 0.5984923014429326,
-        "certified_min_visibility": 0.8260311711577293,
-        "condition_number": 1.5778335776374834
+    "metric": "function-space a_{L2,T} (worst-case over held-out)"
+  },
+  "summary": {
+    "aliasguard": {
+      "heldout": {
+        "near": {
+          "mean": 0.1491088181886975,
+          "ci_lo": 0.12452296567558428,
+          "ci_hi": 0.16824855772989747,
+          "values": [
+            0.1245,
+            0.1546,
+            0.1682
+          ]
+        },
+        "omitted_band": {
+          "mean": 0.23406328520690511,
+          "ci_lo": 0.1661892209937058,
+          "ci_hi": 0.334158397289183,
+          "values": [
+            0.1662,
+            0.3342,
+            0.2018
+          ]
+        },
+        "severe_shift": {
+          "mean": 0.5394129340515427,
+          "ci_lo": 0.47190671218201746,
+          "ci_hi": 0.6029336137026192,
+          "values": [
+            0.4719,
+            0.5434,
+            0.6029
+          ]
+        },
+        "scale_error": {
+          "mean": 0.42165000963698657,
+          "ci_lo": 0.3599456170006525,
+          "ci_hi": 0.49521403535400066,
+          "values": [
+            0.4952,
+            0.3599,
+            0.4098
+          ]
+        },
+        "broadband_ood": {
+          "mean": 0.545372747336399,
+          "ci_lo": 0.5289881883689611,
+          "ci_hi": 0.5618109077608171,
+          "values": [
+            0.529,
+            0.5453,
+            0.5618
+          ]
+        }
       },
-      "e_optimal": {
-        "certified_max_aliasability": 0.5795986734912664,
-        "grid_max_aliasability": 0.5774324503448447,
-        "certified_min_visibility": 0.8243844915491401,
-        "condition_number": 1.4793212855319104
+      "design_set": {
+        "mean": 0.16150890656719674,
+        "ci_lo": 0.14265316630081035,
+        "ci_hi": 0.1743739579127178
       },
-      "aliasguard": {
-        "certified_max_aliasability": 0.29342902693768586,
-        "grid_max_aliasability": 0.29080084208384704,
-        "certified_min_visibility": 0.95396935459245,
-        "condition_number": 1.2315732716029422
+      "condition_number": {
+        "mean": 1.2958575220987667,
+        "ci_lo": 1.2117563491566266,
+        "ci_hi": 1.423638971034318
+      },
+      "min_visibility_near": 0.9889929104920662,
+      "wall_clock_s": {
+        "mean": 0.34974523333463975,
+        "total": 1.0492357000039192
+      }
+    },
+    "ds_optimal": {
+      "heldout": {
+        "near": {
+          "mean": 0.2061185422953271,
+          "ci_lo": 0.18124342743203567,
+          "ci_hi": 0.2246493011155851,
+          "values": [
+            0.2125,
+            0.1812,
+            0.2246
+          ]
+        },
+        "omitted_band": {
+          "mean": 0.24446301805201606,
+          "ci_lo": 0.15048308340563854,
+          "ci_hi": 0.33858821368328335,
+          "values": [
+            0.1505,
+            0.3386,
+            0.2443
+          ]
+        },
+        "severe_shift": {
+          "mean": 0.4938041382796265,
+          "ci_lo": 0.39279218210018,
+          "ci_hi": 0.6192703108186534,
+          "values": [
+            0.3928,
+            0.4693,
+            0.6193
+          ]
+        },
+        "scale_error": {
+          "mean": 0.41909567788581265,
+          "ci_lo": 0.3793182705613895,
+          "ci_hi": 0.46298957414138603,
+          "values": [
+            0.463,
+            0.3793,
+            0.415
+          ]
+        },
+        "broadband_ood": {
+          "mean": 0.5470281036617374,
+          "ci_lo": 0.503039326064992,
+          "ci_hi": 0.6134059177729744,
+          "values": [
+            0.503,
+            0.5246,
+            0.6134
+          ]
+        }
+      },
+      "design_set": {
+        "mean": 0.21794818616915465,
+        "ci_lo": 0.19564012788396956,
+        "ci_hi": 0.24275597619273157
+      },
+      "condition_number": {
+        "mean": 1.4931749312305043,
+        "ci_lo": 1.40186184349798,
+        "ci_hi": 1.6192622509425185
+      },
+      "min_visibility_near": 0.9804182688352577,
+      "wall_clock_s": {
+        "mean": 28.610016233333834,
+        "total": 85.8300487000015
+      }
+    },
+    "e_optimal": {
+      "heldout": {
+        "near": {
+          "mean": 0.5795086454426529,
+          "ci_lo": 0.5204014362624539,
+          "ci_hi": 0.6373788188513255,
+          "values": [
+            0.5204,
+            0.6374,
+            0.5807
+          ]
+        },
+        "omitted_band": {
+          "mean": 0.5442972543338978,
+          "ci_lo": 0.5229182498003627,
+          "ci_hi": 0.5775149468116709,
+          "values": [
+            0.5229,
+            0.5775,
+            0.5325
+          ]
+        },
+        "severe_shift": {
+          "mean": 0.590341100352577,
+          "ci_lo": 0.5183212866748499,
+          "ci_hi": 0.6318241860072291,
+          "values": [
+            0.6318,
+            0.6209,
+            0.5183
+          ]
+        },
+        "scale_error": {
+          "mean": 0.6382699391314599,
+          "ci_lo": 0.5611962656683197,
+          "ci_hi": 0.6950338757983765,
+          "values": [
+            0.695,
+            0.6586,
+            0.5612
+          ]
+        },
+        "broadband_ood": {
+          "mean": 0.6613917845276424,
+          "ci_lo": 0.6175430517682086,
+          "ci_hi": 0.7348477427882617,
+          "values": [
+            0.6175,
+            0.7348,
+            0.6318
+          ]
+        }
+      },
+      "design_set": {
+        "mean": 0.5974156018614231,
+        "ci_lo": 0.5246276772180496,
+        "ci_hi": 0.6728357762700394
+      },
+      "condition_number": {
+        "mean": 1.8710260476688052,
+        "ci_lo": 1.693522454011725,
+        "ci_hi": 2.1800308758499103
+      },
+      "min_visibility_near": 0.8417148103195369,
+      "wall_clock_s": {
+        "mean": 0.010472833336583184,
+        "total": 0.03141850000974955
+      }
+    },
+    "random_jitter": {
+      "heldout": {
+        "near": {
+          "mean": 0.5566060676060937,
+          "ci_lo": 0.5186566475304445,
+          "ci_hi": 0.5925778210900858,
+          "values": [
+            0.5187,
+            0.5926,
+            0.5586
+          ]
+        },
+        "omitted_band": {
+          "mean": 0.5896569567840085,
+          "ci_lo": 0.5035674931683858,
+          "ci_hi": 0.6616964780903347,
+          "values": [
+            0.6617,
+            0.6037,
+            0.5036
+          ]
+        },
+        "severe_shift": {
+          "mean": 0.5885020468928094,
+          "ci_lo": 0.5018555707082155,
+          "ci_hi": 0.6715817768077686,
+          "values": [
+            0.6716,
+            0.5019,
+            0.5921
+          ]
+        },
+        "scale_error": {
+          "mean": 0.5358066352997418,
+          "ci_lo": 0.5019818488036333,
+          "ci_hi": 0.5765593766521596,
+          "values": [
+            0.502,
+            0.5766,
+            0.5289
+          ]
+        },
+        "broadband_ood": {
+          "mean": 0.6395285240210442,
+          "ci_lo": 0.5961088447377418,
+          "ci_hi": 0.6760909461502124,
+          "values": [
+            0.6761,
+            0.5961,
+            0.6464
+          ]
+        }
+      },
+      "design_set": {
+        "mean": 0.5753325059520731,
+        "ci_lo": 0.5480200376548376,
+        "ci_hi": 0.5992456399736672
+      },
+      "condition_number": {
+        "mean": 1.8568016152273312,
+        "ci_lo": 1.5782629026876362,
+        "ci_hi": 2.3910137090619417
+      },
+      "min_visibility_near": 0.8456851030982729,
+      "wall_clock_s": {
+        "mean": 0.00029473333173276234,
+        "total": 0.0008841999951982871
+      }
+    },
+    "iid_uniform": {
+      "heldout": {
+        "near": {
+          "mean": 0.6238994895188396,
+          "ci_lo": 0.5859069587637971,
+          "ci_hi": 0.672460492455639,
+          "values": [
+            0.5859,
+            0.6133,
+            0.6725
+          ]
+        },
+        "omitted_band": {
+          "mean": 0.5567523394499144,
+          "ci_lo": 0.5042141519455938,
+          "ci_hi": 0.596009516802273,
+          "values": [
+            0.57,
+            0.5042,
+            0.596
+          ]
+        },
+        "severe_shift": {
+          "mean": 0.7465902813577315,
+          "ci_lo": 0.6194023582911555,
+          "ci_hi": 0.8912648303828615,
+          "values": [
+            0.8913,
+            0.6194,
+            0.7291
+          ]
+        },
+        "scale_error": {
+          "mean": 0.5903063784789525,
+          "ci_lo": 0.4922243108754886,
+          "ci_hi": 0.6631622930533011,
+          "values": [
+            0.6155,
+            0.4922,
+            0.6632
+          ]
+        },
+        "broadband_ood": {
+          "mean": 0.7879746840458784,
+          "ci_lo": 0.5880783048091759,
+          "ci_hi": 0.8895348588021738,
+          "values": [
+            0.8863,
+            0.5881,
+            0.8895
+          ]
+        }
+      },
+      "design_set": {
+        "mean": 0.638719385555156,
+        "ci_lo": 0.5902878608352363,
+        "ci_hi": 0.6789535727619044
+      },
+      "condition_number": {
+        "mean": 2.6580366379676357,
+        "ci_lo": 2.4748056300561068,
+        "ci_hi": 2.7912274910541384
+      },
+      "min_visibility_near": 0.842703163779675,
+      "wall_clock_s": {
+        "mean": 0.00022216666790579134,
+        "total": 0.0006665000037173741
+      }
+    },
+    "low_discrepancy": {
+      "heldout": {
+        "near": {
+          "mean": 0.7887675686110797,
+          "ci_lo": 0.5654424026208733,
+          "ci_hi": 0.9402070454928056,
+          "values": [
+            0.5654,
+            0.8607,
+            0.9402
+          ]
+        },
+        "omitted_band": {
+          "mean": 0.5857757017786155,
+          "ci_lo": 0.36883796281126235,
+          "ci_hi": 0.819882849686206,
+          "values": [
+            0.5686,
+            0.8199,
+            0.3688
+          ]
+        },
+        "severe_shift": {
+          "mean": 0.6943429531067994,
+          "ci_lo": 0.5173157289446919,
+          "ci_hi": 0.8830305999283609,
+          "values": [
+            0.6827,
+            0.5173,
+            0.883
+          ]
+        },
+        "scale_error": {
+          "mean": 0.46101812396197034,
+          "ci_lo": 0.28728224841332733,
+          "ci_hi": 0.6777739624528314,
+          "values": [
+            0.6778,
+            0.2873,
+            0.418
+          ]
+        },
+        "broadband_ood": {
+          "mean": 1.0473277137535144,
+          "ci_lo": 0.9810055962604954,
+          "ci_hi": 1.1622354139487354,
+          "values": [
+            0.9987,
+            0.981,
+            1.1622
+          ]
+        }
+      },
+      "design_set": {
+        "mean": 0.8391710468180072,
+        "ci_lo": 0.565233600795396,
+        "ci_hi": 0.9998146614800477
+      },
+      "condition_number": {
+        "mean": 1.9852614354087723,
+        "ci_lo": 1.3185207656151259,
+        "ci_hi": 2.6002620563524097
+      },
+      "min_visibility_near": 0.5710419818019109,
+      "wall_clock_s": {
+        "mean": 0.00010553333171022435,
+        "total": 0.00031659999513067305
+      }
+    },
+    "random_search": {
+      "heldout": {
+        "near": {
+          "mean": 0.46722615802383977,
+          "ci_lo": 0.4283574637642145,
+          "ci_hi": 0.49162287432162527,
+          "values": [
+            0.4916,
+            0.4284,
+            0.4817
+          ]
+        },
+        "omitted_band": {
+          "mean": 0.49731977187409804,
+          "ci_lo": 0.41603996584315156,
+          "ci_hi": 0.5532632837708558,
+          "values": [
+            0.5533,
+            0.416,
+            0.5227
+          ]
+        },
+        "severe_shift": {
+          "mean": 0.6172264588999271,
+          "ci_lo": 0.566347325932685,
+          "ci_hi": 0.7124738158551486,
+          "values": [
+            0.7125,
+            0.5663,
+            0.5729
+          ]
+        },
+        "scale_error": {
+          "mean": 0.5114218549591313,
+          "ci_lo": 0.42778726736178313,
+          "ci_hi": 0.5682415367645522,
+          "values": [
+            0.5382,
+            0.4278,
+            0.5682
+          ]
+        },
+        "broadband_ood": {
+          "mean": 0.6041988637990698,
+          "ci_lo": 0.5517091490121899,
+          "ci_hi": 0.632290610735002,
+          "values": [
+            0.6286,
+            0.5517,
+            0.6323
+          ]
+        }
+      },
+      "design_set": {
+        "mean": 0.458965124522061,
+        "ci_lo": 0.4247223873934563,
+        "ci_hi": 0.48535433231896247
+      },
+      "condition_number": {
+        "mean": 2.1721239037827957,
+        "ci_lo": 1.8022165323908925,
+        "ci_hi": 2.3688281040645482
+      },
+      "min_visibility_near": 0.8983127136839816,
+      "wall_clock_s": {
+        "mean": 0.413862333332266,
+        "total": 1.2415869999967981
+      }
+    },
+    "coherence_only": {
+      "heldout": {
+        "near": {
+          "mean": 0.3894982520453912,
+          "ci_lo": 0.2985113278306474,
+          "ci_hi": 0.43980476316777795,
+          "values": [
+            0.2985,
+            0.4398,
+            0.4302
+          ]
+        },
+        "omitted_band": {
+          "mean": 0.44762451044820467,
+          "ci_lo": 0.2681471161345747,
+          "ci_hi": 0.6060311534370987,
+          "values": [
+            0.2681,
+            0.606,
+            0.4687
+          ]
+        },
+        "severe_shift": {
+          "mean": 0.5648638215808747,
+          "ci_lo": 0.43291143884039823,
+          "ci_hi": 0.6583868605979687,
+          "values": [
+            0.4329,
+            0.6584,
+            0.6033
+          ]
+        },
+        "scale_error": {
+          "mean": 0.477279457384619,
+          "ci_lo": 0.4496241642563124,
+          "ci_hi": 0.5012923255175415,
+          "values": [
+            0.4496,
+            0.4809,
+            0.5013
+          ]
+        },
+        "broadband_ood": {
+          "mean": 0.66674627010957,
+          "ci_lo": 0.5037574154042603,
+          "ci_hi": 0.8227524906048759,
+          "values": [
+            0.5038,
+            0.6737,
+            0.8228
+          ]
+        }
+      },
+      "design_set": {
+        "mean": 0.40201649598314076,
+        "ci_lo": 0.2964704132981942,
+        "ci_hi": 0.4667471257610483
+      },
+      "condition_number": {
+        "mean": 2.7747289491365152,
+        "ci_lo": 2.6132684311794963,
+        "ci_hi": 2.948562572663516
+      },
+      "min_visibility_near": 0.9672282584810389,
+      "wall_clock_s": {
+        "mean": 13.700289166668275,
+        "total": 41.100867500004824
+      }
+    },
+    "condition_only": {
+      "heldout": {
+        "near": {
+          "mean": 0.507450915404428,
+          "ci_lo": 0.4071297268014406,
+          "ci_hi": 0.6434921811158405,
+          "values": [
+            0.6435,
+            0.4071,
+            0.4717
+          ]
+        },
+        "omitted_band": {
+          "mean": 0.44555307983290754,
+          "ci_lo": 0.3950937700418622,
+          "ci_hi": 0.4893975185510386,
+          "values": [
+            0.4522,
+            0.4894,
+            0.3951
+          ]
+        },
+        "severe_shift": {
+          "mean": 0.5235906516144185,
+          "ci_lo": 0.49953895124155984,
+          "ci_hi": 0.5597642253954598,
+          "values": [
+            0.5598,
+            0.5115,
+            0.4995
+          ]
+        },
+        "scale_error": {
+          "mean": 0.44845394583611625,
+          "ci_lo": 0.3884296135506531,
+          "ci_hi": 0.5044057318534255,
+          "values": [
+            0.3884,
+            0.5044,
+            0.4525
+          ]
+        },
+        "broadband_ood": {
+          "mean": 0.5709525988892651,
+          "ci_lo": 0.5165047143720872,
+          "ci_hi": 0.628201904403206,
+          "values": [
+            0.6282,
+            0.5682,
+            0.5165
+          ]
+        }
+      },
+      "design_set": {
+        "mean": 0.5126022871231196,
+        "ci_lo": 0.41866701579604126,
+        "ci_hi": 0.6209366267488854
+      },
+      "condition_number": {
+        "mean": 1.1356467491734312,
+        "ci_lo": 1.0631486398948193,
+        "ci_hi": 1.2353620620387635
+      },
+      "min_visibility_near": 0.8562178581989737,
+      "wall_clock_s": {
+        "mean": 11.84557960000287,
+        "total": 35.53673880000861
       }
     }
   },
-  "F_2d": {
-    "m": 10,
-    "K": 8,
-    "N": 48,
-    "random": {
-      "min_visibility": 0.8422895009562055,
-      "min_visibility_ci": 0.010891486382088648,
-      "max_aliasability": 0.6757780171102531,
-      "max_aliasability_ci": 0.04808197116688993,
-      "condition_number": 2.3962644669291566,
-      "condition_number_ci": 0.5303833109457275
-    },
-    "aliasguard": {
-      "min_visibility": 0.9857817431196153,
-      "min_visibility_ci": 0.00700848323732512,
-      "max_aliasability": 0.16610143234007643,
-      "max_aliasability_ci": 0.044059423155358615,
-      "condition_number": 1.1794163473959,
-      "condition_number_ci": 0.016773761812167026
+  "pareto": {
+    "beta": [
+      0.2,
+      1.0,
+      5.0
+    ],
+    "aliasguard": [
+      0.1541135305552255,
+      0.1491088181886975,
+      0.17340661309086247
+    ],
+    "aliasguard_cond": [
+      2.0265175625422818,
+      1.2958575220987667,
+      1.1768170417810702
+    ],
+    "ds_optimal": [
+      0.20611805889840804,
+      1.520170957214898
+    ],
+    "e_optimal": [
+      0.5792177394079557,
+      1.8200894443339035
+    ]
+  },
+  "decomposition": {
+    "amps": [
+      0.5,
+      1.0
+    ],
+    "designs": [
+      "aliasguard",
+      "ds_optimal",
+      "random_jitter"
+    ],
+    "agg": {
+      "aliasguard": {
+        "by_amp": {
+          "0.5": {
+            "bias": {
+              "mean": 0.038134200903512445,
+              "ci": 0.008187774261046443
+            },
+            "noise": {
+              "mean": 0.012616594088126749,
+              "ci": 0.008160274233903095
+            },
+            "trunc": {
+              "mean": 0.35360077176871413,
+              "ci": 0.0001610566919094166
+            },
+            "total": {
+              "mean": 0.3560344093545879,
+              "ci": 0.0006137046973372035
+            }
+          },
+          "1.0": {
+            "bias": {
+              "mean": 0.07626840180702504,
+              "ci": 0.016375548522092963
+            },
+            "noise": {
+              "mean": 0.0130111146458837,
+              "ci": 0.008523666045288831
+            },
+            "trunc": {
+              "mean": 0.7072015435374283,
+              "ci": 0.0003221133838188332
+            },
+            "total": {
+              "mean": 0.7115487007048861,
+              "ci": 0.0013708745034976845
+            }
+          }
+        },
+        "tr_ginv": 0.23143857630352405,
+        "sigma_min_inv2": 0.03408157404521655,
+        "cond": 1.2958575220987667
+      },
+      "ds_optimal": {
+        "by_amp": {
+          "0.5": {
+            "bias": {
+              "mean": 0.06814654251480094,
+              "ci": 0.013847699235908244
+            },
+            "noise": {
+              "mean": 0.01314805707685014,
+              "ci": 0.008276904013747397
+            },
+            "trunc": {
+              "mean": 0.35360077176871413,
+              "ci": 0.0001610566919094166
+            },
+            "total": {
+              "mean": 0.36027940988655954,
+              "ci": 0.0026128226075111936
+            }
+          },
+          "1.0": {
+            "bias": {
+              "mean": 0.13629308502960188,
+              "ci": 0.027695398471816155
+            },
+            "noise": {
+              "mean": 0.014144100632682432,
+              "ci": 0.010567072077131652
+            },
+            "trunc": {
+              "mean": 0.7072015435374283,
+              "ci": 0.0003221133838188332
+            },
+            "total": {
+              "mean": 0.7208966702966961,
+              "ci": 0.004114354568537821
+            }
+          }
+        },
+        "tr_ginv": 0.23851549103218458,
+        "sigma_min_inv2": 0.039261583025126244,
+        "cond": 1.4931749312305043
+      },
+      "random_jitter": {
+        "by_amp": {
+          "0.5": {
+            "bias": {
+              "mean": 0.20227045021149548,
+              "ci": 0.03407861444485571
+            },
+            "noise": {
+              "mean": 0.014328063948485332,
+              "ci": 0.009053540140249281
+            },
+            "trunc": {
+              "mean": 0.35360077176871413,
+              "ci": 0.0001610566919094166
+            },
+            "total": {
+              "mean": 0.4084923045049373,
+              "ci": 0.016356167348539657
+            }
+          },
+          "1.0": {
+            "bias": {
+              "mean": 0.40454090042299007,
+              "ci": 0.0681572288897111
+            },
+            "noise": {
+              "mean": 0.01401260936603519,
+              "ci": 0.00865942563132785
+            },
+            "trunc": {
+              "mean": 0.7072015435374283,
+              "ci": 0.0003221133838188332
+            },
+            "total": {
+              "mean": 0.8195739779746795,
+              "ci": 0.030988560273353765
+            }
+          }
+        },
+        "tr_ginv": 0.25961181871010003,
+        "sigma_min_inv2": 0.05475722725704809,
+        "cond": 1.8568016152273312
+      }
     }
   },
-  "note": "AliasGuard constructive sampling design; all designs use only LAMBDA/Omega/N; held-out and misspecification reported; ablation shows the joint objective is necessary; grid-greedy inherits T1 (cannot break exact grid folds), continuous design can.",
+  "certificate": {
+    "aliasguard": {
+      "certified_mean": 0.27221938560065145,
+      "certified_values": [
+        0.2418,
+        0.4021,
+        0.1727
+      ],
+      "cond_mean": 1.7725654954327392,
+      "all_full_rank": true
+    },
+    "ds_optimal": {
+      "certified_mean": 0.5642529675480669,
+      "certified_values": [
+        0.5059,
+        0.537,
+        0.6499
+      ],
+      "cond_mean": 1.4931749312305038,
+      "all_full_rank": true
+    },
+    "random_jitter": {
+      "certified_mean": 0.6528634876317051,
+      "certified_values": [
+        0.691,
+        0.6125,
+        0.6551
+      ],
+      "cond_mean": 1.8568016152273306,
+      "all_full_rank": true
+    },
+    "e_optimal": {
+      "certified_mean": 0.7266755044683411,
+      "certified_values": [
+        0.7449,
+        0.7357,
+        0.6995
+      ],
+      "cond_mean": 1.8710260476688052,
+      "all_full_rank": true
+    }
+  },
+  "budget": {
+    "N": [
+      24,
+      40
+    ],
+    "aliasguard": [
+      0.25378119045777464,
+      0.1491088181886975
+    ],
+    "aliasguard_ci": [
+      0.012246799602658384,
+      0.021862796027156593
+    ],
+    "ds_optimal": [
+      0.5773410914705019,
+      0.2061185422953271
+    ],
+    "ds_optimal_ci": [
+      0.18807147204542826,
+      0.02170293684177471
+    ],
+    "random_jitter": [
+      0.779445502810583,
+      0.5566060676060937
+    ],
+    "random_jitter_ci": [
+      0.09149614762137054,
+      0.03696058677982067
+    ]
+  },
+  "twod": {
+    "aliasguard": {
+      "mean": 0.49426865958723337,
+      "ci_lo": 0.46400721884414314,
+      "ci_hi": 0.5254283674975307
+    },
+    "random": {
+      "mean": 0.5845629108327605,
+      "ci_lo": 0.5344966720860012,
+      "ci_hi": 0.6311062298295974
+    },
+    "note": "held-out 2-D frequency VECTORS distinct from the design set"
+  },
+  "note": "AliasGuard = Ds-optimal/LCMV-motivated design (credited, not claimed); exact Ds baseline included; function-space metric; >=20 paired outer scenarios; diverse held-out types reported incl. out-of-target degradation; certificate is a post-hoc guarantee for ANY design.",
   "_meta": {
     "python": "3.11.2",
     "platform": "Windows-10-10.0.26200-SP0",
@@ -568,6 +915,6 @@
     "scipy": "1.17.1",
     "torch": "2.13.0+cpu",
     "cuda": null,
-    "git_commit": "4ecc0f8"
+    "git_commit": "6f8cb6f"
   }
 }

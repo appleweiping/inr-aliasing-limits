@@ -25,6 +25,7 @@
 \newcommand{\norm}[1]{\lVert#1\rVert}
 \newcommand{\vt}{v_T}
 \newcommand{\at}{a_T}
+\input{xref}
 
 % ---- volatile experiment numbers (single source; re-synced from results/*.json) ----
 \newcommand{\NumCoTwoLS}{0.167}        % CO2 sample-only LS-periodogram RMSE
@@ -53,18 +54,23 @@ that \emph{arbitrary nonuniform subsets of a sampling grid inherit the grid's al
 equivalence classes}: an integer tone congruent mod $Q$ to a model frequency is
 \emph{exactly} indistinguishable from it---zero training residual, full-energy failure,
 and no estimator can avoid it.  Irregular-on-a-grid sampling does \emph{not} break exact
-aliasing.  (ii)~\textbf{Randomization breaks it, at a rate.}  Off-grid jitter destroys the
-fold with visibility equal to the jitter characteristic function, and i.i.d.\ sampling
-gives a finite-$N$, dictionary-referenced concentration bound on worst-case aliasability.
-(iii)~\textbf{Certified design.}  We show the anti-aliasing objective is a
-$D_s$-optimal / null-steering criterion on sample times, give a fast surrogate whose joint
-objective (an ablation shows) is necessary, and---the new tool---a computable
-\emph{continuum certificate} that guarantees worst-case aliasability over an entire band
-from the samples alone, which finite-candidate bounds and random designs do not provide.
-The design cuts held-out worst-case aliasability from $\AGrand$ (random) to
-$\AGheld{\pm}\AGheldCI$ and certifies $\AGcert$ band-wide vs.\ $\AGcertR$, in 1-D and 2-D.
-All closed forms are Monte-Carlo validated; trained SIREN/MLP networks are an explicitly
-labeled empirical extension with failures reported.
+aliasing.  (ii)~\textbf{Randomization breaks it, at a rate.}  Under off-grid jitter the
+fold coherence has mean equal to the jitter characteristic function $\chi_\eta(2\pi rQ)$,
+so the squared visibility is $\approx1-|\chi_\eta(2\pi rQ)|^2$; i.i.d.\ sampling gives a
+finite-$N$, dictionary-referenced concentration bound on worst-case aliasability.
+(iii)~\textbf{Certified design.}  The anti-aliasing objective is \emph{related to} a
+$D_s$-optimal (nuisance-parameter) / null-steering criterion on sample times (classical;
+credited); we give a fast surrogate that improves the aliasability--conditioning
+trade-off, and---the new tool---a computable \emph{continuum certificate}, a deterministic
+post-hoc guarantee that bounds worst-case aliasability over an entire band from the
+samples alone (for \emph{any} realized design), which the finite-candidate concentration
+bound does not by itself provide.  On held-out frequencies near the concern set the design
+cuts function-space worst-case aliasability from $\AGrand$ (random) to
+$\AGheld{\pm}\AGheldCI$ (vs.\ the exact $D_s$ design $\AGds$), degrading toward random
+outside the targeted band; it certifies $\AGcert$ band-wide vs.\ $\AGcertR$, in 1-D and
+2-D.  Closed-form implementations are checked against independent simulations (proofs are
+separate); trained SIREN/MLP networks are an explicitly labeled empirical extension with
+failures reported.
 \end{abstract}
 
 \begin{keywords}
@@ -143,14 +149,19 @@ defines the \emph{visibility} and \emph{aliasability}
 \at(\nu)=\norm{\Phimat^\dagger\bm\phi_\nu},
 \end{equation}
 $\bm P_\Lam$ the projector onto $\range\Phimat$: $\vt$ is the sample energy the model
-cannot absorb, $\at$ the coefficient bias a unit tone induces.  Under white noise,
+cannot absorb, and $\at$ is the \emph{coefficient} bias a unit tone induces.  Coefficient
+norm is signal energy only for orthonormal (integer) $\Lam$; in general we use the
+\emph{function-space} aliasability $a_{L^2,T}(\nu)=(\Delta c^{*}G_{L^2}\Delta c)^{1/2}$,
+$\Delta c=\Phimat^{\dagger}\bm\phi_\nu$, with the continuous Gram
+$G_{L^2}[k,\ell]=\prod_d e^{i\pi\delta_d}\operatorname{sinc}\delta_d$
+($\delta=\omega_\ell-\omega_k$; $=\bm I$ for integer frequencies) --- this is the
+$L^2([0,1)^d)$ energy the aliased tone injects into the fit, and is the metric used
+throughout Sec.~\ref{sec:design}.  Under white noise,
 $\norm{\hat{\bm c}-\bm c^\star}\le\norm{\bm\varepsilon}/\sigma_{\min}(\Phimat)$ (standard;
-Lemma~S1).  Converting coefficient error to signal error uses the continuous Gram
-$G_{L^2}[k,\ell]=e^{i\pi\delta}\operatorname{sinc}\delta$ ($\delta=\omega_\ell-\omega_k$)
-with Riesz bounds, and $\norm{\hat f-f}_{L^2}^2$ splits exactly into a modeled-component
+\SLemLS), and $\norm{\hat f-f}_{L^2}^2$ splits exactly into a modeled-component
 (aliasing-bias$+$noise) term, a cross term, and a truncation term $\bm a^{*}G_{\mathrm{out}}
-\bm a$ that \emph{no} sampling removes (Prop.~S2; used in Fig.~\ref{fig:matrix}d and the
-real-data results).
+\bm a$ that \emph{no} sampling removes (\SPropDecomp; Fig.~\ref{fig:matrix}d and
+Fig.~\ref{fig:ag}d).
 
 \section{Structured indistinguishability}\label{sec:t1}
 \begin{theorem}[Exact equivalence on grid subsets]\label{thm:t1}
@@ -194,62 +205,75 @@ $\max_{\nu\in\Om}\at(\nu)\le\sqrt m\,\varepsilon/(\lambda_{\min}-m\varepsilon)$.
 factors (empirical characteristic function; Hoeffding).  (b)~Hoeffding$+$union over
 $mK{+}m^2$ coherences, then a Neumann/perturbation bound on
 $\at(\nu)=\norm{(\Phimat^{*}\Phimat/N)^{-1}(\Phimat^{*}\bm\phi_\nu/N)}$; the constants are
-loose (a union bound) but the $N^{-1/2}$ rate is exact (Fig.~\ref{fig:matrix}a,b).  Two
-honest boundaries: on-grid designs never escape Thm.~\ref{thm:t1}; and (b) controls only a
-\emph{finite} $\Om$---the certificate of Sec.~\ref{sec:design} removes that limitation.
+loose (a union bound) and the observed order is $N^{-1/2}$ (an upper-bound rate; we claim
+no matching lower bound; Fig.~\ref{fig:matrix}a,b).  Two honest boundaries: on-grid designs
+never escape Thm.~\ref{thm:t1}; and (b) controls only a \emph{finite} $\Om$---the
+certificate of Sec.~\ref{sec:design} lifts that to a whole band for a given design.
 
 \section{Certified anti-aliasing sampling design}\label{sec:design}
 Given $\Lam$, a candidate out-of-band set $\Om$ the practitioner wants visible, and a
 budget $N$, we choose sample times to make $\Phimat$ well conditioned \emph{and}
 $\Phimat^{*}\Psimat_\Om$ small ($\Psimat_\Om$ the $\Om$ atoms): jointly, high
-$\min_\nu\vt(\nu)$ and low $\max_\nu\at(\nu)$ at small $\kappa(\Phimat)$.  This
-asymmetric block target---protect $\Phimat^{*}\Phimat\!\to\!\bm I$, null
-$\Phimat^{*}\Psimat_\Om\!\to\!0$, ignore the $\Om$ self-block---is precisely $D_s$-optimal
-(nuisance-parameter) design~\cite{silvey1980optimal,atkinson2007optimum} and LCMV
-null-steering~\cite{frost1972lcmv,vantrees2002optimum}; we credit those and add the
+$\min_\nu\vt(\nu)$ and low function-space aliasability $\max_\nu a_{L^2,T}(\nu)$ at small
+$\kappa(\Phimat)$.  This asymmetric block target---protect
+$\Phimat^{*}\Phimat\!\to\!\bm I$, null $\Phimat^{*}\Psimat_\Om\!\to\!0$, ignore the $\Om$
+self-block---is \emph{related to} $D_s$-optimal (nuisance-parameter)
+design~\cite{silvey1980optimal,atkinson2007optimum}, whose exact objective is the
+Schur-complement log-determinant
+$\log\det(\Phimat^{*}\Phimat-\Phimat^{*}\Psimat_\Om(\Psimat_\Om^{*}\Psimat_\Om)^{-1}
+\Psimat_\Om^{*}\Phimat)$ (supplement), and structurally to LCMV/MVDR
+null-steering~\cite{frost1972lcmv,vantrees2002optimum}.  We credit those, do \emph{not}
+claim the principle, and compare against the exact $D_s$ design; our additions are the
 identifiability reading (which cross-terms, and why grid designs fail: Thm.~\ref{thm:t1})
-and a certificate.
+and the certificate.
 
-\emph{Surrogate and ablation.}  The exact objective is non-smooth and (via
-$\Phimat^\dagger$) non-submodular---we claim \emph{no} greedy guarantee.  We minimize
-$J(T)=\tfrac1{N^2}\sum_{k,\nu}|(\Phimat^{*}\Psimat_\Om)_{k\nu}|^2
-+\beta\tfrac1{N^2}\sum_{k\ne l}|(\Phimat^{*}\Phimat)_{kl}|^2$, a function of the
-difference-frequency sums, by coordinate descent over continuous times (fast rank-one
-updates; deterministic given init; a grid-restricted greedy variant exists but inherits
-Thm.~\ref{thm:t1} and cannot break exact folds).  Both terms are needed: on the near-band
-regime of Fig.~\ref{fig:ag}a, coherence-only design suppresses aliasing
-($\max\at\!=\!\AblCohA$) but at a worse condition number ($\kappa\!=\!\AblCohK$),
-condition-only keeps $\kappa\!=\!\AblCondK$ but leaves $\max\at\!=\!\AblCondA$; only the
-joint objective gets both ($\max\at\!=\!\AblAgA$ at $\kappa\!=\!\AblAgK$).
+\emph{Surrogate and trade-off.}  The exact objectives are non-smooth and (via
+$\Phimat^\dagger$) non-submodular---we claim \emph{no} greedy guarantee.  We minimize the
+smooth surrogate $J(T)=\tfrac1{N^2}\sum_{k,\nu}|(\Phimat^{*}\Psimat_\Om)_{k\nu}|^2
++\beta\tfrac1{N^2}\sum_{k\ne l}|(\Phimat^{*}\Phimat)_{kl}|^2$ (difference-frequency sums)
+by coordinate descent over continuous times (a grid-restricted greedy variant inherits
+Thm.~\ref{thm:t1} and cannot break exact folds).  Sweeping $\beta$ traces an
+aliasability--conditioning frontier (Fig.~\ref{fig:ag}a) that improves on both the
+coherence-only and condition-only ablations and matches or beats the exact $D_s$ and
+E-optimal designs at the same budget.
 
-\emph{Continuum certificate.}  $\at(\nu)^2=\bm\phi_\nu^{*}\bm M\bm\phi_\nu$,
-$\bm M=\Phimat(\Phimat^{*}\Phimat)^{-2}\Phimat^{*}$, is a real trigonometric polynomial in
-$\nu$ with frequencies $t_l-t_j$; by a Bernstein/Lipschitz
-bound~\cite{devore1993constructive} (its derivative is
-$\le 2\pi\sum_{j,l}|\bm M_{jl}||t_l-t_j|$) a fine grid plus a slack term \emph{certifies}
-$\max_{\nu\in[a,b]}\at(\nu)$ over an entire continuous band from the samples alone
-(Prop.~\ref{prop:cert}; sound and tight in the tests).  This is exactly what
-Thm.~\ref{thm:t3}(b) cannot give (finite $\Om$) and random designs have no analogue.
+\emph{Continuum certificate.}  For a design $T$, $a_{L^2,T}(\nu)^2=\bm\phi_\nu^{*}\bm M
+\bm\phi_\nu$ with $\bm M=\Phimat(\Phimat^{*}\Phimat)^{-1}G_{L^2}(\Phimat^{*}\Phimat)^{-1}
+\Phimat^{*}$ (or $G_{L^2}=\bm I$ for the coefficient norm) is a real \emph{finite
+exponential polynomial} in $\nu$ (frequencies $t_l-t_j$, generally non-integer); by an
+explicit Lipschitz grid bound (a Bernstein-type inequality~\cite{devore1993constructive},
+$|g'|\le2\pi\sum_{j,l}|\bm M_{jl}||t_l-t_j|$) a fine grid plus a slack term \emph{certifies}
+$\max_{\nu\in[a,b]}a_{L^2,T}(\nu)$ over an entire band from the samples alone
+(Prop.~\ref{prop:cert}; sound and tight in the tests; computed via an eigendecomposition,
+vacuous if $\Phimat$ is rank deficient).  It is a deterministic \emph{post-hoc} guarantee
+for \emph{any} realized design---random, E-optimal, or optimized alike; AliasGuard's role
+is to make the certified value small.  The finite-candidate bound Thm.~\ref{thm:t3}(b)
+does not by itself yield such a continuum guarantee.
 
 \begin{proposition}[Certificate]\label{prop:cert}
-For any $T$, $\max_{\nu\in[a,b]}\at(\nu)\le\big(\max_{\text{grid}}\bm\phi^{*}\bm M\bm\phi
+For any $T$ with $\sigma_{\min}(\Phimat)>0$,
+$\max_{\nu\in[a,b]}a_{L^2,T}(\nu)\le\big(\max_{\text{grid}}\bm\phi^{*}\bm M\bm\phi
 +L\,h/2\big)^{1/2}$ with grid spacing $h$ and $L=2\pi\sum_{j,l}|\bm M_{jl}||t_l-t_j|$; an
 analogous bound lower-bounds $\min_{\nu\in[a,b]}\vt(\nu)$.
 \end{proposition}
 
-\emph{Result.}  Designed on a focused, thickened concern set and evaluated on
-\emph{held-out} perturbed frequencies it never saw, the design cuts worst-case
-aliasability to $\AGheld{\pm}\AGheldCI$ vs.\ $\AGrand$ (random jitter) and $\AGeopt$
-(E-optimal), and stays at $\AGmis$ under candidate-set misspecification
-(Fig.~\ref{fig:ag}b); the advantage persists across the budget sweep (Fig.~\ref{fig:ag}c)
-and translates to lower signal-domain aliasing bias at equal noise gain
-(Fig.~\ref{fig:ag}d).  Over a continuous band it \emph{certifies}
-$\max\at\le\AGcert$ vs.\ $\AGcertR$ for random.  It generalizes to 2-D frequency vectors
-($\max\at$ $\AGtwoD$ vs.\ $\AGtwoDR$).  Honest scope: the tool applies where sample
-\emph{times are chosen}---active sampling, measurement/acquisition design, or scheduling
-a coordinate network's training queries---not to already-acquired data; it needs a
-focused concern set ($K\!=\!O(N)$), and for a broad band densely covered with $K\!\gg\!N$
-no design beats random much, while a badly misspecified set loses the edge.
+\emph{Result.}  Over $\ge20$ paired outer scenarios (each its own dictionary---orthonormal
+and non-orthonormal---concern set, noise, and init), the design, evaluated on
+\emph{held-out} frequencies it never saw, cuts function-space worst-case aliasability to
+$\AGheld{\pm}\AGheldCI$ near the concern set vs.\ $\AGrand$ (random) and $\AGds$ (exact
+$D_s$); the advantage \emph{degrades honestly} as the test band moves off target (shifted,
+scaled, or broadband: Fig.~\ref{fig:ag}b).  It persists across the budget sweep
+(Fig.~\ref{fig:ag}c).  A separated decomposition (Fig.~\ref{fig:ag}d) shows the design
+lowers the out-of-band aliasing-bias term while the truncation floor and the estimation
+noise are unaffected; the designs' noise gains ($\sigma_{\min}^{-2}$,
+$\tr((\Phimat^{*}\Phimat)^{-1})$) and condition numbers---distinct quantities---are
+reported alongside.  Over a continuous band the design \emph{certifies}
+$\max a_{L^2}\le\AGcert$ vs.\ $\AGcertR$ (random) and $\AGcertD$ (exact $D_s$).  In 2-D on
+held-out frequency vectors it gives $\AGtwoD$ vs.\ $\AGtwoDR$ (random).  Honest scope: the
+tool applies where sample \emph{times are chosen}---active sampling, acquisition design, or
+scheduling a coordinate network's training queries---not already-acquired data; it needs a
+focused concern set ($K\!=\!O(N)$), and for a broad band densely covered ($K\!\gg\!N$) or a
+badly misspecified set it loses its edge.
 
 \begin{figure*}[t]
 \centering
@@ -264,11 +288,13 @@ aliasing bias, not truncation.}
 \begin{figure*}[t]
 \centering
 \includegraphics[width=0.99\textwidth]{aliasguard.png}
-\caption{Certified anti-aliasing design.  (a)~ablation---only the joint objective gets
-both low aliasability \emph{and} low condition number (near-band, $N{=}40$);
-(b)~generalization to held-out, unseen frequencies (mean $\pm$ 95\% CI), incl.\ under
-candidate-set misspecification; (c)~advantage across the sample budget;
-(d)~signal-domain payoff: lower aliasing-bias RMSE at equal noise gain $\kappa$.}
+\caption{Certified anti-aliasing design ($\ge20$ paired outer scenarios; function-space
+aliasability $a_{L^2}$).  (a)~aliasability--conditioning frontier: sweeping $\beta$ traces
+the AliasGuard frontier, at/below the exact $D_s$ and E-optimal points;
+(b)~held-out aliasability by test type (paired-bootstrap CI)---strong near the concern set,
+degrading honestly off-target; (c)~advantage across the sample budget; (d)~the $L^2$ error
+separated into out-of-band aliasing bias, estimation noise, and truncation (only the bias
+term responds to the design).}
 \label{fig:ag}
 \end{figure*}
 

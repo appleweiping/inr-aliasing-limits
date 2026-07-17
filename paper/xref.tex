@@ -1,0 +1,15 @@
+% Shared cross-document reference names (P0-A): \input by BOTH main.tex and supplement.tex
+% so the paper and supplement cannot disagree on theorem/lemma numbering.
+% The consistency test (paper/check_consistency.py) verifies these strings appear in both
+% compiled PDFs.  Supplement items are numbered S1, S2, ... in the order below.
+\newcommand{\SharedTitle}{Silent Aliasing and Certified Sampling Design for Fixed Fourier-Feature Models}
+% --- supplement items (as printed) ---
+\newcommand{\SLemLS}{Lemma~S1}          % LS stability
+\newcommand{\SPropDecomp}{Prop.~S1}     % Riesz conversion + exact error decomposition
+\newcommand{\SPropAvg}{Prop.~S2}        % average-case (background)
+\newcommand{\SPropSurr}{Prop.~S3}       % surrogate controls aliasability
+\newcommand{\SPropCertS}{Prop.~S4}      % certificate (supplement proof)
+% --- main items (as printed), referenced from the supplement ---
+\newcommand{\MThmGrid}{Theorem~1}       % structured indistinguishability
+\newcommand{\MThmJitter}{Theorem~2}     % off-grid randomization
+\newcommand{\MPropCert}{Proposition~1}  % continuum certificate (stated in main)

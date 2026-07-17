@@ -65,22 +65,76 @@ def test_greedy_grid_inherits_t1_on_coherent_folds():
     assert min(visibility_of(LAMBDA, tc, float(nu)) for nu in Ofold) > 0.5
 
 
-def test_certificate_is_sound():
-    # certified max-aliasability >= the true max over a fine reference grid; certified
-    # min-visibility <= the true min. Small band for test speed.
+def test_certificate_is_sound_both_metrics():
+    # certified max-aliasability >= the true max over a fine reference grid, for BOTH the
+    # coefficient-norm and the function-space (L2) metric; certified min-visibility <= true.
+    from inralias.design import aliasability_L2_of
     N = 28
     rng = np.random.default_rng(1)
     t = np.sort(rng.uniform(0, 1, N))
     band = [(25.0, 30.0)]
-    ca = aliasability_certificate(LAMBDA, t, band, n_grid=4000)
-    cv = visibility_certificate(LAMBDA, t, band, n_grid=4000)
     ref = np.arange(25.0, 30.0, 0.0025)
-    true_a = max(aliasability_of(LAMBDA, t, float(x)) for x in ref)
+    for metric, truth in (("coeff", aliasability_of), ("l2", aliasability_L2_of)):
+        ca = aliasability_certificate(LAMBDA, t, band, n_grid=4000, metric=metric)
+        true_a = max(truth(LAMBDA, t, float(x)) for x in ref)
+        assert ca["full_rank"]
+        assert ca["certified_max_aliasability"] >= true_a - 1e-4          # sound upper bound
+        assert ca["certified_max_aliasability"] <= ca["grid_max_aliasability"] + 0.15  # tight
+        assert ca["sigma_min"] > 0 and np.isfinite(ca["condition_number"])
+    cv = visibility_certificate(LAMBDA, t, band, n_grid=4000)
     true_v = min(visibility_of(LAMBDA, t, float(x)) for x in ref)
-    assert ca["certified_max_aliasability"] >= true_a - 1e-4       # sound upper bound
-    assert cv["certified_min_visibility"] <= true_v + 1e-4         # sound lower bound
-    # non-vacuous: certified bound within a small factor of the grid max
-    assert ca["certified_max_aliasability"] <= ca["grid_max_aliasability"] + 0.15
+    assert cv["certified_min_visibility"] <= true_v + 1e-4
+
+
+def test_certificate_applies_to_any_design():
+    # the certificate is a deterministic post-hoc guarantee for ANY realized design --
+    # random, low-discrepancy, or optimized -- not only AliasGuard.
+    from inralias.design import fixed_jitter
+    band = [(25.0, 32.0)]
+    for t in (np.sort(np.random.default_rng(3).uniform(0, 1, 30)), fixed_jitter(30)):
+        c = aliasability_certificate(LAMBDA, t, band, n_grid=3000)
+        assert c["full_rank"] and np.isfinite(c["certified_max_aliasability"])
+
+
+def test_certificate_vacuous_when_rank_deficient():
+    # N < m (underdetermined) and duplicated samples -> rank deficient -> vacuous certificate
+    band = [(25.0, 30.0)]
+    t_small = np.sort(np.random.default_rng(2).uniform(0, 1, 5))       # N=5 < m=9
+    c = aliasability_certificate(LAMBDA, t_small, band, metric="l2")
+    assert not c["full_rank"]
+    assert c["certified_max_aliasability"] == float("inf")
+    cv = visibility_certificate(LAMBDA, t_small, band)
+    assert not cv["full_rank"] and cv["certified_min_visibility"] == 0.0
+    # duplicated samples (exactly singular Gram) also vacuous
+    t_dup = np.concatenate([t_small, t_small, t_small[:2]])            # N=12 but rank<=5
+    c2 = aliasability_certificate(LAMBDA, t_dup, band)
+    assert not c2["full_rank"]
+
+
+def test_certificate_scale_and_near_singular():
+    # near-singular design (clustered samples) -> large but finite condition number, and the
+    # certificate is still sound where it is non-vacuous; a wide band stays sound.
+    t = np.sort(np.concatenate([np.random.default_rng(5).uniform(0.0, 0.25, 34)]))
+    band = [(25.0, 45.0)]                                              # wide band (scale)
+    c = aliasability_certificate(LAMBDA, t, band, n_grid=2500, metric="l2")
+    if c["full_rank"]:
+        ref = np.arange(25.0, 45.0, 0.01)
+        from inralias.design import aliasability_L2_of
+        true_a = max(aliasability_L2_of(LAMBDA, t, float(x)) for x in ref)
+        assert c["certified_max_aliasability"] >= true_a - 1e-3
+    assert c["condition_number"] >= 1.0
+
+
+def test_l2_equals_coeff_for_integer_dictionary():
+    from inralias.design import aliasability_L2_of
+    t = np.sort(np.random.default_rng(7).uniform(0, 1, 30))
+    for nu in (30.4, 41.2, -27.3):
+        assert aliasability_L2_of(LAMBDA, t, nu) == pytest.approx(
+            aliasability_of(LAMBDA, t, nu), abs=1e-9)   # integer LAMBDA is orthonormal
+    # non-integer dictionary: the two differ
+    lam_nonint = np.array([0.0, 4.6, -4.6, 9.3, -9.3, 15.1, -15.1])
+    d = abs(aliasability_L2_of(lam_nonint, t, 30.4) - aliasability_of(lam_nonint, t, 30.4))
+    assert d > 1e-4
 
 
 def test_2d_design_beats_random():
