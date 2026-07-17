@@ -89,7 +89,7 @@ def build_design(method, LAM, Odes, N, seed, quick):
     if method == "aliasguard":
         t, _ = aliasguard_continuous(LAM, Odes, N, n_sweeps=15, grid_res=480, seed=seed)
     elif method == "ds_optimal":
-        t = ds_optimal_design(LAM, Odes, N, n_sweeps=6, grid_res=224, seed=seed)
+        t = ds_optimal_design(LAM, Odes, N, n_sweeps=6, grid_res=160, seed=seed)
     elif method == "e_optimal":
         t = e_optimal_design(LAM, N, n_restarts=ns, seed=seed)
     elif method == "random_jitter":
@@ -102,9 +102,9 @@ def build_design(method, LAM, Odes, N, seed, quick):
     elif method == "random_search":
         t = _random_search(LAM, Odes, N, n=ns, seed=seed)
     elif method == "coherence_only":
-        t = coherence_only_design(LAM, Odes, N, seed=seed, n_sweeps=6, grid_res=224)
+        t = coherence_only_design(LAM, Odes, N, seed=seed, n_sweeps=6, grid_res=160)
     elif method == "condition_only":
-        t = condition_only_design(LAM, N, seed=seed, n_sweeps=6, grid_res=224)
+        t = condition_only_design(LAM, N, seed=seed, n_sweeps=6, grid_res=160)
     elif method == "annealing":
         t = annealing_design(LAM, Odes, N, maxiter=60 if not quick else 40, seed=seed)
     else:
