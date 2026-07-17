@@ -337,12 +337,14 @@ the detection dichotomy (a coherent fold is indistinguishable from its in-band t
 sample-only test; for visible tones \emph{only} the residual detector has a closed-form
 operating characteristic---the exact noncentral-$\chi^2$ power curve---while the other
 detectors are empirical baselines shown for comparison), and a trained-network extension
-(FF-MLP fold match $\NLffmatch$ over $\ge20$ crossed seeds; the trained \emph{SIREN}
-responses are \emph{inconsistent with the initialization-NTK prediction}, match
-$\NLsimatch$, a statement we make only because we \emph{measure} the init-vs-trained NTK
-drift---median relative drift $\NLsidrift$ vs.\ $\NLffdrift$ for FF-MLP---so the
-fixed-feature theory makes no claim there) with 2-D results are in the supplement, with all
-failing runs released.
+(FF-MLP fold match $\NLffmatch$, correlation $\NLffcorr$ over $\ge20$ crossed seeds; the
+trained \emph{SIREN} responses are \emph{inconsistent with the initialization-NTK
+prediction}, correlation $\NLsicorr$. We measured the init-vs-trained NTK drift to test
+whether this is a lazy-training artifact: it is \emph{not}---the SIREN kernel drifts
+\emph{less} than the FF-MLP kernel ($\NLsidrift$ vs.\ $\NLffdrift$ median relative), yet the
+FF-MLP prediction still matches---so the fixed-feature/init-NTK description simply does not
+extrapolate to trained SIRENs, and we make no claim there) with 2-D results are in the
+supplement, with all failing runs released.
 
 \section{Limitations and conclusion}
 The theory covers fixed-feature linear-coefficient models; nonlinear networks are an

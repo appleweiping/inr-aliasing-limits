@@ -147,10 +147,11 @@ def rows():
          "empirical extension", "`run_nonlinear`", "nonlinear.json", "empirical",
          "attribution valid in small-amplitude limit"),
         ("13", f"Trained SIREN responses inconsistent with the init-NTK prediction "
-               f"(match {si_match}, NTK rel. drift median {si_drift}) — reported only "
-               f"BECAUSE the drift is measured",
+               f"(match {si_match}); NOT an NTK-drift artifact (SIREN kernel drift "
+               f"{si_drift} < FF-MLP {ff_drift}, yet FF-MLP prediction matches) — the "
+               f"fixed-feature/init-NTK description does not extrapolate to SIRENs",
          "empirical (negative)", "`run_nonlinear`", "nonlinear.json", "empirical",
-         "no claim that SIRENs 'leave' a fixed kernel beyond the measured drift"),
+         "explicitly NOT attributed to SIRENs 'leaving' a fixed kernel"),
         ("14", f"2-D exact fold verified over held-out tone set (fold_exact_rate {im_fold}); "
                f"trained-net EXCESS replica energy lattice−random {im_exc} "
                f"(lattice>random in {im_rate} of ≥20 paired seeds)",

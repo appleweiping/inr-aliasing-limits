@@ -367,11 +367,14 @@ extrapolates to \emph{lazy-regime} FF-MLPs (exact fold match $\NLffmatch$, top-3
 pattern correlation median $\NLffcorr$, $n{=}\NLffn$) and the band-limited head (median
 $\NLblcorr$), but the trained-\emph{SIREN} responses are \emph{inconsistent with the
 initialization-NTK prediction} (exact match $\NLsimatch$, correlation median $\NLsicorr$).
-We state this only because we \emph{measure} the init-vs-trained NTK drift: median relative
-Frobenius drift $\NLsidrift$ for SIREN vs.\ $\NLffdrift$ for FF-MLP, so where the drift is
-large the init-NTK prediction is not expected to hold and the fixed-feature theory makes no
-claim there---we do \emph{not} assert SIRENs ``leave'' a fixed kernel beyond the measured
-drift.  All seed-level failures are released.
+We measured the init-vs-trained NTK Frobenius drift specifically to test whether this
+mismatch is a lazy-training / kernel-drift artifact, and it is \emph{not}: the SIREN kernel
+drifts \emph{less} than the FF-MLP kernel (median relative drift $\NLsidrift$ vs.\
+$\NLffdrift$), yet the FF-MLP init-NTK prediction matches well while the SIREN one does not.
+The honest conclusion is therefore the negative one---the fixed-feature/init-NTK description
+does not extrapolate to trained SIRENs---and we explicitly do \emph{not} attribute the
+failure to the SIREN ``leaving'' its initialization kernel.  All seed-level failures are
+released.
 
 \paragraph{Two dimensions.}  Fig.~\ref{fig:s-2d}.  The linear model reproduces the
 predicted 2-D frequency-vector fold exactly over a \emph{held-out} tone set disjoint from
