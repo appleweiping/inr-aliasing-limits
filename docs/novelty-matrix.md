@@ -31,12 +31,37 @@ constructive design, and empirical honesty, not theorem depth**:
   identifiability reading (which cross-terms; and Thm 1 says grid designs cannot realize it
   for coherent folds); (ii) the **continuum certificate** — a sample-only worst-case
   guarantee over an entire band via the trig-polynomial/Bernstein structure — which the
-  finite-candidate bound and random designs do not provide. The certificate is the single
-  clearly-independent methodological increment.
+  finite-candidate bound and random designs do not provide.
 
-**Conclusion.** No result is presented as deeper than it is. The defensible, non-derivable
-contributions are: the T1 grid-inheritance corrective, the T3 finite-N bound, and the
-certified design + continuum certificate. Everything else is credited synthesis.
+**Conclusion.** No result is presented as deeper than it is. The defensible contributions
+are: the T1 grid-inheritance corrective, the T3 finite-N bound, and the certified design.
+The continuum certificate is a genuinely useful tool but, as the dedicated audit below
+records, its certification *machinery* is standard; the increment is its *application*.
+Everything else is credited synthesis.
+
+## Certificate — dedicated prior-art audit (P0-C)
+
+The continuum certificate proves `max_{ν∈[a,b]} a_{L2,T}(ν) ≤ (max_grid g + L·h/2)^{1/2}`
+where `g(ν)=φ_ν* M φ_ν` is a real **finite/generalized exponential polynomial** (exponents
+`t_ℓ−t_j`, generally non-integer) and `L` is an explicit Lipschitz constant. Honest reading
+against the relevant bodies of work:
+
+| Prior art | What it already provides | Bearing on our certificate |
+|---|---|---|
+| **Semi-infinite programming / optimal design** (Hettich–Kortanek; Kelley; Reemtsen) | Optimizing/bounding a functional under a *continuum* of constraints (e.g. frequencies), including outer approximation and discretization with error control | Certifying a sup over `[a,b]` **is** a semi-infinite problem; our grid+slack bound is a discretization-with-error-control certificate — standard SIP machinery |
+| **Lipschitz / grid global optimization** (Shubert–Piyavskii; interval methods) | Certified bounds on `max f` over an interval via samples + a modulus-of-continuity (Lipschitz) slack | This is exactly our `max_grid + L·h/2` construction; not a new technique |
+| **Trig-/exponential-polynomial extremal bounds** (Bernstein; Markov; DeVore–Lorentz) | Derivative bounds for (generalized) trigonometric polynomials → grid-to-sup control | Supplies our explicit `L`; we use it, do not extend it |
+| **Robust / minimax experimental design** (Wiens; Fedorov–Hackl) | Designs robust over a *region* of the response/parameter space | Same "protect over a continuum" spirit as certifying a band; our object is aliasability, not response variance |
+| **Frequency-selective / null-broadening array design** (adaptive beamforming) | Nulls/robustness over a *band* of angles, not a point | The band-wise analogue of our concern set; motivates, and is credited by, the design |
+| **Exchange / cutting-plane design** (Fedorov; Cook–Nachtsheim) | Iteratively add the worst continuum point to a finite support | An alternative to our certificate for the *same* semi-infinite goal |
+
+**Calibrated claim.** The certification *method* (gridding + a Bernstein/Lipschitz slack to
+turn a finite scan into a continuum guarantee) is **standard** and we do not claim it. The
+increment is (i) recognizing `a_{L2,T}(ν)²` as a certifiable finite exponential polynomial,
+(ii) delivering a **sample-only, deterministic, post-hoc worst-case aliasability guarantee
+for any realized design** in the identifiability/anti-aliasing setting, and (iii) the robust
+numerics (Hermitian eigendecomposition, rank/condition detection, vacuous-on-rank-deficient
+output). This is an application-and-framing contribution, not a new certification theory.
 
 ## Detailed table
 

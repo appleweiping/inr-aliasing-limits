@@ -63,10 +63,12 @@ finite-$N$, dictionary-referenced concentration bound on worst-case aliasability
 (iii)~\textbf{Certified design.}  The anti-aliasing objective is \emph{related to} a
 $D_s$-optimal (nuisance-parameter) / null-steering criterion on sample times (classical;
 credited); we give a fast surrogate that improves the aliasability--conditioning
-trade-off, and---the new tool---a computable \emph{continuum certificate}, a deterministic
-post-hoc guarantee that bounds worst-case aliasability over an entire band from the
-samples alone (for \emph{any} realized design), which the finite-candidate concentration
-bound does not by itself provide.  On held-out frequencies near the concern set the design
+trade-off, and---our main added tool---a computable \emph{continuum certificate}, a
+deterministic post-hoc guarantee that bounds worst-case aliasability over an entire band
+from the samples alone (for \emph{any} realized design), which the finite-candidate
+concentration bound does not by itself provide.  The certification machinery (gridding plus
+a Bernstein/Lipschitz slack) is standard; the contribution is its application to sample-only
+aliasability.  On held-out frequencies near the concern set the design
 cuts function-space worst-case aliasability from $\AGrand$ (random) to
 $\AGheld{\pm}\AGheldCI$ (vs.\ the exact $D_s$ design $\AGds$), degrading toward random
 outside the targeted band; it certifies $\AGcert$ band-wide vs.\ $\AGcertR$, in 1-D and
