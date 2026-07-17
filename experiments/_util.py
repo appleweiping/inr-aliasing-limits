@@ -35,20 +35,18 @@ def ensure_dirs() -> None:
 
 
 def _source_tree_hash() -> str:
-    """SHA-256 fingerprint of the exact inputs that determine a result: all Python under
-    src/ and experiments/, PLUS the dependency lock, the package spec, and the bibliography
-    (so a change to code, pinned deps, or refs perturbs the stamp).  Fingerprints the source
-    even if the tree is uncommitted/dirty.  check_consistency.py recomputes this and fails if
-    the committed tree cannot reproduce the stamp carried by a headline result."""
+    """SHA-256 fingerprint of the CODE that produces a result: all Python under src/ and
+    experiments/.  This is environment-portable (byte-identical on the local checkout and the
+    server, both LF), so check_consistency.py can recompute it from the committed tree and
+    fail if that tree does not reproduce the stamp a headline result carries.  The dependency
+    environment (torch/numpy/scipy versions, host, GPU) is stamped separately in ``_meta``;
+    it is deliberately NOT folded in here, since the pinned lock describes the CI/local
+    environment, not necessarily the server conda environment that produced a given result."""
     import hashlib
 
     h = hashlib.sha256()
     root = RESULTS.parent
     files = sorted(list((root / "src").rglob("*.py")) + list((root / "experiments").rglob("*.py")))
-    for extra in ("requirements.lock", "pyproject.toml", "paper/refs.bib"):
-        p = root / extra
-        if p.exists():
-            files.append(p)
     for f in files:
         try:
             h.update(f.relative_to(root).as_posix().encode())

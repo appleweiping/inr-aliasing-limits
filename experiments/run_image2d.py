@@ -36,7 +36,7 @@ import matplotlib.pyplot as plt
 
 SIZE = 128
 NOISE = 0.02
-EPOCHS = 4000
+EPOCHS = 2000          # converged for the excess-contrast demonstration; halves the table time
 LR = 2e-4
 HEADLINE_SEEDS = 20
 TABLE_SEEDS = 3
