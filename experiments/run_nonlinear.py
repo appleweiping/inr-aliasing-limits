@@ -37,7 +37,7 @@ import matplotlib.pyplot as plt
 
 N = 46
 SIGMA = 0.02
-EPOCHS = 6000
+EPOCHS = 4000
 LR = 2e-4
 T_REF = np.linspace(0, 1, 2000, endpoint=False)
 N_SEEDS = 20
@@ -94,59 +94,72 @@ def _train_predict(model, t, y, dev):
                                   device=dev)).cpu().numpy().ravel(), model
 
 
-def _ntk_prediction(model, t, tone_samples, dev, lam=1e-6):
-    """Predicted tone reconstruction via the empirical NTK at initialization.
+def _param_pack(model):
+    """(names, param-dict) of trainable params, detached (for torch.func calls)."""
+    params = {k: v.detach() for k, v in model.named_parameters() if v.requires_grad}
+    return list(params.keys()), params
 
-    Kernel regression of the tone samples with K = J J^T (J = param Jacobian at init):
-    f_pred(x) = k(x, t) K^{-1} tone_samples.  Returns the dense reconstruction.
-    """
+
+def _scalar_fn(model, names):
+    """f(param-tuple, x) -> scalar output at a single input x (shape (d,))."""
+    from torch.func import functional_call
+
+    def f(p_tuple, x):
+        pd = {n: p for n, p in zip(names, p_tuple)}
+        return functional_call(model, pd, (x.reshape(1, -1),)).reshape(())
+
+    return f
+
+
+def _jacobian_rows(model, X, dev):
+    """(len(X), P) parameter-Jacobian, vectorized with vmap+jacrev (no Python per-point
+    loop -- the loop was ~2000 GPU-synced backward passes per run and the real bottleneck)."""
     import torch
+    from torch.func import jacrev, vmap
 
-    tt = torch.tensor(t.reshape(-1, 1), dtype=torch.float32, device=dev)
-    te = torch.tensor(T_REF.reshape(-1, 1), dtype=torch.float32, device=dev)
-    params = [p for p in model.parameters() if p.requires_grad]
+    names, params = _param_pack(model)
+    pt = tuple(params[n] for n in names)
+    f = _scalar_fn(model, names)
+    jt = vmap(jacrev(f, argnums=0), in_dims=(None, 0))(pt, X)   # tuple of (B, *param_shape)
+    return torch.cat([g.reshape(X.shape[0], -1) for g in jt], dim=1)
 
-    def jac(inputs):
-        rows = []
-        for i in range(inputs.shape[0]):
-            model.zero_grad(set_to_none=True)
-            out = model(inputs[i:i + 1]).squeeze()
-            grads = torch.autograd.grad(out, params, retain_graph=False)
-            rows.append(torch.cat([g.reshape(-1) for g in grads]))
-        return torch.stack(rows)
 
-    J_t = jac(tt)                                   # (N, P)
+def _ntk_prediction(model, t, tone_samples, dev, lam=1e-6):
+    """Predicted tone reconstruction via the empirical NTK at initialization:
+    f_pred(x) = k(x, t) K^{-1} tone, K = J J^T.  The dense evaluation uses a vmap'd JVP so
+    the (M x P) eval Jacobian is never materialized."""
+    import torch
+    from torch.func import jvp, vmap
+
+    names, params = _param_pack(model)
+    pt = tuple(params[n] for n in names)
+    f = _scalar_fn(model, names)
+    X = torch.tensor(t.reshape(-1, 1), dtype=torch.float32, device=dev)
+    J_t = _jacobian_rows(model, X, dev)                         # (N, P)
     K = J_t @ J_t.T
     K = K + lam * torch.eye(K.shape[0], device=dev) * K.diagonal().mean()
-    alpha = torch.linalg.solve(K, torch.tensor(tone_samples, dtype=torch.float32,
-                                               device=dev))
-    # evaluate in batches to bound memory
-    preds = []
-    bs = 200
-    for i in range(0, te.shape[0], bs):
-        J_e = jac(te[i:i + bs])
-        preds.append((J_e @ J_t.T @ alpha).detach().cpu())
-    import torch as _t
-
-    return _t.cat(preds).numpy().ravel()
+    alpha = torch.linalg.solve(K, torch.tensor(tone_samples, dtype=torch.float32, device=dev))
+    vflat = J_t.T @ alpha                                       # direction v = J_t^T alpha
+    # reshape v into param-shaped tuple
+    vt, off = [], 0
+    for n in names:
+        ne = params[n].numel()
+        vt.append(vflat[off:off + ne].reshape(params[n].shape)); off += ne
+    vt = tuple(vt)
+    Xe = torch.tensor(T_REF.reshape(-1, 1), dtype=torch.float32, device=dev)
+    # <grad_theta f(xe), v> for every eval point == a forward-mode JVP, vmapped
+    preds = vmap(lambda xe: jvp(lambda p: f(p, xe), (pt,), (vt,))[1])(Xe)
+    return preds.detach().cpu().numpy().ravel()
 
 
 def _ntk_gram(model, t, dev):
-    """Empirical NTK Gram K = J J^T on the sample points (J = param Jacobian).
+    """Empirical NTK Gram K = J J^T on the sample points (vectorized param Jacobian).
 
     Used to MEASURE how far the tangent kernel moves from initialization to after training
     -- the evidence needed before claiming a trained network departs from its init-NTK."""
     import torch
-
     tt = torch.tensor(t.reshape(-1, 1), dtype=torch.float32, device=dev)
-    params = [p for p in model.parameters() if p.requires_grad]
-    rows = []
-    for i in range(tt.shape[0]):
-        model.zero_grad(set_to_none=True)
-        out = model(tt[i:i + 1]).squeeze()
-        grads = torch.autograd.grad(out, params, retain_graph=False)
-        rows.append(torch.cat([g.reshape(-1) for g in grads]))
-    J = torch.stack(rows)
+    J = _jacobian_rows(model, tt, dev)
     return (J @ J.T).detach().cpu().numpy()
 
 
