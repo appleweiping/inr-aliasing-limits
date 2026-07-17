@@ -360,9 +360,11 @@ impossible.
 Fourier-feature MLPs, SIRENs, and a band-limited head, tone attribution (an ablation:
 identical initialization trained with and without the tone) is compared to each network's
 own NTK-linearization prediction---no arbitrary reference band.  Over $\ge20$ sampling
-scenarios---with sampling, feature, and weight seeds crossed independently, plus
-label-permutation, amplitude-sweep-to-zero (infinitesimal-influence), and weight-seed
-stability controls, and cluster-bootstrap CIs over sampling scenario---the linear picture
+scenarios---with feature and weight seeds drawn from independent streams (one triple per
+scenario, so they are decoupled from the sampling index rather than fully factorially
+crossed) plus label-permutation, amplitude-sweep-to-zero (infinitesimal-influence), and a
+weight-seed-stability control that varies only the weight seed at fixed sampling to isolate
+optimizer variance, with cluster-bootstrap CIs over sampling scenario---the linear picture
 extrapolates to \emph{lazy-regime} FF-MLPs (exact fold match $\NLffmatch$, top-3 $\NLfftop$,
 pattern correlation median $\NLffcorr$, $n{=}\NLffn$) and the band-limited head (median
 $\NLblcorr$), but the trained-\emph{SIREN} responses are \emph{inconsistent with the
@@ -383,9 +385,12 @@ subset folds to $(-5,3)$, residual $10^{-15}$).  For trained 2-D networks (anti-
 resize; images degraded with noise) the headline is the \emph{excess} coherent-replica
 energy of lattice masks over matched-density \emph{random} masks (the no-alias control),
 measured on the reconstruction-\emph{error} spectrum so true image content does not inflate
-it: over $\ge20$ paired seeds the excess is $\IMexcess$ and lattice exceeds random in
-$\IMrate$ of seeds; ridge and early stopping do not remove it---structured aliasing is a
-sampling-design property, not an overfitting artifact.
+it: over $\ge20$ paired seeds on the synthetic image (sharp spectral lines) the excess is
+$\IMexcess$ and lattice exceeds random in $\IMrate$ of seeds; the effect also replicates on
+the real \emph{ascent} and \emph{face} images in the per-configuration PSNR table (the
+$\ge20$-seed excess CI is reported only for the synthetic image); ridge and early stopping
+do not remove it---structured aliasing is a sampling-design property, not an overfitting
+artifact.
 
 \begin{figure}[t]\centering\includegraphics[width=0.7\linewidth]{diagnostic_roc.png}
 \caption{Detection power vs.\ tone amplitude; the coherent fold sits at chance.}

@@ -86,10 +86,14 @@ def _clean(freqs, LAM, guard=0.25):
 def build_design(method, LAM, Odes, N, seed, quick):
     ns = 60 if quick else 200
     t0 = time.perf_counter()
+    # MATCHED BUDGET: every coordinate-descent method (AliasGuard AND the exact-Ds / ablation
+    # baselines) uses the SAME n_sweeps and grid_res, so the comparison is fair -- the
+    # baselines are not budget-starved relative to the flagship.
+    NSW, GR = 15, 480
     if method == "aliasguard":
-        t, _ = aliasguard_continuous(LAM, Odes, N, n_sweeps=15, grid_res=480, seed=seed)
+        t, _ = aliasguard_continuous(LAM, Odes, N, n_sweeps=NSW, grid_res=GR, seed=seed)
     elif method == "ds_optimal":
-        t = ds_optimal_design(LAM, Odes, N, n_sweeps=6, grid_res=160, seed=seed)
+        t = ds_optimal_design(LAM, Odes, N, n_sweeps=NSW, grid_res=GR, seed=seed)
     elif method == "e_optimal":
         t = e_optimal_design(LAM, N, n_restarts=ns, seed=seed)
     elif method == "random_jitter":
@@ -102,9 +106,9 @@ def build_design(method, LAM, Odes, N, seed, quick):
     elif method == "random_search":
         t = _random_search(LAM, Odes, N, n=ns, seed=seed)
     elif method == "coherence_only":
-        t = coherence_only_design(LAM, Odes, N, seed=seed, n_sweeps=6, grid_res=160)
+        t = coherence_only_design(LAM, Odes, N, seed=seed, n_sweeps=NSW, grid_res=GR)
     elif method == "condition_only":
-        t = condition_only_design(LAM, N, seed=seed, n_sweeps=6, grid_res=160)
+        t = condition_only_design(LAM, N, seed=seed, n_sweeps=NSW, grid_res=GR)
     elif method == "annealing":
         t = annealing_design(LAM, Odes, N, maxiter=60 if not quick else 40, seed=seed)
     else:
@@ -264,8 +268,8 @@ def _pareto_ref_task(args):
     ref, sc, N, quick = args
     LAM = np.asarray(sc["LAMBDA"], float)
     if ref == "ds_optimal":
-        t = ds_optimal_design(LAM, np.asarray(sc["Odes"], float), N, n_sweeps=5,
-                              grid_res=200, seed=sc["s"])
+        t = ds_optimal_design(LAM, np.asarray(sc["Odes"], float), N, n_sweeps=12,
+                              grid_res=480, seed=sc["s"])
     else:
         t = e_optimal_design(LAM, N, n_restarts=120 if quick else 200, seed=sc["s"])
     return ref, float(_worst_L2(LAM, t, np.asarray(sc["held"]["near"], float))), \
@@ -419,11 +423,25 @@ def main():
         print("[AG] 2-D ...", flush=True); twod = section_2d(quick)
     make_figure(summ, pareto, decomp, cert)
 
+    # paired-difference CIs on the headline 'near' held-out (scenarios are paired across
+    # methods); the comparison is now at MATCHED optimization budget (see build_design).
+    def _paired(m1, m2, ht="near"):
+        dif = np.array([r["methods"][m1]["heldout"][ht] - r["methods"][m2]["heldout"][ht]
+                        for r in records])
+        prng = np.random.default_rng(7)
+        bs = [dif[prng.integers(0, dif.size, dif.size)].mean() for _ in range(4000)]
+        return {"mean": float(dif.mean()), "ci_lo": float(np.quantile(bs, 0.025)),
+                "ci_hi": float(np.quantile(bs, 0.975)),
+                "significant": bool(np.quantile(bs, 0.975) < 0)}
+    paired = {"aliasguard_minus_ds_optimal": _paired("aliasguard", "ds_optimal"),
+              "aliasguard_minus_random_jitter": _paired("aliasguard", "random_jitter")}
+
     out = {"config": {"N": N, "n_scenarios": nsc, "methods": methods,
                       "heldout_types": HELDOUT_TYPES, "cert_band": CERT_BAND,
+                      "matched_budget": "all coordinate-descent methods at n_sweeps=15, grid_res=480",
                       "metric": "function-space a_{L2,T} worst-case on held-out"},
            "summary": summ, "pareto": pareto, "decomposition": decomp,
-           "certificate": cert, "budget": budget, "twod": twod,
+           "certificate": cert, "budget": budget, "twod": twod, "paired": paired,
            "scenario_records": records,
            "note": "AliasGuard = Ds-optimal/LCMV-motivated design (credited, not claimed); "
                    "exact Ds baseline included; function-space metric; paired outer "

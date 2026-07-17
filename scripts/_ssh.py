@@ -1,11 +1,13 @@
 #!/usr/bin/env python
-"""Minimal paramiko SSH helper for the GPU server.
+"""Minimal paramiko SSH helper for a GPU server.
 
-Credentials are read from the environment so nothing secret is committed:
+ALL connection details are read from the environment so NOTHING host- or credential-specific
+is committed (no default host/port/user/password -- this keeps the repo anonymizable and
+secret-free):
 
-    AL_SSH_HOST  (default: connect.westb.seetacloud.com)
-    AL_SSH_PORT  (default: 49844)
-    AL_SSH_USER  (default: root)
+    AL_SSH_HOST  (required)
+    AL_SSH_PORT  (required)
+    AL_SSH_USER  (required)
     AL_SSH_PASS  (required)
 
 Usage:
@@ -23,12 +25,13 @@ import paramiko
 
 
 def _client() -> paramiko.SSHClient:
-    host = os.environ.get("AL_SSH_HOST", "connect.westb.seetacloud.com")
-    port = int(os.environ.get("AL_SSH_PORT", "49844"))
-    user = os.environ.get("AL_SSH_USER", "root")
+    host = os.environ.get("AL_SSH_HOST")
+    port = int(os.environ.get("AL_SSH_PORT", "22"))
+    user = os.environ.get("AL_SSH_USER")
     password = os.environ.get("AL_SSH_PASS")
-    if not password:
-        sys.exit("AL_SSH_PASS not set in environment")
+    missing = [k for k in ("AL_SSH_HOST", "AL_SSH_USER", "AL_SSH_PASS") if not os.environ.get(k)]
+    if missing:
+        sys.exit(f"missing required SSH env vars (nothing is committed): {', '.join(missing)}")
     cli = paramiko.SSHClient()
     cli.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     cli.connect(host, port=port, username=user, password=password, timeout=30,

@@ -72,11 +72,19 @@ for rel in ("docs/claim-ledger.md", "paper/main.tex", "paper/supplement.tex", "R
     else:
         ppass(f"{rel}: no forbidden absolutes")
 
+allow_dirty = "--allow-dirty" in sys.argv
+
+
+def fail_or_warn(msg):
+    """Hard failure in the strict (pre-submission) gate; a warning under --allow-dirty."""
+    warn.append(msg) if allow_dirty else fail(msg)
+
+
 # 2. undefined refs
 for name in ("main", "supplement"):
     log = PAPER / f"{name}.log"
     if not log.exists():
-        warn.append(f"{name}.log missing (build first)")
+        fail_or_warn(f"{name}.log missing (build the PDF before the strict gate)")
         continue
     txt = log.read_text(errors="ignore").lower()
     if "undefined reference" in txt or "undefined citation" in txt or "there were undefined references" in txt:
@@ -104,10 +112,32 @@ try:
     else:
         ppass("supplement prints Lemma S1 + Proposition S1..S4")
 except ModuleNotFoundError:
-    warn.append("pypdf not installed; skipped PDF-text checks")
+    fail_or_warn("pypdf not installed; PDF-text checks NOT verified")
+
+# 4b. the committed source tree must REPRODUCE the source fingerprint each headline result
+# carries (proves the shipped code == the code that produced the numbers).
+try:
+    sys.path.insert(0, str(ROOT / "experiments"))
+    from _util import _source_tree_hash
+
+    tree_hash = _source_tree_hash()
+    stamps = {}
+    for jf in ("aliasguard.json", "synthetic_matrix.json", "diagnostic_roc.json",
+               "nonlinear.json", "image2d_aliasing.json", "real_speech.json"):
+        p = ROOT / "results" / jf
+        if p.exists():
+            stamps[jf] = json.loads(p.read_text()).get("_meta", {}).get("source_tree_sha256")
+    bad = {k: v for k, v in stamps.items() if v != tree_hash}
+    if bad:
+        fail_or_warn(f"source-tree hash {tree_hash} does not match result stamps "
+                     f"{ {k: v for k, v in bad.items()} } -- the committed source does not "
+                     f"reproduce these results' fingerprint")
+    else:
+        ppass(f"committed source tree reproduces every result fingerprint ({tree_hash})")
+except Exception as e:  # pragma: no cover
+    fail_or_warn(f"could not verify source-tree fingerprint: {e}")
 
 # 5. provenance of headline results
-allow_dirty = "--allow-dirty" in sys.argv
 for jf in ("aliasguard.json", "synthetic_matrix.json", "diagnostic_roc.json"):
     p = ROOT / "results" / jf
     if not p.exists():

@@ -252,7 +252,7 @@ def expected_jitter_coherence(k: int, Q: int, scale: float, dist: str = "gaussia
     * ``gaussian`` (std ``scale`` seconds): :math:`e^{-2\pi^2k^2Q^2\,\mathrm{scale}^2}`;
     * ``uniform`` (width ``scale`` seconds): :math:`\mathrm{sinc}(kQ\,\mathrm{scale})`.
 
-    Small-jitter law (T3a): visibility :math:`\approx\sqrt{1-\chi^2}\approx
+    Small-jitter law (T3a): visibility :math:`\approx\sqrt{1-|\chi|^2}\approx
     2\pi|k|Q\sigma_t` -- jitter *continuously breaks* the exact fold.
     """
     x = float(k) * float(Q) * float(scale)

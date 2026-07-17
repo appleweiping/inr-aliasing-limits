@@ -1,8 +1,7 @@
 name: tests
 
 on:
-  push:
-    branches: [main]
+  push:              # every branch, so the paper's "on every push" claim is literally true
   pull_request:
 
 jobs:

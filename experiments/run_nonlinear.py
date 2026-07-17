@@ -12,9 +12,10 @@ how far they extrapolate to *trained* networks.  Protocol:
   from the network's own **Jacobian (NTK) linearization at initialization**: the tone is
   pushed through kernel regression with the empirical NTK and its reconstruction
   spectrum is the predicted pattern.  No arbitrary reference band is used.
-* **Seed hygiene.**  Sampling seed, feature-initialization seed, and weight/optimizer
-  seed are separated and varied independently (20 sampling seeds; weight-seed stability
-  control on a subset).
+* **Seed hygiene.**  Sampling, feature-initialization, and weight/optimizer seeds are drawn
+  from independent streams so they are decoupled from a single counter's arithmetic (one
+  triple per sampling scenario -- NOT a full factorial cross); a weight-seed-stability
+  control varies only the weight seed at fixed sampling to isolate optimizer variance.
 * **Controls.**  Label permutation (attribution must die), amplitude sweep, and
   weight-seed stability.
 * **No hidden failures.**  Every run's (predicted, measured, correlation) triple is
@@ -419,7 +420,8 @@ def main():
            "siren_framing": siren_note,
            "note": "empirical extrapolation only; predictions from each network's own "
                    "init-NTK linearization (bandlimited: exact dictionary); NTK drift "
-                   "measured init-vs-trained; seeds (sampling/feature/weight) crossed "
+                   "measured init-vs-trained; feature/weight seeds independently drawn per "
+                   "sampling scenario (decoupled from the sampling index, not fully crossed); "
                    "independently; CIs cluster-bootstrapped by sampling scenario; amplitude "
                    "swept to 0 for the infinitesimal-influence limit; all runs recorded "
                    "including failures"}

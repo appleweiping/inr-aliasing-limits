@@ -35,13 +35,20 @@ def ensure_dirs() -> None:
 
 
 def _source_tree_hash() -> str:
-    """SHA-256 over all tracked source files (src/, experiments/) -- fingerprints the exact
-    source that produced a result even if the tree is uncommitted/dirty."""
+    """SHA-256 fingerprint of the exact inputs that determine a result: all Python under
+    src/ and experiments/, PLUS the dependency lock, the package spec, and the bibliography
+    (so a change to code, pinned deps, or refs perturbs the stamp).  Fingerprints the source
+    even if the tree is uncommitted/dirty.  check_consistency.py recomputes this and fails if
+    the committed tree cannot reproduce the stamp carried by a headline result."""
     import hashlib
 
     h = hashlib.sha256()
     root = RESULTS.parent
     files = sorted(list((root / "src").rglob("*.py")) + list((root / "experiments").rglob("*.py")))
+    for extra in ("requirements.lock", "pyproject.toml", "paper/refs.bib"):
+        p = root / extra
+        if p.exists():
+            files.append(p)
     for f in files:
         try:
             h.update(f.relative_to(root).as_posix().encode())

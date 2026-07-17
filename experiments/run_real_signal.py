@@ -104,7 +104,9 @@ def load_segments(name: str):
                     continue
                 down = max(1, seg.size // M_TARGET)              # 16000 -> 2000: down=8
                 xs = resample_poly(seg, up=1, down=down)[:M_TARGET]
-                segs.append({"x_raw": xs, "rate": fs / down,
+                # cluster = RECORDING (segments from one recording share a speaker and are
+                # NOT independent replicates), so the honest CI replication unit is the record.
+                segs.append({"x_raw": xs, "rate": fs / down, "cluster": rec,
                              "rate_unit": meta["rate_unit"], "time_unit": meta["time_unit"],
                              "duration": seg.size / fs, "label": f"rec{rec}_seg{si}"})
     else:
@@ -115,7 +117,7 @@ def load_segments(name: str):
         blen = x.size // nblk
         for bi in range(nblk):
             seg = x[bi * blen:(bi + 1) * blen]
-            segs.append({"x_raw": seg, "rate": fs,
+            segs.append({"x_raw": seg, "rate": fs, "cluster": bi,
                          "rate_unit": meta["rate_unit"], "time_unit": meta["time_unit"],
                          "duration": seg.size / fs, "label": f"{name}_blk{bi}"})
     return segs
@@ -200,19 +202,22 @@ def run(name: str):
             for meth in METHODS:
                 if meth != "oracle":
                     assert draw["oracle"] <= draw[meth] + 1e-9, (name, gi, seed, meth)
-            seg_of.append(gi)
+            seg_of.append(seg["cluster"])          # cluster = recording (speech) or block
     seg_of = np.asarray(seg_of)
+    clusters = sorted(set(seg_of.tolist()))        # honest replication unit
+    n_clusters = len(clusters)
 
     def _ci(values):
-        """95% CI half-width, clustered on BLOCKS (the honest replication unit): t-interval
-        on block-level means.  Mask/noise seeds within a block are NOT treated as
-        independent replicates."""
+        """95% CI half-width, clustered on the honest replication unit (RECORDING for
+        speech -- same-recording segments share a speaker and are not independent -- or
+        time BLOCK otherwise): t-interval on cluster-level means.  Mask/noise seeds are NOT
+        treated as independent replicates."""
         from scipy.stats import t as tdist
         v = np.asarray(values)
-        means = np.array([v[seg_of == g].mean() for g in range(len(segs))])
-        if len(segs) < 2:
+        means = np.array([v[seg_of == c].mean() for c in clusters])
+        if n_clusters < 2:
             return float("nan")
-        return float(tdist.ppf(0.975, len(segs) - 1) * means.std(ddof=1) / np.sqrt(len(segs)))
+        return float(tdist.ppf(0.975, n_clusters - 1) * means.std(ddof=1) / np.sqrt(n_clusters))
 
     summary = {}
     oracle = np.asarray(rows["oracle"])
@@ -226,7 +231,7 @@ def run(name: str):
             "paired_diff_ci95": _ci(diff) if m != "oracle" else 0.0,
             "band_mean": float(np.mean(bands[m])),
             "n": int(v.size),
-            "n_clusters": len(segs),
+            "n_clusters": n_clusters,
         }
     s0 = segs[0]
     out = {

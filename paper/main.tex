@@ -70,9 +70,10 @@ concentration bound does not by itself provide.  The certification machinery (gr
 a Bernstein/Lipschitz slack) is standard; the contribution is its application to sample-only
 aliasability.  On held-out frequencies near the concern set the design
 cuts function-space worst-case aliasability from $\AGrand$ (random) to
-$\AGheld{\pm}\AGheldCI$ (vs.\ the exact $D_s$ design $\AGds$), degrading toward random
-outside the targeted band; it certifies $\AGcert$ band-wide vs.\ $\AGcertR$, in 1-D and
-2-D.  Closed-form implementations are checked against independent simulations (proofs are
+$\AGheld{\pm}\AGheldCI$ (vs.\ the exact $D_s$ design $\AGds$ at matched optimization
+budget), degrading toward random outside the targeted band; the 1-D continuum certificate
+bounds it band-wide at $\AGcert$ vs.\ $\AGcertR$ (random).  Closed-form implementations are
+checked against independent simulations (proofs are
 separate); trained SIREN/MLP networks are an explicitly labeled empirical extension with
 failures reported.
 \end{abstract}
@@ -107,7 +108,8 @@ breaks the fold: a jitter characteristic-function law and an i.i.d.\ concentrati
 (Thm.~\ref{thm:t3}).
 (3)~A \emph{certified constructive design} (Sec.~\ref{sec:design}): we recognize the
 anti-aliasing objective as a $D_s$-optimal / null-steering criterion on sample times, give
-a fast joint surrogate that an ablation shows is necessary, and prove a computable
+a fast joint surrogate that an ablation shows improves the tested aliasability--conditioning
+trade-off over each single-objective variant (at matched budget), and prove a computable
 \emph{continuum aliasability certificate} that guarantees the worst case over an entire
 out-of-band interval from the samples only.
 (4)~An honest empirical program: real-data both sides, a trained-network extension with
@@ -184,8 +186,11 @@ rank then $\vt(\nu)>0$.
 \emph{Sketch.}  (i)~$e^{i2\pi\nu g/Q}$ depends only on $\nu\bmod Q$; (ii)~two-point (Le
 Cam) with $\norm{e_\nu-e_{\omega_k}}_{L^2}=\sqrt2$; (iii)~the rank condition (supplement).
 \emph{Silent aliasing} is (i)--(ii): the samples are fit to the noise floor while the
-reconstruction error is $\ge$ the full out-of-band energy, at any $N$, with $\nu$
-arbitrarily far from $\Lam$.  The corrective is (i)'s \emph{on every such subset}: a
+\emph{least-squares} reconstruction error equals the full out-of-band energy ($\sqrt2|a|$)
+and \emph{no} estimator does better than $|a|/\sqrt2$ (ii)---for \emph{any} admissible
+grid-subset (parts (i)--(ii) need no rank condition; the full-rank claims of (iii) require
+$N\ge m$), with $\nu$ arbitrarily far from $\Lam$.  The corrective is (i)'s
+\emph{on every such subset}: a
 common intuition holds that irregular sampling avoids aliasing; on a grid it does not, no
 matter how irregular the subset.  Classical aliasing is $T=$ full grid~\cite{shannon1949}.
 
@@ -271,9 +276,12 @@ scaled, or broadband: Fig.~\ref{fig:ag}b).  It persists across the budget sweep
 lowers the out-of-band aliasing-bias term while the truncation floor and the estimation
 noise are unaffected; the designs' noise gains ($\sigma_{\min}^{-2}$,
 $\tr((\Phimat^{*}\Phimat)^{-1})$) and condition numbers---distinct quantities---are
-reported alongside.  Over a continuous band the design \emph{certifies}
-$\max a_{L^2}\le\AGcert$ vs.\ $\AGcertR$ (random) and $\AGcertD$ (exact $D_s$).  In 2-D on
-held-out frequency vectors it gives $\AGtwoD$ vs.\ $\AGtwoDR$ (random).  Honest scope: the
+reported alongside.  Over a continuous 1-D band the design \emph{certifies}
+$\max a_{L^2}\le\AGcert$ vs.\ $\AGcertR$ (random) and $\AGcertD$ (exact $D_s$), a
+non-vacuous ($<\!1$) guarantee in $\AGcertNV$ of $\AGcertTot$ scenarios (the rest are
+reported vacuous, not hidden).  A preliminary 2-D held-out-vector comparison gives
+$\AGtwoD$ vs.\ $\AGtwoDR$ (random)---a small margin that is \AGtwoDsep\ and uses only an
+i.i.d.-uniform baseline, so we do not present it as a headline.  Honest scope: the
 tool applies where sample \emph{times are chosen}---active sampling, acquisition design, or
 scheduling a coordinate network's training queries---not already-acquired data; it needs a
 focused concern set ($K\!=\!O(N)$), and for a broad band densely covered ($K\!\gg\!N$) or a
@@ -283,7 +291,7 @@ badly misspecified set it loses its edge.
 \centering
 \includegraphics[width=0.99\textwidth]{synthetic_matrix.png}
 \caption{Theory validation (mean $\pm$ 95\% CI, 20 draws).  (a)~jitter law
-$\sqrt{1-\chi_\eta^2}$; (b)~i.i.d.\ worst-case aliasability vs.\ the bound; (c)~grid
+$\sqrt{1-|\chi_\eta|^2}$; (b)~i.i.d.\ worst-case aliasability vs.\ the bound; (c)~grid
 persistence vs.\ i.i.d.\ (fixed \emph{and} adversarial tones); (d)~jitter removes
 aliasing bias, not truncation.}
 \label{fig:matrix}
@@ -311,8 +319,10 @@ carry seeds, configs, full-SHA/dirty-flag provenance, and host/CPU/GPU stamps; e
 is regenerated from them.  (``CI'' here means that integration workflow; the statistical
 confidence intervals below are a distinct quantity.)
 
-\emph{Theory (Fig.~\ref{fig:matrix}).}  (a)~the jitter law matches $\sqrt{1-\chi_\eta^2}$
-across two decades, exact fold ($v\!\approx\!10^{-14}$) at $\sigma_t{=}0$; (b)~i.i.d.\
+\emph{Theory (Fig.~\ref{fig:matrix}).}  (a)~the jitter law matches $\sqrt{1-|\chi_\eta|^2}$
+across two decades (the agreement is empirical and holds well beyond the regime where the
+finite-$N$ union-bound linear law is provably tight), exact fold ($v\!\approx\!10^{-14}$) at
+$\sigma_t{=}0$; (b)~i.i.d.\
 worst-case aliasability decays $N^{-1/2}$ beneath the bound; (c)~the grid-subset coherent
 tone stays invisible at every $N$ while i.i.d.\ sampling makes even the per-$N$ adversarial
 candidate visible; (d)~jitter removes the aliasing-bias term, never truncation.
@@ -337,7 +347,8 @@ the detection dichotomy (a coherent fold is indistinguishable from its in-band t
 sample-only test; for visible tones \emph{only} the residual detector has a closed-form
 operating characteristic---the exact noncentral-$\chi^2$ power curve---while the other
 detectors are empirical baselines shown for comparison), and a trained-network extension
-(FF-MLP fold match $\NLffmatch$, correlation $\NLffcorr$ over $\ge20$ crossed seeds; the
+(FF-MLP fold match $\NLffmatch$, correlation $\NLffcorr$ over $\ge20$ sampling scenarios
+with independently drawn feature/weight seeds and a separate weight-seed-stability control; the
 trained \emph{SIREN} responses are \emph{inconsistent with the initialization-NTK
 prediction}, correlation $\NLsicorr$. We measured the init-vs-trained NTK drift to test
 whether this is a lazy-training artifact: it is \emph{not}---the SIREN kernel drifts
