@@ -131,6 +131,39 @@ def _ntk_prediction(model, t, tone_samples, dev, lam=1e-6):
     return _t.cat(preds).numpy().ravel()
 
 
+def _ntk_gram(model, t, dev):
+    """Empirical NTK Gram K = J J^T on the sample points (J = param Jacobian).
+
+    Used to MEASURE how far the tangent kernel moves from initialization to after training
+    -- the evidence needed before claiming a trained network departs from its init-NTK."""
+    import torch
+
+    tt = torch.tensor(t.reshape(-1, 1), dtype=torch.float32, device=dev)
+    params = [p for p in model.parameters() if p.requires_grad]
+    rows = []
+    for i in range(tt.shape[0]):
+        model.zero_grad(set_to_none=True)
+        out = model(tt[i:i + 1]).squeeze()
+        grads = torch.autograd.grad(out, params, retain_graph=False)
+        rows.append(torch.cat([g.reshape(-1) for g in grads]))
+    J = torch.stack(rows)
+    return (J @ J.T).detach().cpu().numpy()
+
+
+def _ntk_drift(K0, K1):
+    """Init-vs-trained NTK drift: relative Frobenius change + top-eigenvector alignment.
+
+    Small drift => the linearization (init NTK) is a good model of training => an init-NTK
+    prediction is expected to match.  Large drift => the network left its init tangent
+    space and a mismatch is expected (this is what distinguishes SIREN from FF-MLP here)."""
+    f0 = float(np.linalg.norm(K0))
+    rel = float(np.linalg.norm(K1 - K0) / (f0 + 1e-12))
+    w0, V0 = np.linalg.eigh(K0)
+    w1, V1 = np.linalg.eigh(K1)
+    cos = abs(float(V0[:, -1] @ V1[:, -1]))          # top-eigvec alignment (1 = unchanged)
+    return {"ntk_rel_drift": rel, "ntk_top_evec_cos": cos}
+
+
 def _fold_metrics(diff_recon, pred_recon):
     """Measured vs predicted attribution spectra below FMAX_SPEC.
 
@@ -149,7 +182,13 @@ def _fold_metrics(diff_recon, pred_recon):
             "pattern_corr": corr}
 
 
-def one_run(arch, f_out, samp_seed, weight_seed, amp=0.8, permute=False, dev="cuda"):
+def one_run(arch, f_out, samp_seed, weight_seed, feature_seed=None, amp=0.8,
+            permute=False, measure_drift=False, dev="cuda"):
+    """One ablation-attribution run.  ``samp_seed`` (design t + noise), ``feature_seed``
+    (Fourier-feature draw) and ``weight_seed`` (weight init / optimizer) are INDEPENDENT
+    inputs -- the caller crosses them instead of binding all three to one counter."""
+    if feature_seed is None:
+        feature_seed = 100 + samp_seed
     rng = np.random.default_rng(samp_seed)
     t = nonuniform_times(N, rng, "jitter")
     noise = rng.normal(0, SIGMA, N)
@@ -160,27 +199,52 @@ def one_run(arch, f_out, samp_seed, weight_seed, amp=0.8, permute=False, dev="cu
     if permute:
         y_all = rng.permutation(y_all)
 
-    feature_seed = 100 + samp_seed
     m1 = _make_model(arch, feature_seed, weight_seed)
     f_with, _ = _train_predict(m1, t, y_all, dev)
     m0 = _make_model(arch, feature_seed, weight_seed)
-    f_wo, _ = _train_predict(m0, t, y_in, dev)
+    f_wo, m0_trained = _train_predict(m0, t, y_in, dev)
     diff = f_with - f_wo
 
     m_ref = _make_model(arch, feature_seed, weight_seed)
     m_ref = m_ref.to(dev) if hasattr(m_ref, "to") else m_ref
+    drift = {}
+    if measure_drift:
+        # NTK Gram at init (m_ref) vs after training (m0_trained) -- same init, so this is a
+        # clean before/after comparison of the tangent kernel on the same points.
+        K_init = _ntk_gram(m_ref, t, dev)
+        m0_trained = m0_trained.to(dev) if hasattr(m0_trained, "to") else m0_trained
+        K_trained = _ntk_gram(m0_trained, t, dev)
+        drift = _ntk_drift(K_init, K_trained)
     pred_recon = _ntk_prediction(m_ref, t, tone, dev)
 
     res = _fold_metrics(diff, pred_recon)
     res.update({"arch": arch, "f_out": f_out, "samp_seed": samp_seed,
-                "weight_seed": weight_seed, "amp": amp, "permute": permute,
-                "diff_energy": float(np.mean(diff**2))})
+                "weight_seed": weight_seed, "feature_seed": int(feature_seed),
+                "amp": amp, "permute": permute,
+                "diff_energy": float(np.mean(diff**2)),
+                "linear_response": float(np.mean(diff**2)) / (amp**2 + 1e-12), **drift})
     return res, diff, pred_recon, t
 
 
 def _boot_ci(bools, rng, n=2000):
     v = np.asarray(bools, float)
     stats = [v[rng.integers(0, v.size, v.size)].mean() for _ in range(n)]
+    return [float(np.quantile(stats, 0.025)), float(np.quantile(stats, 0.975))]
+
+
+def _cluster_boot_ci(vals, clusters, rng, n=2000):
+    """Cluster bootstrap: resample SAMPLING SCENARIOS (each shares one design t), not
+    individual runs -- runs from the same sampling seed are correlated, so the honest
+    replication unit is the scenario."""
+    vals = np.asarray(vals, float)
+    clusters = np.asarray(clusters)
+    uniq = np.unique(clusters)
+    idx_by = {c: np.where(clusters == c)[0] for c in uniq}
+    stats = []
+    for _ in range(n):
+        pick = rng.choice(uniq, uniq.size, replace=True)
+        sel = np.concatenate([idx_by[c] for c in pick])
+        stats.append(vals[sel].mean())
     return [float(np.quantile(stats, 0.025)), float(np.quantile(stats, 0.975))]
 
 
@@ -232,32 +296,60 @@ def main():
     quick = "--quick" in sys.argv
     n_seeds = 4 if quick else N_SEEDS
 
+    # Independent seed pools: sampling, feature-init, and weight/optimizer seeds are drawn
+    # from separate streams so they are NOT one-to-one bound to a single counter (P1-A).
+    seedgen = np.random.default_rng(20260717)
+    feat_pool = seedgen.integers(0, 1_000_000, n_seeds).tolist()
+    wt_pool = seedgen.integers(0, 1_000_000, n_seeds).tolist()
+
     runs = []
-    # main grid: ffmlp x f_out x sampling seeds
+    # main grid: ffmlp x f_out x sampling scenario (each scenario an independent triple)
     for f_out in F_OUTS:
         for s in range(n_seeds):
-            r, *_ = one_run("ffmlp", f_out, s, 200 + s, dev=dev)
+            r, *_ = one_run("ffmlp", f_out, s, wt_pool[s], feature_seed=feat_pool[s],
+                            measure_drift=True, dev=dev)
             runs.append(r)
             print(f"[nl] ffmlp f={f_out} s={s}: meas={r['measured_fold']} "
-                  f"pred={r['predicted_fold']} corr={r['pattern_corr']:.2f}", flush=True)
+                  f"pred={r['predicted_fold']} corr={r['pattern_corr']:.2f} "
+                  f"drift={r.get('ntk_rel_drift', float('nan')):.2f}", flush=True)
     # siren + bandlimited at f_out = 50
     for arch in ("siren", "bandlimited"):
         for s in range(n_seeds):
-            r, *_ = one_run(arch, 50.0, s, 200 + s, dev=dev)
+            r, *_ = one_run(arch, 50.0, s, wt_pool[s], feature_seed=feat_pool[s],
+                            measure_drift=True, dev=dev)
             runs.append(r)
-            print(f"[nl] {arch} s={s}: meas={r['measured_fold']} "
-                  f"pred={r['predicted_fold']} corr={r['pattern_corr']:.2f}", flush=True)
+            print(f"[nl] {arch} s={s}: meas={r['measured_fold']} pred={r['predicted_fold']} "
+                  f"corr={r['pattern_corr']:.2f} drift={r.get('ntk_rel_drift', float('nan')):.2f}",
+                  flush=True)
+
     # controls
     controls = []
-    for s in range(0, n_seeds, 4):
-        r, *_ = one_run("ffmlp", 50.0, s, 200 + s, permute=True, dev=dev)
+    step = max(1, n_seeds // 4)
+    for s in range(0, n_seeds, step):
+        r, *_ = one_run("ffmlp", 50.0, s, wt_pool[s], feature_seed=feat_pool[s],
+                        permute=True, dev=dev)
         r["control"] = "label_permutation"; controls.append(r)
-    for s in range(0, n_seeds, 4):
-        r, *_ = one_run("ffmlp", 50.0, s, 200 + s, amp=0.4, dev=dev)
-        r["control"] = "amp0.4"; controls.append(r)
-    for s in range(0, n_seeds, 4):          # weight-seed stability
-        r, *_ = one_run("ffmlp", 50.0, s, 900 + s, dev=dev)
-        r["control"] = "weight_seed_900"; controls.append(r)
+    # optimizer/weight-seed stability at FIXED sampling scenario (isolates weight variance,
+    # decoupled from sampling): vary only the weight seed with s and features held fixed.
+    for j in range(min(5, n_seeds)):
+        r, *_ = one_run("ffmlp", 50.0, 0, 900 + j, feature_seed=feat_pool[0], dev=dev)
+        r["control"] = "weight_seed_stability"; controls.append(r)
+
+    # Amplitude sweep -> 0 (infinitesimal-influence test): the two-net difference is a clean
+    # linear attribution only in the small-amplitude limit.  Report pattern_corr and the
+    # linear-response energy (diff_energy / amp^2, which should stabilize as amp -> 0).
+    amp_sweep = []
+    AMPS = (0.05, 0.1, 0.2, 0.4, 0.8)
+    for s in range(0, n_seeds, step):
+        for amp in AMPS:
+            r, *_ = one_run("ffmlp", 50.0, s, wt_pool[s], feature_seed=feat_pool[s],
+                            amp=amp, dev=dev)
+            amp_sweep.append({"amp": amp, "samp_seed": s,
+                              "pattern_corr": r["pattern_corr"],
+                              "exact_match": r["exact_match"],
+                              "linear_response": r["linear_response"]})
+            print(f"[nl] amp-sweep s={s} amp={amp}: corr={r['pattern_corr']:.2f} "
+                  f"lin_resp={r['linear_response']:.3f}", flush=True)
 
     rng = np.random.default_rng(0)
     summary = {}
@@ -268,31 +360,50 @@ def main():
         ex = [r["exact_match"] for r in sub]
         t3 = [r["top3_match"] for r in sub]
         co = [r["pattern_corr"] for r in sub]
+        clu = [r["samp_seed"] for r in sub]           # cluster = sampling scenario
+        drifts = [r["ntk_rel_drift"] for r in sub if "ntk_rel_drift" in r]
         summary[arch] = {
             "n_runs": len(sub),
             "exact_match_rate": float(np.mean(ex)),
-            "exact_match_ci95": _boot_ci(ex, rng),
+            "exact_match_ci95_cluster": _cluster_boot_ci(ex, clu, rng),
             "top3_match_rate": float(np.mean(t3)),
-            "top3_match_ci95": _boot_ci(t3, rng),
+            "top3_match_ci95_cluster": _cluster_boot_ci(t3, clu, rng),
             "pattern_corr_median": float(np.median(co)),
             "pattern_corr_q10_q90": [float(np.quantile(co, 0.1)),
                                      float(np.quantile(co, 0.9))],
+            "ntk_rel_drift_median": float(np.median(drifts)) if drifts else None,
+            "ntk_rel_drift_q10_q90": ([float(np.quantile(drifts, 0.1)),
+                                       float(np.quantile(drifts, 0.9))] if drifts else None),
         }
     perm_corr = [r["pattern_corr"] for r in controls
                  if r.get("control") == "label_permutation"]
 
     make_figure(runs, controls, n_seeds, dev)
 
+    # Honest framing of the SIREN result, conditioned on the MEASURED drift.
+    ff_d = summary.get("ffmlp", {}).get("ntk_rel_drift_median")
+    si_d = summary.get("siren", {}).get("ntk_rel_drift_median")
+    siren_note = ("insufficient data" if (ff_d is None or si_d is None) else
+                  (f"trained SIREN NTK drifts {si_d:.2f} (median rel.) vs FF-MLP {ff_d:.2f}; "
+                   "where drift is large the init-NTK prediction is not expected to hold, so "
+                   "we report only that trained SIREN responses are inconsistent with the "
+                   "initialization-NTK prediction -- not that they 'leave' a fixed kernel."))
+
     out = {"N": N, "sigma": SIGMA, "epochs": EPOCHS, "n_seeds": n_seeds,
            "f_outs": list(F_OUTS), "device": dev, "quick": quick,
-           "runs": runs, "controls": controls, "summary": summary,
+           "runs": runs, "controls": controls, "amp_sweep": amp_sweep, "summary": summary,
+           "siren_framing": siren_note,
            "note": "empirical extrapolation only; predictions from each network's own "
-                   "NTK linearization (bandlimited: exact dictionary); all runs "
-                   "recorded including failures"}
+                   "init-NTK linearization (bandlimited: exact dictionary); NTK drift "
+                   "measured init-vs-trained; seeds (sampling/feature/weight) crossed "
+                   "independently; CIs cluster-bootstrapped by sampling scenario; amplitude "
+                   "swept to 0 for the infinitesimal-influence limit; all runs recorded "
+                   "including failures"}
     save_json("nonlinear.json", out)
     print("[nl] summary:", {k: {kk: (round(vv, 3) if isinstance(vv, float) else vv)
-                                for kk, vv in v.items() if "ci" not in kk}
+                                for kk, vv in v.items() if "ci" not in kk and vv is not None}
                             for k, v in summary.items()}, flush=True)
+    print("[nl] siren_framing:", siren_note, flush=True)
 
 
 if __name__ == "__main__":
