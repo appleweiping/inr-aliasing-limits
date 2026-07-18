@@ -1,0 +1,3444 @@
+{
+  "config": {
+    "B": 12.0,
+    "N": 40,
+    "n_scenarios": 32,
+    "a_out": 2.0,
+    "designs": [
+      "aliasguard",
+      "ds_optimal",
+      "random",
+      "jitter",
+      "grid",
+      "low_discrepancy"
+    ],
+    "threat_aware": [
+      "aliasguard",
+      "ds_optimal"
+    ],
+    "archs": [
+      "ffmlp",
+      "siren"
+    ],
+    "epochs": 3000,
+    "dict_seed": 42,
+    "m_features": 25,
+    "a_out_sweep": [
+      0.5,
+      1.0,
+      2.0,
+      4.0,
+      8.0
+    ]
+  },
+  "certificate_mean": {
+    "aliasguard": 0.7475469720112604,
+    "ds_optimal": 0.729853329790136,
+    "random": 7.244183569845025,
+    "jitter": 1.2274023435442984,
+    "grid": 0.9279663844619433,
+    "low_discrepancy": 1.2204758148612496
+  },
+  "certificate_vacuous": {
+    "aliasguard": 0,
+    "ds_optimal": 0,
+    "random": 0,
+    "jitter": 0,
+    "grid": 0,
+    "low_discrepancy": 0
+  },
+  "certificate_by_scenario": {
+    "0": {
+      "aliasguard": 0.7945534822371171,
+      "ds_optimal": 0.6684852837796911,
+      "random": 2.7883991603894995,
+      "jitter": 1.2597781602366909,
+      "grid": 1.0005402120975866,
+      "low_discrepancy": 1.0936851669899164
+    },
+    "1": {
+      "aliasguard": 0.34625659285339944,
+      "ds_optimal": 0.5917800048057982,
+      "random": 3.9060199225251213,
+      "jitter": 1.485708028176299,
+      "grid": 0.42960729049710994,
+      "low_discrepancy": 1.204607882590078
+    },
+    "2": {
+      "aliasguard": 0.5352049168075391,
+      "ds_optimal": 0.7001616186747918,
+      "random": 5.3535968504842195,
+      "jitter": 1.299486102154589,
+      "grid": 1.0005193329161248,
+      "low_discrepancy": 1.0449597425815338
+    },
+    "3": {
+      "aliasguard": 0.7831952141809588,
+      "ds_optimal": 0.7205499209989323,
+      "random": 2.245049375922551,
+      "jitter": 1.379369582579274,
+      "grid": 0.9973326865567418,
+      "low_discrepancy": 1.0449598639508557
+    },
+    "4": {
+      "aliasguard": 0.6977159433550373,
+      "ds_optimal": 0.7148420321247343,
+      "random": 49.994175515638396,
+      "jitter": 1.2576330029438074,
+      "grid": 0.8655894202508465,
+      "low_discrepancy": 1.6019205322975367
+    },
+    "5": {
+      "aliasguard": 0.8409768657098041,
+      "ds_optimal": 0.7328288771236213,
+      "random": 8.39178979840723,
+      "jitter": 1.3180663969914475,
+      "grid": 1.0056707857530196,
+      "low_discrepancy": 1.2555210265863335
+    },
+    "6": {
+      "aliasguard": 0.8792743813998731,
+      "ds_optimal": 0.7701197558527002,
+      "random": 2.4940502518365903,
+      "jitter": 1.3598337171819388,
+      "grid": 1.00054017044553,
+      "low_discrepancy": 1.0965917512671826
+    },
+    "7": {
+      "aliasguard": 0.7691902762882308,
+      "ds_optimal": 0.7801813815065655,
+      "random": 3.2589173867054773,
+      "jitter": 1.2222073577012467,
+      "grid": 1.000540188399529,
+      "low_discrepancy": 1.3471121397011552
+    },
+    "8": {
+      "aliasguard": 0.738377956922879,
+      "ds_optimal": 0.7340119228003126,
+      "random": 7.509056901645147,
+      "jitter": 1.4780993610909485,
+      "grid": 1.0005401674603671,
+      "low_discrepancy": 1.2224258707102127
+    },
+    "9": {
+      "aliasguard": 0.8073049851353056,
+      "ds_optimal": 0.835111786256369,
+      "random": 2.4950137847890965,
+      "jitter": 1.545205024482242,
+      "grid": 0.9380752643742548,
+      "low_discrepancy": 1.6019205828683116
+    },
+    "10": {
+      "aliasguard": 0.7898069553817195,
+      "ds_optimal": 0.725573346655673,
+      "random": 20.858684807136264,
+      "jitter": 1.2202358185792992,
+      "grid": 1.0005402233239313,
+      "low_discrepancy": 1.044959914138769
+    },
+    "11": {
+      "aliasguard": 0.6918833163029888,
+      "ds_optimal": 0.7553945253765778,
+      "random": 6.169123348918385,
+      "jitter": 1.4096431385717638,
+      "grid": 1.0005401831332026,
+      "low_discrepancy": 1.1582400367117587
+    },
+    "12": {
+      "aliasguard": 0.9827707992800663,
+      "ds_optimal": 0.9079551230057338,
+      "random": 5.6754402513274975,
+      "jitter": 1.6896561561585723,
+      "grid": 1.0042848597620395,
+      "low_discrepancy": 1.2555210403235102
+    },
+    "13": {
+      "aliasguard": 0.6866885278509705,
+      "ds_optimal": 0.3954745285948647,
+      "random": 1.8213709707367507,
+      "jitter": 1.526330079164629,
+      "grid": 0.5324705494620108,
+      "low_discrepancy": 1.2046080517611626
+    },
+    "14": {
+      "aliasguard": 0.7105693264314316,
+      "ds_optimal": 0.6183739232173319,
+      "random": 6.157679831506437,
+      "jitter": 0.9669926053425886,
+      "grid": 1.000540221864772,
+      "low_discrepancy": 1.0449598354539171
+    },
+    "15": {
+      "aliasguard": 0.9304878738663515,
+      "ds_optimal": 0.6847780741243453,
+      "random": 2.249226761517615,
+      "jitter": 1.4865583899390153,
+      "grid": 1.0005401530727538,
+      "low_discrepancy": 1.158239888026314
+    },
+    "16": {
+      "aliasguard": 0.8270988125507227,
+      "ds_optimal": 0.6629978943925663,
+      "random": 3.574147153736282,
+      "jitter": 1.1675206215789817,
+      "grid": 1.0005401997263472,
+      "low_discrepancy": 1.1479316733365872
+    },
+    "17": {
+      "aliasguard": 0.8489123801417147,
+      "ds_optimal": 0.9539392920231061,
+      "random": 3.5474253080301104,
+      "jitter": 0.9844599187050568,
+      "grid": 1.0005401895664496,
+      "low_discrepancy": 1.283473133472441
+    },
+    "18": {
+      "aliasguard": 0.6490875030485903,
+      "ds_optimal": 0.6892997085758177,
+      "random": 4.2561601851865225,
+      "jitter": 1.0915605777233552,
+      "grid": 1.000521918019206,
+      "low_discrepancy": 1.028710785009075
+    },
+    "19": {
+      "aliasguard": 0.5828568551454812,
+      "ds_optimal": 0.7345937727612147,
+      "random": 12.47675091163672,
+      "jitter": 1.093401059804564,
+      "grid": 0.9883205799162308,
+      "low_discrepancy": 1.158240003809053
+    },
+    "20": {
+      "aliasguard": 0.7192077089311906,
+      "ds_optimal": 0.7147655918377767,
+      "random": 7.596826016399987,
+      "jitter": 1.0205064102785626,
+      "grid": 0.953883836689166,
+      "low_discrepancy": 1.0449596768124965
+    },
+    "21": {
+      "aliasguard": 0.6135473330808896,
+      "ds_optimal": 0.7103777645447905,
+      "random": 5.938545503573402,
+      "jitter": 1.0493241568442846,
+      "grid": 0.5324704339294805,
+      "low_discrepancy": 1.2046078178572637
+    },
+    "22": {
+      "aliasguard": 0.6846165972304004,
+      "ds_optimal": 0.7466191560625103,
+      "random": 6.822664057952397,
+      "jitter": 0.9100965216192556,
+      "grid": 1.0056708035321398,
+      "low_discrepancy": 1.2555211076662662
+    },
+    "23": {
+      "aliasguard": 0.8051376342260833,
+      "ds_optimal": 0.7578233017709082,
+      "random": 4.5243822027733165,
+      "jitter": 1.3245838968548307,
+      "grid": 1.0056707861260212,
+      "low_discrepancy": 1.2555210538859272
+    },
+    "24": {
+      "aliasguard": 0.68466315357002,
+      "ds_optimal": 0.792477212434933,
+      "random": 4.5566758255876945,
+      "jitter": 1.1055215807774261,
+      "grid": 0.9897773905401982,
+      "low_discrepancy": 1.186850917826983
+    },
+    "25": {
+      "aliasguard": 0.9374923144292913,
+      "ds_optimal": 0.7594626836320206,
+      "random": 4.9160705864144365,
+      "jitter": 1.0484506998732632,
+      "grid": 1.0005401498744586,
+      "low_discrepancy": 1.2079198635868762
+    },
+    "26": {
+      "aliasguard": 0.684862526711019,
+      "ds_optimal": 0.7616245103332013,
+      "random": 8.722719678405747,
+      "jitter": 1.1894373551050903,
+      "grid": 1.0005401757886223,
+      "low_discrepancy": 1.4598612920301006
+    },
+    "27": {
+      "aliasguard": 0.9487911223069402,
+      "ds_optimal": 0.9179935791087718,
+      "random": 2.612002215033252,
+      "jitter": 1.3325457720456118,
+      "grid": 1.0005401731705814,
+      "low_discrepancy": 1.6019205543750215
+    },
+    "28": {
+      "aliasguard": 0.6463879070089944,
+      "ds_optimal": 0.7811367617488735,
+      "random": 3.739661304796793,
+      "jitter": 1.0156659160529502,
+      "grid": 1.0005219208508123,
+      "low_discrepancy": 1.2834731191093485
+    },
+    "29": {
+      "aliasguard": 0.7790851910914536,
+      "ds_optimal": 0.7138723684075393,
+      "random": 3.8577337684572086,
+      "jitter": 1.121923965368342,
+      "grid": 1.0022359693647354,
+      "low_discrepancy": 1.2555210869891358
+    },
+    "30": {
+      "aliasguard": 0.6942162230734468,
+      "ds_optimal": 0.5629283215257519,
+      "random": 16.89302123687025,
+      "jitter": 0.9150766045732537,
+      "grid": 0.42960727921772207,
+      "low_discrepancy": 1.0449596082745312
+    },
+    "31": {
+      "aliasguard": 0.8312824278104238,
+      "ds_optimal": 0.7597725292265254,
+      "random": 6.411493360700403,
+      "jitter": 1.0019970149183721,
+      "grid": 1.0056707871001942,
+      "low_discrepancy": 1.2555210555603356
+    }
+  },
+  "summary": {
+    "ffmlp": {
+      "aliasguard": {
+        "psnr_mean": 9.321241468752058,
+        "psnr_std": 2.3089998012169866
+      },
+      "ds_optimal": {
+        "psnr_mean": 9.365772553352125,
+        "psnr_std": 2.6339465680448932
+      },
+      "random": {
+        "psnr_mean": 9.035205488513945,
+        "psnr_std": 2.106025430836124
+      },
+      "jitter": {
+        "psnr_mean": 8.75669079966504,
+        "psnr_std": 2.231715826383565
+      },
+      "grid": {
+        "psnr_mean": 9.527385311282174,
+        "psnr_std": 2.4129441834665513
+      },
+      "low_discrepancy": {
+        "psnr_mean": 8.806015640073959,
+        "psnr_std": 2.4230243592026706
+      }
+    },
+    "siren": {
+      "aliasguard": {
+        "psnr_mean": 9.208013044857081,
+        "psnr_std": 2.189402343372431
+      },
+      "ds_optimal": {
+        "psnr_mean": 8.950349051082107,
+        "psnr_std": 2.3464401882931334
+      },
+      "random": {
+        "psnr_mean": 7.698773941050943,
+        "psnr_std": 2.143766454755041
+      },
+      "jitter": {
+        "psnr_mean": 8.474303576197244,
+        "psnr_std": 2.0723616051563254
+      },
+      "grid": {
+        "psnr_mean": 9.432443413518747,
+        "psnr_std": 2.393605775793988
+      },
+      "low_discrepancy": {
+        "psnr_mean": 8.72005246886295,
+        "psnr_std": 2.3276026206908504
+      }
+    }
+  },
+  "paired": {
+    "ffmlp": {
+      "ds_optimal": {
+        "mean": -0.04453108460006849,
+        "ci_lo": -0.5244747399104269,
+        "ci_hi": 0.42137419690205136,
+        "significant_win": false
+      },
+      "random": {
+        "mean": 0.2860359802381109,
+        "ci_lo": -0.04023140533656959,
+        "ci_hi": 0.65174840923318,
+        "significant_win": false
+      },
+      "jitter": {
+        "mean": 0.5645506690870155,
+        "ci_lo": 0.18594503875764734,
+        "ci_hi": 0.9713154253548392,
+        "significant_win": true
+      },
+      "grid": {
+        "mean": -0.20614384253011642,
+        "ci_lo": -0.6470246402022335,
+        "ci_hi": 0.25772118968033264,
+        "significant_win": false
+      },
+      "low_discrepancy": {
+        "mean": 0.515225828678097,
+        "ci_lo": 0.034041187632007766,
+        "ci_hi": 1.019792897788985,
+        "significant_win": true
+      }
+    },
+    "siren": {
+      "ds_optimal": {
+        "mean": 0.2576639937749743,
+        "ci_lo": -0.19900053916782906,
+        "ci_hi": 0.678210419779412,
+        "significant_win": false
+      },
+      "random": {
+        "mean": 1.509239103806136,
+        "ci_lo": 1.1777298142679165,
+        "ci_hi": 1.9001430728681614,
+        "significant_win": true
+      },
+      "jitter": {
+        "mean": 0.7337094686598372,
+        "ci_lo": 0.3752625583483862,
+        "ci_hi": 1.104531407057044,
+        "significant_win": true
+      },
+      "grid": {
+        "mean": -0.2244303686616659,
+        "ci_lo": -0.6301338498839009,
+        "ci_hi": 0.17382278761922024,
+        "significant_win": false
+      },
+      "low_discrepancy": {
+        "mean": 0.48796057599413134,
+        "ci_lo": 0.029499785847611346,
+        "ci_hi": 0.9798814036396841,
+        "significant_win": true
+      }
+    }
+  },
+  "cert_predicts_winner_spearman": {
+    "ffmlp": {
+      "rho_within_mean": 0.22678571428571426,
+      "rho_within_ci_lo": 0.07857142857142857,
+      "rho_within_ci_hi": 0.375,
+      "frac_positive": 0.6875,
+      "rho_pooled": 0.5428571428571429,
+      "p_pooled": 0.26570262390670546,
+      "n_scenarios_used": 32
+    },
+    "siren": {
+      "rho_within_mean": 0.4464285714285715,
+      "rho_within_ci_lo": 0.3303125,
+      "rho_within_ci_hi": 0.5571428571428572,
+      "frac_positive": 0.875,
+      "rho_pooled": 0.7714285714285715,
+      "p_pooled": 0.07239650145772594,
+      "n_scenarios_used": 32
+    }
+  },
+  "crossover": [
+    {
+      "a_out": 0.5,
+      "psnr": {
+        "ffmlp": {
+          "aliasguard": 19.64110213760532,
+          "ds_optimal": 18.602297396515787,
+          "random": 16.27913865665745,
+          "jitter": 18.287307698327577,
+          "grid": 20.484700697660184,
+          "low_discrepancy": 18.648997413058076
+        },
+        "siren": {
+          "aliasguard": 20.189566960138382,
+          "ds_optimal": 18.419990293270672,
+          "random": 14.55472171096753,
+          "jitter": 18.282863522419863,
+          "grid": 20.47697046744596,
+          "low_discrepancy": 18.582992649871606
+        }
+      },
+      "ag_minus": {
+        "ffmlp": {
+          "ds_optimal": 1.0388047410895331,
+          "random": 3.3619634809478693,
+          "jitter": 1.3537944392777386,
+          "grid": -0.8435985600548662,
+          "low_discrepancy": 0.9921047245472445
+        },
+        "siren": {
+          "ds_optimal": 1.7695766668677062,
+          "random": 5.6348452491708505,
+          "jitter": 1.9067034377185177,
+          "grid": -0.28740350730757913,
+          "low_discrepancy": 1.6065743102667787
+        }
+      },
+      "significant_win": {
+        "ffmlp": {
+          "ds_optimal": true,
+          "random": true,
+          "jitter": true,
+          "grid": false,
+          "low_discrepancy": true
+        },
+        "siren": {
+          "ds_optimal": true,
+          "random": true,
+          "jitter": true,
+          "grid": false,
+          "low_discrepancy": true
+        }
+      },
+      "spearman_within": {
+        "ffmlp": 0.5553571428571429,
+        "siren": 0.5821428571428573
+      }
+    },
+    {
+      "a_out": 1.0,
+      "psnr": {
+        "ffmlp": {
+          "aliasguard": 14.972515305830397,
+          "ds_optimal": 14.672480315118051,
+          "random": 13.578108654000467,
+          "jitter": 14.180123612064852,
+          "grid": 15.356355957234712,
+          "low_discrepancy": 14.338532015484454
+        },
+        "siren": {
+          "aliasguard": 14.710720450042295,
+          "ds_optimal": 13.841743531155158,
+          "random": 11.60261223860335,
+          "jitter": 13.217434695651654,
+          "grid": 14.959569269384689,
+          "low_discrepancy": 13.768614118959452
+        }
+      },
+      "ag_minus": {
+        "ffmlp": {
+          "ds_optimal": 0.3000349907123447,
+          "random": 1.3944066518299314,
+          "jitter": 0.7923916937655442,
+          "grid": -0.38384065140431467,
+          "low_discrepancy": 0.6339832903459441
+        },
+        "siren": {
+          "ds_optimal": 0.868976918887137,
+          "random": 3.108108211438946,
+          "jitter": 1.4932857543906402,
+          "grid": -0.24884881934239417,
+          "low_discrepancy": 0.9421063310828454
+        }
+      },
+      "significant_win": {
+        "ffmlp": {
+          "ds_optimal": false,
+          "random": true,
+          "jitter": true,
+          "grid": false,
+          "low_discrepancy": true
+        },
+        "siren": {
+          "ds_optimal": true,
+          "random": true,
+          "jitter": true,
+          "grid": false,
+          "low_discrepancy": true
+        }
+      },
+      "spearman_within": {
+        "ffmlp": 0.4375,
+        "siren": 0.5571428571428572
+      }
+    },
+    {
+      "a_out": 2.0,
+      "psnr": {
+        "ffmlp": {
+          "aliasguard": 9.321241468752058,
+          "ds_optimal": 9.365772553352125,
+          "random": 9.035205488513945,
+          "jitter": 8.75669079966504,
+          "grid": 9.527385311282174,
+          "low_discrepancy": 8.806015640073959
+        },
+        "siren": {
+          "aliasguard": 9.208013044857081,
+          "ds_optimal": 8.950349051082107,
+          "random": 7.698773941050943,
+          "jitter": 8.474303576197244,
+          "grid": 9.432443413518747,
+          "low_discrepancy": 8.72005246886295
+        }
+      },
+      "ag_minus": {
+        "ffmlp": {
+          "ds_optimal": -0.04453108460006849,
+          "random": 0.2860359802381109,
+          "jitter": 0.5645506690870155,
+          "grid": -0.20614384253011642,
+          "low_discrepancy": 0.515225828678097
+        },
+        "siren": {
+          "ds_optimal": 0.2576639937749743,
+          "random": 1.509239103806136,
+          "jitter": 0.7337094686598372,
+          "grid": -0.2244303686616659,
+          "low_discrepancy": 0.48796057599413134
+        }
+      },
+      "significant_win": {
+        "ffmlp": {
+          "ds_optimal": false,
+          "random": false,
+          "jitter": true,
+          "grid": false,
+          "low_discrepancy": true
+        },
+        "siren": {
+          "ds_optimal": false,
+          "random": true,
+          "jitter": true,
+          "grid": false,
+          "low_discrepancy": true
+        }
+      },
+      "spearman_within": {
+        "ffmlp": 0.22678571428571426,
+        "siren": 0.4464285714285715
+      }
+    },
+    {
+      "a_out": 4.0,
+      "psnr": {
+        "ffmlp": {
+          "aliasguard": 3.3551944283597264,
+          "ds_optimal": 3.5010852672858084,
+          "random": 3.428737357000456,
+          "jitter": 2.8611941957194214,
+          "grid": 3.526224932438643,
+          "low_discrepancy": 2.8809498557384456
+        },
+        "siren": {
+          "aliasguard": 3.578269187711936,
+          "ds_optimal": 3.7886466044559186,
+          "random": 3.131280918996792,
+          "jitter": 3.307055342827494,
+          "grid": 3.772315464843948,
+          "low_discrepancy": 3.4251706029562445
+        }
+      },
+      "ag_minus": {
+        "ffmlp": {
+          "ds_optimal": -0.14589083892608196,
+          "random": -0.07354292864072992,
+          "jitter": 0.4940002326403049,
+          "grid": -0.171030504078917,
+          "low_discrepancy": 0.4742445726212803
+        },
+        "siren": {
+          "ds_optimal": -0.21037741674398253,
+          "random": 0.4469882687151444,
+          "jitter": 0.271213844884442,
+          "grid": -0.19404627713201167,
+          "low_discrepancy": 0.1530985847556918
+        }
+      },
+      "significant_win": {
+        "ffmlp": {
+          "ds_optimal": false,
+          "random": false,
+          "jitter": true,
+          "grid": false,
+          "low_discrepancy": false
+        },
+        "siren": {
+          "ds_optimal": false,
+          "random": true,
+          "jitter": false,
+          "grid": false,
+          "low_discrepancy": false
+        }
+      },
+      "spearman_within": {
+        "ffmlp": 0.10714285714285715,
+        "siren": 0.1875
+      }
+    },
+    {
+      "a_out": 8.0,
+      "psnr": {
+        "ffmlp": {
+          "aliasguard": -2.6475688356485776,
+          "ds_optimal": -2.480710443450321,
+          "random": -2.4948047026063342,
+          "jitter": -3.1356510562277737,
+          "grid": -2.4752727544779094,
+          "low_discrepancy": -3.1183291443545684
+        },
+        "siren": {
+          "aliasguard": -2.2961814620693217,
+          "ds_optimal": -1.8906696881618763,
+          "random": -2.267945321312009,
+          "jitter": -2.3363150647234443,
+          "grid": -2.136404299516146,
+          "low_discrepancy": -2.2890273657910027
+        }
+      },
+      "ag_minus": {
+        "ffmlp": {
+          "ds_optimal": -0.16685839219825638,
+          "random": -0.15276413304224296,
+          "jitter": 0.48808222057919626,
+          "grid": -0.17229608117066775,
+          "low_discrepancy": 0.47076030870599117
+        },
+        "siren": {
+          "ds_optimal": -0.4055117739074455,
+          "random": -0.028236140757312567,
+          "jitter": 0.0401336026541224,
+          "grid": -0.1597771625531758,
+          "low_discrepancy": -0.007154096278318988
+        }
+      },
+      "significant_win": {
+        "ffmlp": {
+          "ds_optimal": false,
+          "random": false,
+          "jitter": true,
+          "grid": false,
+          "low_discrepancy": false
+        },
+        "siren": {
+          "ds_optimal": false,
+          "random": false,
+          "jitter": false,
+          "grid": false,
+          "low_discrepancy": false
+        }
+      },
+      "spearman_within": {
+        "ffmlp": 0.10357142857142856,
+        "siren": 0.06428571428571428
+      }
+    }
+  ],
+  "runs": [
+    {
+      "cfg": 0,
+      "arch": "ffmlp",
+      "design": "aliasguard",
+      "psnr": 8.312452299404148,
+      "err": 1.0824963250171926
+    },
+    {
+      "cfg": 0,
+      "arch": "ffmlp",
+      "design": "ds_optimal",
+      "psnr": 7.695326387337643,
+      "err": 1.2477828776230773
+    },
+    {
+      "cfg": 0,
+      "arch": "ffmlp",
+      "design": "random",
+      "psnr": 6.8813575113441425,
+      "err": 1.504997953727725
+    },
+    {
+      "cfg": 0,
+      "arch": "ffmlp",
+      "design": "jitter",
+      "psnr": 7.17483832902425,
+      "err": 1.4066557560167374
+    },
+    {
+      "cfg": 0,
+      "arch": "ffmlp",
+      "design": "grid",
+      "psnr": 9.06097285708691,
+      "err": 0.9111174718362369
+    },
+    {
+      "cfg": 0,
+      "arch": "ffmlp",
+      "design": "low_discrepancy",
+      "psnr": 9.389309667439305,
+      "err": 0.8447743013412812
+    },
+    {
+      "cfg": 0,
+      "arch": "siren",
+      "design": "aliasguard",
+      "psnr": 8.695734719343115,
+      "err": 0.9910559851352134
+    },
+    {
+      "cfg": 0,
+      "arch": "siren",
+      "design": "ds_optimal",
+      "psnr": 8.134533199486025,
+      "err": 1.1277642947753892
+    },
+    {
+      "cfg": 0,
+      "arch": "siren",
+      "design": "random",
+      "psnr": 5.6330413699908615,
+      "err": 2.006169038405602
+    },
+    {
+      "cfg": 0,
+      "arch": "siren",
+      "design": "jitter",
+      "psnr": 6.832315210096722,
+      "err": 1.522089323152732
+    },
+    {
+      "cfg": 0,
+      "arch": "siren",
+      "design": "grid",
+      "psnr": 9.055199597582122,
+      "err": 0.9123294640722216
+    },
+    {
+      "cfg": 0,
+      "arch": "siren",
+      "design": "low_discrepancy",
+      "psnr": 10.095402557200028,
+      "err": 0.7180115077681728
+    },
+    {
+      "cfg": 1,
+      "arch": "ffmlp",
+      "design": "aliasguard",
+      "psnr": 9.29573930495473,
+      "err": 1.207335890225678
+    },
+    {
+      "cfg": 1,
+      "arch": "ffmlp",
+      "design": "ds_optimal",
+      "psnr": 11.615499808007916,
+      "err": 0.7077046688025459
+    },
+    {
+      "cfg": 1,
+      "arch": "ffmlp",
+      "design": "random",
+      "psnr": 9.803016445104817,
+      "err": 1.0742377179837672
+    },
+    {
+      "cfg": 1,
+      "arch": "ffmlp",
+      "design": "jitter",
+      "psnr": 9.281976064276446,
+      "err": 1.2111681315344414
+    },
+    {
+      "cfg": 1,
+      "arch": "ffmlp",
+      "design": "grid",
+      "psnr": 11.839328818172117,
+      "err": 0.6721545760736416
+    },
+    {
+      "cfg": 1,
+      "arch": "ffmlp",
+      "design": "low_discrepancy",
+      "psnr": 10.163335033069805,
+      "err": 0.9887091155010062
+    },
+    {
+      "cfg": 1,
+      "arch": "siren",
+      "design": "aliasguard",
+      "psnr": 9.50405201501104,
+      "err": 1.1507920155602442
+    },
+    {
+      "cfg": 1,
+      "arch": "siren",
+      "design": "ds_optimal",
+      "psnr": 10.126595991881002,
+      "err": 0.9971085547224542
+    },
+    {
+      "cfg": 1,
+      "arch": "siren",
+      "design": "random",
+      "psnr": 8.471735984291097,
+      "err": 1.4595818124553426
+    },
+    {
+      "cfg": 1,
+      "arch": "siren",
+      "design": "jitter",
+      "psnr": 8.698642099844742,
+      "err": 1.3852808528845544
+    },
+    {
+      "cfg": 1,
+      "arch": "siren",
+      "design": "grid",
+      "psnr": 11.691240476900965,
+      "err": 0.6954693481356187
+    },
+    {
+      "cfg": 1,
+      "arch": "siren",
+      "design": "low_discrepancy",
+      "psnr": 10.136182882534525,
+      "err": 0.9949099019459671
+    },
+    {
+      "cfg": 2,
+      "arch": "ffmlp",
+      "design": "aliasguard",
+      "psnr": 10.964161388333133,
+      "err": 0.9845570160844388
+    },
+    {
+      "cfg": 2,
+      "arch": "ffmlp",
+      "design": "ds_optimal",
+      "psnr": 10.227418677365703,
+      "err": 1.1665816544200824
+    },
+    {
+      "cfg": 2,
+      "arch": "ffmlp",
+      "design": "random",
+      "psnr": 9.841855236239288,
+      "err": 1.2748863950596054
+    },
+    {
+      "cfg": 2,
+      "arch": "ffmlp",
+      "design": "jitter",
+      "psnr": 10.445191653404915,
+      "err": 1.1095269226917641
+    },
+    {
+      "cfg": 2,
+      "arch": "ffmlp",
+      "design": "grid",
+      "psnr": 10.558793239361146,
+      "err": 1.0808805109298323
+    },
+    {
+      "cfg": 2,
+      "arch": "ffmlp",
+      "design": "low_discrepancy",
+      "psnr": 8.93068186323767,
+      "err": 1.5724933730506385
+    },
+    {
+      "cfg": 2,
+      "arch": "siren",
+      "design": "aliasguard",
+      "psnr": 10.095612853304345,
+      "err": 1.202529460528564
+    },
+    {
+      "cfg": 2,
+      "arch": "siren",
+      "design": "ds_optimal",
+      "psnr": 9.021245011734132,
+      "err": 1.540041801267093
+    },
+    {
+      "cfg": 2,
+      "arch": "siren",
+      "design": "random",
+      "psnr": 8.634467200310462,
+      "err": 1.68348902766735
+    },
+    {
+      "cfg": 2,
+      "arch": "siren",
+      "design": "jitter",
+      "psnr": 10.488396407944418,
+      "err": 1.0985437799271698
+    },
+    {
+      "cfg": 2,
+      "arch": "siren",
+      "design": "grid",
+      "psnr": 10.521214072704332,
+      "err": 1.0902738680380835
+    },
+    {
+      "cfg": 2,
+      "arch": "siren",
+      "design": "low_discrepancy",
+      "psnr": 9.590714683780778,
+      "err": 1.3507828617405666
+    },
+    {
+      "cfg": 3,
+      "arch": "ffmlp",
+      "design": "aliasguard",
+      "psnr": 12.007834697898375,
+      "err": 0.6620002953276909
+    },
+    {
+      "cfg": 3,
+      "arch": "ffmlp",
+      "design": "ds_optimal",
+      "psnr": 13.419562118785125,
+      "err": 0.4782835467122694
+    },
+    {
+      "cfg": 3,
+      "arch": "ffmlp",
+      "design": "random",
+      "psnr": 11.01067525773566,
+      "err": 0.8328640705816968
+    },
+    {
+      "cfg": 3,
+      "arch": "ffmlp",
+      "design": "jitter",
+      "psnr": 12.121022213937277,
+      "err": 0.6449698769723835
+    },
+    {
+      "cfg": 3,
+      "arch": "ffmlp",
+      "design": "grid",
+      "psnr": 12.52120932865707,
+      "err": 0.5881941761080127
+    },
+    {
+      "cfg": 3,
+      "arch": "ffmlp",
+      "design": "low_discrepancy",
+      "psnr": 11.783210780738854,
+      "err": 0.6971409194910672
+    },
+    {
+      "cfg": 3,
+      "arch": "siren",
+      "design": "aliasguard",
+      "psnr": 11.908728474335923,
+      "err": 0.677280864601604
+    },
+    {
+      "cfg": 3,
+      "arch": "siren",
+      "design": "ds_optimal",
+      "psnr": 11.694916934113289,
+      "err": 0.7114591342813117
+    },
+    {
+      "cfg": 3,
+      "arch": "siren",
+      "design": "random",
+      "psnr": 10.255873152180294,
+      "err": 0.9909559228746335
+    },
+    {
+      "cfg": 3,
+      "arch": "siren",
+      "design": "jitter",
+      "psnr": 11.57962164698435,
+      "err": 0.7305996978649756
+    },
+    {
+      "cfg": 3,
+      "arch": "siren",
+      "design": "grid",
+      "psnr": 11.96354410825959,
+      "err": 0.6687861061098894
+    },
+    {
+      "cfg": 3,
+      "arch": "siren",
+      "design": "low_discrepancy",
+      "psnr": 10.095659993404983,
+      "err": 1.028195393064657
+    },
+    {
+      "cfg": 4,
+      "arch": "ffmlp",
+      "design": "aliasguard",
+      "psnr": 8.28171689748965,
+      "err": 1.2595367503974568
+    },
+    {
+      "cfg": 4,
+      "arch": "ffmlp",
+      "design": "ds_optimal",
+      "psnr": 8.009112160226927,
+      "err": 1.3411313588266118
+    },
+    {
+      "cfg": 4,
+      "arch": "ffmlp",
+      "design": "random",
+      "psnr": 7.6669035376823675,
+      "err": 1.4510827511053983
+    },
+    {
+      "cfg": 4,
+      "arch": "ffmlp",
+      "design": "jitter",
+      "psnr": 7.25683428044308,
+      "err": 1.5947738487300476
+    },
+    {
+      "cfg": 4,
+      "arch": "ffmlp",
+      "design": "grid",
+      "psnr": 8.503647574112772,
+      "err": 1.196789516006805
+    },
+    {
+      "cfg": 4,
+      "arch": "ffmlp",
+      "design": "low_discrepancy",
+      "psnr": 7.753819442296843,
+      "err": 1.4223307169588741
+    },
+    {
+      "cfg": 4,
+      "arch": "siren",
+      "design": "aliasguard",
+      "psnr": 8.747006425016334,
+      "err": 1.131571214158926
+    },
+    {
+      "cfg": 4,
+      "arch": "siren",
+      "design": "ds_optimal",
+      "psnr": 7.925566510455258,
+      "err": 1.367180584983891
+    },
+    {
+      "cfg": 4,
+      "arch": "siren",
+      "design": "random",
+      "psnr": 4.954186922203073,
+      "err": 2.7099659946269403
+    },
+    {
+      "cfg": 4,
+      "arch": "siren",
+      "design": "jitter",
+      "psnr": 7.165105495723381,
+      "err": 1.6288158391948446
+    },
+    {
+      "cfg": 4,
+      "arch": "siren",
+      "design": "grid",
+      "psnr": 9.03539641103132,
+      "err": 1.0588706055702983
+    },
+    {
+      "cfg": 4,
+      "arch": "siren",
+      "design": "low_discrepancy",
+      "psnr": 7.961842165714198,
+      "err": 1.355808389488901
+    },
+    {
+      "cfg": 5,
+      "arch": "ffmlp",
+      "design": "aliasguard",
+      "psnr": 7.228613413865702,
+      "err": 2.349335065994454
+    },
+    {
+      "cfg": 5,
+      "arch": "ffmlp",
+      "design": "ds_optimal",
+      "psnr": 6.403331495916235,
+      "err": 2.841012553793493
+    },
+    {
+      "cfg": 5,
+      "arch": "ffmlp",
+      "design": "random",
+      "psnr": 7.502998868855132,
+      "err": 2.2054967161786534
+    },
+    {
+      "cfg": 5,
+      "arch": "ffmlp",
+      "design": "jitter",
+      "psnr": 7.30516184574609,
+      "err": 2.3082886588779514
+    },
+    {
+      "cfg": 5,
+      "arch": "ffmlp",
+      "design": "grid",
+      "psnr": 7.834007924152902,
+      "err": 2.0436452489234336
+    },
+    {
+      "cfg": 5,
+      "arch": "ffmlp",
+      "design": "low_discrepancy",
+      "psnr": 9.29298771490056,
+      "err": 1.4605200753518068
+    },
+    {
+      "cfg": 5,
+      "arch": "siren",
+      "design": "aliasguard",
+      "psnr": 7.6415680857907216,
+      "err": 2.136237299740842
+    },
+    {
+      "cfg": 5,
+      "arch": "siren",
+      "design": "ds_optimal",
+      "psnr": 6.937867923381376,
+      "err": 2.511999276784867
+    },
+    {
+      "cfg": 5,
+      "arch": "siren",
+      "design": "random",
+      "psnr": 7.190937460992851,
+      "err": 2.3698046988956722
+    },
+    {
+      "cfg": 5,
+      "arch": "siren",
+      "design": "jitter",
+      "psnr": 8.340704536054558,
+      "err": 1.8185943972061316
+    },
+    {
+      "cfg": 5,
+      "arch": "siren",
+      "design": "grid",
+      "psnr": 7.863113417570991,
+      "err": 2.029994964428673
+    },
+    {
+      "cfg": 5,
+      "arch": "siren",
+      "design": "low_discrepancy",
+      "psnr": 8.92903195642475,
+      "err": 1.5881923753931972
+    },
+    {
+      "cfg": 6,
+      "arch": "ffmlp",
+      "design": "aliasguard",
+      "psnr": 13.243550344021532,
+      "err": 0.5307221118055626
+    },
+    {
+      "cfg": 6,
+      "arch": "ffmlp",
+      "design": "ds_optimal",
+      "psnr": 12.51923292321979,
+      "err": 0.6270453107041443
+    },
+    {
+      "cfg": 6,
+      "arch": "ffmlp",
+      "design": "random",
+      "psnr": 14.09610326873866,
+      "err": 0.4361259111848982
+    },
+    {
+      "cfg": 6,
+      "arch": "ffmlp",
+      "design": "jitter",
+      "psnr": 11.25695272040264,
+      "err": 0.838546102377749
+    },
+    {
+      "cfg": 6,
+      "arch": "ffmlp",
+      "design": "grid",
+      "psnr": 12.734965869721801,
+      "err": 0.5966582221404437
+    },
+    {
+      "cfg": 6,
+      "arch": "ffmlp",
+      "design": "low_discrepancy",
+      "psnr": 11.791904893682034,
+      "err": 0.7413643995936191
+    },
+    {
+      "cfg": 6,
+      "arch": "siren",
+      "design": "aliasguard",
+      "psnr": 12.753237655432466,
+      "err": 0.5941532145700946
+    },
+    {
+      "cfg": 6,
+      "arch": "siren",
+      "design": "ds_optimal",
+      "psnr": 11.156722602359125,
+      "err": 0.85812381815873
+    },
+    {
+      "cfg": 6,
+      "arch": "siren",
+      "design": "random",
+      "psnr": 11.433708518592809,
+      "err": 0.8051028515159959
+    },
+    {
+      "cfg": 6,
+      "arch": "siren",
+      "design": "jitter",
+      "psnr": 10.945633383127621,
+      "err": 0.900863266170017
+    },
+    {
+      "cfg": 6,
+      "arch": "siren",
+      "design": "grid",
+      "psnr": 12.527653929470047,
+      "err": 0.625830642619724
+    },
+    {
+      "cfg": 6,
+      "arch": "siren",
+      "design": "low_discrepancy",
+      "psnr": 11.70974718017491,
+      "err": 0.7555226673631232
+    },
+    {
+      "cfg": 7,
+      "arch": "ffmlp",
+      "design": "aliasguard",
+      "psnr": 7.314635728295121,
+      "err": 1.1319819465174288
+    },
+    {
+      "cfg": 7,
+      "arch": "ffmlp",
+      "design": "ds_optimal",
+      "psnr": 6.852622477706866,
+      "err": 1.2590437618915309
+    },
+    {
+      "cfg": 7,
+      "arch": "ffmlp",
+      "design": "random",
+      "psnr": 8.295738621350257,
+      "err": 0.9030862110765076
+    },
+    {
+      "cfg": 7,
+      "arch": "ffmlp",
+      "design": "jitter",
+      "psnr": 8.06869528614956,
+      "err": 0.9515542312211744
+    },
+    {
+      "cfg": 7,
+      "arch": "ffmlp",
+      "design": "grid",
+      "psnr": 6.894919792040769,
+      "err": 1.246841055615329
+    },
+    {
+      "cfg": 7,
+      "arch": "ffmlp",
+      "design": "low_discrepancy",
+      "psnr": 7.635532000677985,
+      "err": 1.051356183424572
+    },
+    {
+      "cfg": 7,
+      "arch": "siren",
+      "design": "aliasguard",
+      "psnr": 7.606147089414757,
+      "err": 1.0584939118425987
+    },
+    {
+      "cfg": 7,
+      "arch": "siren",
+      "design": "ds_optimal",
+      "psnr": 6.628422700548021,
+      "err": 1.3257474587300133
+    },
+    {
+      "cfg": 7,
+      "arch": "siren",
+      "design": "random",
+      "psnr": 7.024722610136328,
+      "err": 1.2101266139486633
+    },
+    {
+      "cfg": 7,
+      "arch": "siren",
+      "design": "jitter",
+      "psnr": 7.59081713601592,
+      "err": 1.0622368410313463
+    },
+    {
+      "cfg": 7,
+      "arch": "siren",
+      "design": "grid",
+      "psnr": 7.282603189104893,
+      "err": 1.140362045855107
+    },
+    {
+      "cfg": 7,
+      "arch": "siren",
+      "design": "low_discrepancy",
+      "psnr": 7.055430871061428,
+      "err": 1.2016001842650983
+    },
+    {
+      "cfg": 8,
+      "arch": "ffmlp",
+      "design": "aliasguard",
+      "psnr": 12.859263076205254,
+      "err": 0.6138422649459205
+    },
+    {
+      "cfg": 8,
+      "arch": "ffmlp",
+      "design": "ds_optimal",
+      "psnr": 9.216105742752706,
+      "err": 1.420275256485982
+    },
+    {
+      "cfg": 8,
+      "arch": "ffmlp",
+      "design": "random",
+      "psnr": 8.991162109166511,
+      "err": 1.4957771150250645
+    },
+    {
+      "cfg": 8,
+      "arch": "ffmlp",
+      "design": "jitter",
+      "psnr": 9.206525953887795,
+      "err": 1.4234115971194428
+    },
+    {
+      "cfg": 8,
+      "arch": "ffmlp",
+      "design": "grid",
+      "psnr": 8.958964942618278,
+      "err": 1.5069075229170967
+    },
+    {
+      "cfg": 8,
+      "arch": "ffmlp",
+      "design": "low_discrepancy",
+      "psnr": 8.581351051482777,
+      "err": 1.6437962680429057
+    },
+    {
+      "cfg": 8,
+      "arch": "siren",
+      "design": "aliasguard",
+      "psnr": 12.18238658646852,
+      "err": 0.717372024865111
+    },
+    {
+      "cfg": 8,
+      "arch": "siren",
+      "design": "ds_optimal",
+      "psnr": 9.239580330171231,
+      "err": 1.4126190616481733
+    },
+    {
+      "cfg": 8,
+      "arch": "siren",
+      "design": "random",
+      "psnr": 6.64088493828751,
+      "err": 2.5697720512896667
+    },
+    {
+      "cfg": 8,
+      "arch": "siren",
+      "design": "jitter",
+      "psnr": 9.167536450464372,
+      "err": 1.436248043948186
+    },
+    {
+      "cfg": 8,
+      "arch": "siren",
+      "design": "grid",
+      "psnr": 9.493001342007092,
+      "err": 1.3325483046002762
+    },
+    {
+      "cfg": 8,
+      "arch": "siren",
+      "design": "low_discrepancy",
+      "psnr": 8.87517514065517,
+      "err": 1.5362630362723964
+    },
+    {
+      "cfg": 9,
+      "arch": "ffmlp",
+      "design": "aliasguard",
+      "psnr": 9.517249609367806,
+      "err": 0.870546920741872
+    },
+    {
+      "cfg": 9,
+      "arch": "ffmlp",
+      "design": "ds_optimal",
+      "psnr": 12.947683765864479,
+      "err": 0.3951379733534715
+    },
+    {
+      "cfg": 9,
+      "arch": "ffmlp",
+      "design": "random",
+      "psnr": 9.15479776747753,
+      "err": 0.9463185816892057
+    },
+    {
+      "cfg": 9,
+      "arch": "ffmlp",
+      "design": "jitter",
+      "psnr": 8.884073867924013,
+      "err": 1.0071861795831984
+    },
+    {
+      "cfg": 9,
+      "arch": "ffmlp",
+      "design": "grid",
+      "psnr": 9.310260687827022,
+      "err": 0.9130426733261408
+    },
+    {
+      "cfg": 9,
+      "arch": "ffmlp",
+      "design": "low_discrepancy",
+      "psnr": 9.493503719201852,
+      "err": 0.875319840823741
+    },
+    {
+      "cfg": 9,
+      "arch": "siren",
+      "design": "aliasguard",
+      "psnr": 9.096199658363401,
+      "err": 0.9591735159049598
+    },
+    {
+      "cfg": 9,
+      "arch": "siren",
+      "design": "ds_optimal",
+      "psnr": 13.10231837421493,
+      "err": 0.38131624459186986
+    },
+    {
+      "cfg": 9,
+      "arch": "siren",
+      "design": "random",
+      "psnr": 8.45493195081856,
+      "err": 1.111793036380559
+    },
+    {
+      "cfg": 9,
+      "arch": "siren",
+      "design": "jitter",
+      "psnr": 7.922587984732138,
+      "err": 1.2567773529820387
+    },
+    {
+      "cfg": 9,
+      "arch": "siren",
+      "design": "grid",
+      "psnr": 9.15277411955467,
+      "err": 0.9467596330826102
+    },
+    {
+      "cfg": 9,
+      "arch": "siren",
+      "design": "low_discrepancy",
+      "psnr": 9.552454740044865,
+      "err": 0.8635185483253002
+    },
+    {
+      "cfg": 10,
+      "arch": "ffmlp",
+      "design": "aliasguard",
+      "psnr": 7.9422144052902235,
+      "err": 0.8525969613949861
+    },
+    {
+      "cfg": 10,
+      "arch": "ffmlp",
+      "design": "ds_optimal",
+      "psnr": 11.177983222353596,
+      "err": 0.4047313995677104
+    },
+    {
+      "cfg": 10,
+      "arch": "ffmlp",
+      "design": "random",
+      "psnr": 8.307634441975072,
+      "err": 0.7837937152941477
+    },
+    {
+      "cfg": 10,
+      "arch": "ffmlp",
+      "design": "jitter",
+      "psnr": 7.265417871321453,
+      "err": 0.996376403554091
+    },
+    {
+      "cfg": 10,
+      "arch": "ffmlp",
+      "design": "grid",
+      "psnr": 8.424842941421666,
+      "err": 0.7629233847886145
+    },
+    {
+      "cfg": 10,
+      "arch": "ffmlp",
+      "design": "low_discrepancy",
+      "psnr": 8.341326509248347,
+      "err": 0.7777366589939153
+    },
+    {
+      "cfg": 10,
+      "arch": "siren",
+      "design": "aliasguard",
+      "psnr": 7.413600528875897,
+      "err": 0.9629531721597504
+    },
+    {
+      "cfg": 10,
+      "arch": "siren",
+      "design": "ds_optimal",
+      "psnr": 9.827270788623263,
+      "err": 0.5523802498928532
+    },
+    {
+      "cfg": 10,
+      "arch": "siren",
+      "design": "random",
+      "psnr": 6.0615935439235535,
+      "err": 1.314637046822034
+    },
+    {
+      "cfg": 10,
+      "arch": "siren",
+      "design": "jitter",
+      "psnr": 5.9210886920955215,
+      "err": 1.357864242237445
+    },
+    {
+      "cfg": 10,
+      "arch": "siren",
+      "design": "grid",
+      "psnr": 7.5180426854930165,
+      "err": 0.9400716429690987
+    },
+    {
+      "cfg": 10,
+      "arch": "siren",
+      "design": "low_discrepancy",
+      "psnr": 6.892838743599738,
+      "err": 1.0856287768498794
+    },
+    {
+      "cfg": 11,
+      "arch": "ffmlp",
+      "design": "aliasguard",
+      "psnr": 8.283613485591001,
+      "err": 1.513700285605978
+    },
+    {
+      "cfg": 11,
+      "arch": "ffmlp",
+      "design": "ds_optimal",
+      "psnr": 9.00665012930373,
+      "err": 1.2815519875301913
+    },
+    {
+      "cfg": 11,
+      "arch": "ffmlp",
+      "design": "random",
+      "psnr": 7.700436195353809,
+      "err": 1.7312413715077197
+    },
+    {
+      "cfg": 11,
+      "arch": "ffmlp",
+      "design": "jitter",
+      "psnr": 6.639458176020828,
+      "err": 2.2103213763177028
+    },
+    {
+      "cfg": 11,
+      "arch": "ffmlp",
+      "design": "grid",
+      "psnr": 8.631041762565388,
+      "err": 1.3973238286649168
+    },
+    {
+      "cfg": 11,
+      "arch": "ffmlp",
+      "design": "low_discrepancy",
+      "psnr": 7.605826327639644,
+      "err": 1.7693697930825856
+    },
+    {
+      "cfg": 11,
+      "arch": "siren",
+      "design": "aliasguard",
+      "psnr": 7.921097236999659,
+      "err": 1.6454758690236275
+    },
+    {
+      "cfg": 11,
+      "arch": "siren",
+      "design": "ds_optimal",
+      "psnr": 8.750609176882154,
+      "err": 1.3593782712666491
+    },
+    {
+      "cfg": 11,
+      "arch": "siren",
+      "design": "random",
+      "psnr": 7.048323647356574,
+      "err": 2.0117262215124034
+    },
+    {
+      "cfg": 11,
+      "arch": "siren",
+      "design": "jitter",
+      "psnr": 7.066800464139695,
+      "err": 2.003185625006382
+    },
+    {
+      "cfg": 11,
+      "arch": "siren",
+      "design": "grid",
+      "psnr": 8.445765516358634,
+      "err": 1.4582255044216277
+    },
+    {
+      "cfg": 11,
+      "arch": "siren",
+      "design": "low_discrepancy",
+      "psnr": 8.283787368855656,
+      "err": 1.5136396811338404
+    },
+    {
+      "cfg": 12,
+      "arch": "ffmlp",
+      "design": "aliasguard",
+      "psnr": 3.9785740371455764,
+      "err": 1.1216255432552087
+    },
+    {
+      "cfg": 12,
+      "arch": "ffmlp",
+      "design": "ds_optimal",
+      "psnr": 2.0616372408456733,
+      "err": 1.7439802835518359
+    },
+    {
+      "cfg": 12,
+      "arch": "ffmlp",
+      "design": "random",
+      "psnr": 3.470165451008978,
+      "err": 1.2609235316957377
+    },
+    {
+      "cfg": 12,
+      "arch": "ffmlp",
+      "design": "jitter",
+      "psnr": 1.900520765682271,
+      "err": 1.8098943248540023
+    },
+    {
+      "cfg": 12,
+      "arch": "ffmlp",
+      "design": "grid",
+      "psnr": 1.6263942454748062,
+      "err": 1.9278172867554615
+    },
+    {
+      "cfg": 12,
+      "arch": "ffmlp",
+      "design": "low_discrepancy",
+      "psnr": 0.9040933585869514,
+      "err": 2.276648371408414
+    },
+    {
+      "cfg": 12,
+      "arch": "siren",
+      "design": "aliasguard",
+      "psnr": 4.0512217447874415,
+      "err": 1.1030193223528406
+    },
+    {
+      "cfg": 12,
+      "arch": "siren",
+      "design": "ds_optimal",
+      "psnr": 1.7071198922260498,
+      "err": 1.892314449480366
+    },
+    {
+      "cfg": 12,
+      "arch": "siren",
+      "design": "random",
+      "psnr": 2.4403451534338645,
+      "err": 1.5983459299122966
+    },
+    {
+      "cfg": 12,
+      "arch": "siren",
+      "design": "jitter",
+      "psnr": 1.8993535637573116,
+      "err": 1.8103808141212783
+    },
+    {
+      "cfg": 12,
+      "arch": "siren",
+      "design": "grid",
+      "psnr": 1.5599317294895965,
+      "err": 1.957546656373307
+    },
+    {
+      "cfg": 12,
+      "arch": "siren",
+      "design": "low_discrepancy",
+      "psnr": 0.641907464619046,
+      "err": 2.4183243476312652
+    },
+    {
+      "cfg": 13,
+      "arch": "ffmlp",
+      "design": "aliasguard",
+      "psnr": 11.300912837571115,
+      "err": 0.5586399897650507
+    },
+    {
+      "cfg": 13,
+      "arch": "ffmlp",
+      "design": "ds_optimal",
+      "psnr": 10.360361729223197,
+      "err": 0.6937246586663908
+    },
+    {
+      "cfg": 13,
+      "arch": "ffmlp",
+      "design": "random",
+      "psnr": 11.21209873808902,
+      "err": 0.5701819054973415
+    },
+    {
+      "cfg": 13,
+      "arch": "ffmlp",
+      "design": "jitter",
+      "psnr": 11.86815252313104,
+      "err": 0.4902392198776287
+    },
+    {
+      "cfg": 13,
+      "arch": "ffmlp",
+      "design": "grid",
+      "psnr": 11.573031939524922,
+      "err": 0.5247109300115298
+    },
+    {
+      "cfg": 13,
+      "arch": "ffmlp",
+      "design": "low_discrepancy",
+      "psnr": 11.187956835182753,
+      "err": 0.5733603034550668
+    },
+    {
+      "cfg": 13,
+      "arch": "siren",
+      "design": "aliasguard",
+      "psnr": 11.03775565944593,
+      "err": 0.5935369202392847
+    },
+    {
+      "cfg": 13,
+      "arch": "siren",
+      "design": "ds_optimal",
+      "psnr": 9.470198740095583,
+      "err": 0.8515368189344291
+    },
+    {
+      "cfg": 13,
+      "arch": "siren",
+      "design": "random",
+      "psnr": 10.288395546081182,
+      "err": 0.70531602331519
+    },
+    {
+      "cfg": 13,
+      "arch": "siren",
+      "design": "jitter",
+      "psnr": 10.625218551826219,
+      "err": 0.6526817204482924
+    },
+    {
+      "cfg": 13,
+      "arch": "siren",
+      "design": "grid",
+      "psnr": 11.655096002890806,
+      "err": 0.5148891076625877
+    },
+    {
+      "cfg": 13,
+      "arch": "siren",
+      "design": "low_discrepancy",
+      "psnr": 11.066360078093636,
+      "err": 0.5896404880965012
+    },
+    {
+      "cfg": 14,
+      "arch": "ffmlp",
+      "design": "aliasguard",
+      "psnr": 9.131391263307426,
+      "err": 1.9944127346190448
+    },
+    {
+      "cfg": 14,
+      "arch": "ffmlp",
+      "design": "ds_optimal",
+      "psnr": 10.678101996039457,
+      "err": 1.3968313231095761
+    },
+    {
+      "cfg": 14,
+      "arch": "ffmlp",
+      "design": "random",
+      "psnr": 10.218928702353328,
+      "err": 1.5526061232852681
+    },
+    {
+      "cfg": 14,
+      "arch": "ffmlp",
+      "design": "jitter",
+      "psnr": 10.649038035790587,
+      "err": 1.406210580480854
+    },
+    {
+      "cfg": 14,
+      "arch": "ffmlp",
+      "design": "grid",
+      "psnr": 10.977593574000357,
+      "err": 1.3037514590750199
+    },
+    {
+      "cfg": 14,
+      "arch": "ffmlp",
+      "design": "low_discrepancy",
+      "psnr": 11.246376838759442,
+      "err": 1.225508932230486
+    },
+    {
+      "cfg": 14,
+      "arch": "siren",
+      "design": "aliasguard",
+      "psnr": 9.489930175898504,
+      "err": 1.8363740508649171
+    },
+    {
+      "cfg": 14,
+      "arch": "siren",
+      "design": "ds_optimal",
+      "psnr": 11.095259340551094,
+      "err": 1.2689024350811278
+    },
+    {
+      "cfg": 14,
+      "arch": "siren",
+      "design": "random",
+      "psnr": 8.84372948901647,
+      "err": 2.130989039462146
+    },
+    {
+      "cfg": 14,
+      "arch": "siren",
+      "design": "jitter",
+      "psnr": 10.094025672936906,
+      "err": 1.5979073616540285
+    },
+    {
+      "cfg": 14,
+      "arch": "siren",
+      "design": "grid",
+      "psnr": 11.321915163972239,
+      "err": 1.2043775415425597
+    },
+    {
+      "cfg": 14,
+      "arch": "siren",
+      "design": "low_discrepancy",
+      "psnr": 11.474467806789281,
+      "err": 1.16280632171357
+    },
+    {
+      "cfg": 15,
+      "arch": "ffmlp",
+      "design": "aliasguard",
+      "psnr": 7.589228124382857,
+      "err": 1.301555846173929
+    },
+    {
+      "cfg": 15,
+      "arch": "ffmlp",
+      "design": "ds_optimal",
+      "psnr": 7.76714910892818,
+      "err": 1.2493114167634694
+    },
+    {
+      "cfg": 15,
+      "arch": "ffmlp",
+      "design": "random",
+      "psnr": 7.5971193135631765,
+      "err": 1.2991930489532995
+    },
+    {
+      "cfg": 15,
+      "arch": "ffmlp",
+      "design": "jitter",
+      "psnr": 7.829788902521184,
+      "err": 1.2314214929837037
+    },
+    {
+      "cfg": 15,
+      "arch": "ffmlp",
+      "design": "grid",
+      "psnr": 7.97678769390794,
+      "err": 1.190438188378403
+    },
+    {
+      "cfg": 15,
+      "arch": "ffmlp",
+      "design": "low_discrepancy",
+      "psnr": 7.252180163463786,
+      "err": 1.4065902519703866
+    },
+    {
+      "cfg": 15,
+      "arch": "siren",
+      "design": "aliasguard",
+      "psnr": 7.441512647961401,
+      "err": 1.346586805928366
+    },
+    {
+      "cfg": 15,
+      "arch": "siren",
+      "design": "ds_optimal",
+      "psnr": 7.685272380331024,
+      "err": 1.2730878742002263
+    },
+    {
+      "cfg": 15,
+      "arch": "siren",
+      "design": "random",
+      "psnr": 6.379632801526154,
+      "err": 1.719579818675255
+    },
+    {
+      "cfg": 15,
+      "arch": "siren",
+      "design": "jitter",
+      "psnr": 7.689552353952276,
+      "err": 1.2718338636752733
+    },
+    {
+      "cfg": 15,
+      "arch": "siren",
+      "design": "grid",
+      "psnr": 7.773623392458719,
+      "err": 1.2474503822034348
+    },
+    {
+      "cfg": 15,
+      "arch": "siren",
+      "design": "low_discrepancy",
+      "psnr": 7.050996389273512,
+      "err": 1.4732823321002053
+    },
+    {
+      "cfg": 16,
+      "arch": "ffmlp",
+      "design": "aliasguard",
+      "psnr": 9.959069183379352,
+      "err": 0.6561885601946621
+    },
+    {
+      "cfg": 16,
+      "arch": "ffmlp",
+      "design": "ds_optimal",
+      "psnr": 9.970453669183971,
+      "err": 0.6544706966502636
+    },
+    {
+      "cfg": 16,
+      "arch": "ffmlp",
+      "design": "random",
+      "psnr": 9.446815765617412,
+      "err": 0.7383359186185868
+    },
+    {
+      "cfg": 16,
+      "arch": "ffmlp",
+      "design": "jitter",
+      "psnr": 9.021360111328754,
+      "err": 0.8143283638467704
+    },
+    {
+      "cfg": 16,
+      "arch": "ffmlp",
+      "design": "grid",
+      "psnr": 9.967262498958952,
+      "err": 0.654951774581055
+    },
+    {
+      "cfg": 16,
+      "arch": "ffmlp",
+      "design": "low_discrepancy",
+      "psnr": 9.436102970478705,
+      "err": 0.74015942897863
+    },
+    {
+      "cfg": 16,
+      "arch": "siren",
+      "design": "aliasguard",
+      "psnr": 9.526458068978421,
+      "err": 0.7249194732242132
+    },
+    {
+      "cfg": 16,
+      "arch": "siren",
+      "design": "ds_optimal",
+      "psnr": 9.848520009958472,
+      "err": 0.6731061708892732
+    },
+    {
+      "cfg": 16,
+      "arch": "siren",
+      "design": "random",
+      "psnr": 8.248058166832678,
+      "err": 0.9730378999072227
+    },
+    {
+      "cfg": 16,
+      "arch": "siren",
+      "design": "jitter",
+      "psnr": 8.773249455963319,
+      "err": 0.862205179580685
+    },
+    {
+      "cfg": 16,
+      "arch": "siren",
+      "design": "grid",
+      "psnr": 9.16367598128419,
+      "err": 0.7880757699419858
+    },
+    {
+      "cfg": 16,
+      "arch": "siren",
+      "design": "low_discrepancy",
+      "psnr": 8.395011997845302,
+      "err": 0.9406636746161597
+    },
+    {
+      "cfg": 17,
+      "arch": "ffmlp",
+      "design": "aliasguard",
+      "psnr": 9.790619406552247,
+      "err": 1.2962199959353566
+    },
+    {
+      "cfg": 17,
+      "arch": "ffmlp",
+      "design": "ds_optimal",
+      "psnr": 8.865893199242365,
+      "err": 1.6038041668204446
+    },
+    {
+      "cfg": 17,
+      "arch": "ffmlp",
+      "design": "random",
+      "psnr": 10.105972769374475,
+      "err": 1.2054338435042113
+    },
+    {
+      "cfg": 17,
+      "arch": "ffmlp",
+      "design": "jitter",
+      "psnr": 9.100137285545127,
+      "err": 1.5195917562289556
+    },
+    {
+      "cfg": 17,
+      "arch": "ffmlp",
+      "design": "grid",
+      "psnr": 9.842637090357782,
+      "err": 1.280787110661901
+    },
+    {
+      "cfg": 17,
+      "arch": "ffmlp",
+      "design": "low_discrepancy",
+      "psnr": 9.43051638367177,
+      "err": 1.4082800241035263
+    },
+    {
+      "cfg": 17,
+      "arch": "siren",
+      "design": "aliasguard",
+      "psnr": 10.12688471006794,
+      "err": 1.1996434479774463
+    },
+    {
+      "cfg": 17,
+      "arch": "siren",
+      "design": "ds_optimal",
+      "psnr": 8.949392873118589,
+      "err": 1.5732631486823119
+    },
+    {
+      "cfg": 17,
+      "arch": "siren",
+      "design": "random",
+      "psnr": 9.554937208323105,
+      "err": 1.3685067270266347
+    },
+    {
+      "cfg": 17,
+      "arch": "siren",
+      "design": "jitter",
+      "psnr": 8.495835700392671,
+      "err": 1.746453743259321
+    },
+    {
+      "cfg": 17,
+      "arch": "siren",
+      "design": "grid",
+      "psnr": 10.137309470121508,
+      "err": 1.1967672895211492
+    },
+    {
+      "cfg": 17,
+      "arch": "siren",
+      "design": "low_discrepancy",
+      "psnr": 9.197874150772307,
+      "err": 1.4857756698215911
+    },
+    {
+      "cfg": 18,
+      "arch": "ffmlp",
+      "design": "aliasguard",
+      "psnr": 9.633385253789235,
+      "err": 0.9693140668350809
+    },
+    {
+      "cfg": 18,
+      "arch": "ffmlp",
+      "design": "ds_optimal",
+      "psnr": 8.989389723488431,
+      "err": 1.1242530342534414
+    },
+    {
+      "cfg": 18,
+      "arch": "ffmlp",
+      "design": "random",
+      "psnr": 10.069116185558048,
+      "err": 0.8767815898126786
+    },
+    {
+      "cfg": 18,
+      "arch": "ffmlp",
+      "design": "jitter",
+      "psnr": 8.972972229833431,
+      "err": 1.1285110547481347
+    },
+    {
+      "cfg": 18,
+      "arch": "ffmlp",
+      "design": "grid",
+      "psnr": 9.501453837936596,
+      "err": 0.9992120365262109
+    },
+    {
+      "cfg": 18,
+      "arch": "ffmlp",
+      "design": "low_discrepancy",
+      "psnr": 8.732692509681538,
+      "err": 1.1927070593361215
+    },
+    {
+      "cfg": 18,
+      "arch": "siren",
+      "design": "aliasguard",
+      "psnr": 9.71809162095752,
+      "err": 0.950591394965981
+    },
+    {
+      "cfg": 18,
+      "arch": "siren",
+      "design": "ds_optimal",
+      "psnr": 8.629611500273093,
+      "err": 1.2213549325487358
+    },
+    {
+      "cfg": 18,
+      "arch": "siren",
+      "design": "random",
+      "psnr": 7.339851782244714,
+      "err": 1.6436822394769568
+    },
+    {
+      "cfg": 18,
+      "arch": "siren",
+      "design": "jitter",
+      "psnr": 8.969585578150474,
+      "err": 1.1293914169374821
+    },
+    {
+      "cfg": 18,
+      "arch": "siren",
+      "design": "grid",
+      "psnr": 9.38835906892584,
+      "err": 1.0255743107417232
+    },
+    {
+      "cfg": 18,
+      "arch": "siren",
+      "design": "low_discrepancy",
+      "psnr": 8.85658328594728,
+      "err": 1.159163538966524
+    },
+    {
+      "cfg": 19,
+      "arch": "ffmlp",
+      "design": "aliasguard",
+      "psnr": 10.538766801625489,
+      "err": 1.3021045787644345
+    },
+    {
+      "cfg": 19,
+      "arch": "ffmlp",
+      "design": "ds_optimal",
+      "psnr": 9.9617034341483,
+      "err": 1.4871411906330074
+    },
+    {
+      "cfg": 19,
+      "arch": "ffmlp",
+      "design": "random",
+      "psnr": 10.360070052134224,
+      "err": 1.3567990818421842
+    },
+    {
+      "cfg": 19,
+      "arch": "ffmlp",
+      "design": "jitter",
+      "psnr": 10.594032923823784,
+      "err": 1.2856396380234318
+    },
+    {
+      "cfg": 19,
+      "arch": "ffmlp",
+      "design": "grid",
+      "psnr": 9.538058704116093,
+      "err": 1.6395198375230546
+    },
+    {
+      "cfg": 19,
+      "arch": "ffmlp",
+      "design": "low_discrepancy",
+      "psnr": 9.629665469743426,
+      "err": 1.6052992369539254
+    },
+    {
+      "cfg": 19,
+      "arch": "siren",
+      "design": "aliasguard",
+      "psnr": 10.019687284342174,
+      "err": 1.4674179181672904
+    },
+    {
+      "cfg": 19,
+      "arch": "siren",
+      "design": "ds_optimal",
+      "psnr": 9.3434681156357,
+      "err": 1.7146509904479834
+    },
+    {
+      "cfg": 19,
+      "arch": "siren",
+      "design": "random",
+      "psnr": 9.218513623845295,
+      "err": 1.7647012115358924
+    },
+    {
+      "cfg": 19,
+      "arch": "siren",
+      "design": "jitter",
+      "psnr": 10.303233607146797,
+      "err": 1.3746723123752385
+    },
+    {
+      "cfg": 19,
+      "arch": "siren",
+      "design": "grid",
+      "psnr": 9.495650578830839,
+      "err": 1.6556078935667817
+    },
+    {
+      "cfg": 19,
+      "arch": "siren",
+      "design": "low_discrepancy",
+      "psnr": 9.619512558741048,
+      "err": 1.6090564862495365
+    },
+    {
+      "cfg": 20,
+      "arch": "ffmlp",
+      "design": "aliasguard",
+      "psnr": 8.207911527592088,
+      "err": 1.4569062874235914
+    },
+    {
+      "cfg": 20,
+      "arch": "ffmlp",
+      "design": "ds_optimal",
+      "psnr": 8.717689314674873,
+      "err": 1.2955489862925438
+    },
+    {
+      "cfg": 20,
+      "arch": "ffmlp",
+      "design": "random",
+      "psnr": 8.553782941783586,
+      "err": 1.3453784783947653
+    },
+    {
+      "cfg": 20,
+      "arch": "ffmlp",
+      "design": "jitter",
+      "psnr": 9.572871479844768,
+      "err": 1.0639852865857327
+    },
+    {
+      "cfg": 20,
+      "arch": "ffmlp",
+      "design": "grid",
+      "psnr": 9.521002614448507,
+      "err": 1.076768913387634
+    },
+    {
+      "cfg": 20,
+      "arch": "ffmlp",
+      "design": "low_discrepancy",
+      "psnr": 10.680517451074433,
+      "err": 0.8244627245729474
+    },
+    {
+      "cfg": 20,
+      "arch": "siren",
+      "design": "aliasguard",
+      "psnr": 8.301648175565518,
+      "err": 1.425797840992287
+    },
+    {
+      "cfg": 20,
+      "arch": "siren",
+      "design": "ds_optimal",
+      "psnr": 8.641598415022179,
+      "err": 1.318447766379706
+    },
+    {
+      "cfg": 20,
+      "arch": "siren",
+      "design": "random",
+      "psnr": 6.347009202808254,
+      "err": 2.2362577054650066
+    },
+    {
+      "cfg": 20,
+      "arch": "siren",
+      "design": "jitter",
+      "psnr": 9.176746218657907,
+      "err": 1.165596268529803
+    },
+    {
+      "cfg": 20,
+      "arch": "siren",
+      "design": "grid",
+      "psnr": 9.60291999319875,
+      "err": 1.056649059908835
+    },
+    {
+      "cfg": 20,
+      "arch": "siren",
+      "design": "low_discrepancy",
+      "psnr": 10.895605109831372,
+      "err": 0.7846252125786155
+    },
+    {
+      "cfg": 21,
+      "arch": "ffmlp",
+      "design": "aliasguard",
+      "psnr": 8.01394763220156,
+      "err": 1.0393131795897224
+    },
+    {
+      "cfg": 21,
+      "arch": "ffmlp",
+      "design": "ds_optimal",
+      "psnr": 7.887499461987179,
+      "err": 1.070018414273274
+    },
+    {
+      "cfg": 21,
+      "arch": "ffmlp",
+      "design": "random",
+      "psnr": 9.18848403930984,
+      "err": 0.7930358014894348
+    },
+    {
+      "cfg": 21,
+      "arch": "ffmlp",
+      "design": "jitter",
+      "psnr": 7.4685646188143355,
+      "err": 1.1783782990721055
+    },
+    {
+      "cfg": 21,
+      "arch": "ffmlp",
+      "design": "grid",
+      "psnr": 10.461935499636075,
+      "err": 0.5914903285655846
+    },
+    {
+      "cfg": 21,
+      "arch": "ffmlp",
+      "design": "low_discrepancy",
+      "psnr": 6.658291735096091,
+      "err": 1.4200774277915342
+    },
+    {
+      "cfg": 21,
+      "arch": "siren",
+      "design": "aliasguard",
+      "psnr": 8.260710263405644,
+      "err": 0.9819065826253454
+    },
+    {
+      "cfg": 21,
+      "arch": "siren",
+      "design": "ds_optimal",
+      "psnr": 7.522142039895481,
+      "err": 1.16393035296815
+    },
+    {
+      "cfg": 21,
+      "arch": "siren",
+      "design": "random",
+      "psnr": 7.581973432927194,
+      "err": 1.1480051981938018
+    },
+    {
+      "cfg": 21,
+      "arch": "siren",
+      "design": "jitter",
+      "psnr": 7.021018843845841,
+      "err": 1.3062891314812908
+    },
+    {
+      "cfg": 21,
+      "arch": "siren",
+      "design": "grid",
+      "psnr": 10.150022318711073,
+      "err": 0.6355342582078574
+    },
+    {
+      "cfg": 21,
+      "arch": "siren",
+      "design": "low_discrepancy",
+      "psnr": 6.4633309083107084,
+      "err": 1.4852792267906603
+    },
+    {
+      "cfg": 22,
+      "arch": "ffmlp",
+      "design": "aliasguard",
+      "psnr": 12.825988284468409,
+      "err": 0.8041474458815152
+    },
+    {
+      "cfg": 22,
+      "arch": "ffmlp",
+      "design": "ds_optimal",
+      "psnr": 12.135428431132787,
+      "err": 0.9427394309245265
+    },
+    {
+      "cfg": 22,
+      "arch": "ffmlp",
+      "design": "random",
+      "psnr": 10.953536749629047,
+      "err": 1.2376015379095087
+    },
+    {
+      "cfg": 22,
+      "arch": "ffmlp",
+      "design": "jitter",
+      "psnr": 9.846138510461895,
+      "err": 1.5970579105846616
+    },
+    {
+      "cfg": 22,
+      "arch": "ffmlp",
+      "design": "grid",
+      "psnr": 11.185505781040135,
+      "err": 1.1732321008725233
+    },
+    {
+      "cfg": 22,
+      "arch": "ffmlp",
+      "design": "low_discrepancy",
+      "psnr": 10.226556881339366,
+      "err": 1.4631162277591627
+    },
+    {
+      "cfg": 22,
+      "arch": "siren",
+      "design": "aliasguard",
+      "psnr": 12.298439342372607,
+      "err": 0.9080098946690202
+    },
+    {
+      "cfg": 22,
+      "arch": "siren",
+      "design": "ds_optimal",
+      "psnr": 11.680171607876673,
+      "err": 1.0469293003377198
+    },
+    {
+      "cfg": 22,
+      "arch": "siren",
+      "design": "random",
+      "psnr": 10.184999997976071,
+      "err": 1.4771837297833241
+    },
+    {
+      "cfg": 22,
+      "arch": "siren",
+      "design": "jitter",
+      "psnr": 9.422990466958097,
+      "err": 1.7604977268078068
+    },
+    {
+      "cfg": 22,
+      "arch": "siren",
+      "design": "grid",
+      "psnr": 11.064559105418725,
+      "err": 1.2063646560331391
+    },
+    {
+      "cfg": 22,
+      "arch": "siren",
+      "design": "low_discrepancy",
+      "psnr": 10.677037978286359,
+      "err": 1.318957244131501
+    },
+    {
+      "cfg": 23,
+      "arch": "ffmlp",
+      "design": "aliasguard",
+      "psnr": 8.496502276778685,
+      "err": 1.3797689333246481
+    },
+    {
+      "cfg": 23,
+      "arch": "ffmlp",
+      "design": "ds_optimal",
+      "psnr": 10.1315949510103,
+      "err": 0.9468846904429867
+    },
+    {
+      "cfg": 23,
+      "arch": "ffmlp",
+      "design": "random",
+      "psnr": 8.261611007061324,
+      "err": 1.4564496958711257
+    },
+    {
+      "cfg": 23,
+      "arch": "ffmlp",
+      "design": "jitter",
+      "psnr": 9.167674889839418,
+      "err": 1.182194952909939
+    },
+    {
+      "cfg": 23,
+      "arch": "ffmlp",
+      "design": "grid",
+      "psnr": 9.395526554470946,
+      "err": 1.1217702922486494
+    },
+    {
+      "cfg": 23,
+      "arch": "ffmlp",
+      "design": "low_discrepancy",
+      "psnr": 8.85806710923627,
+      "err": 1.269550202139036
+    },
+    {
+      "cfg": 23,
+      "arch": "siren",
+      "design": "aliasguard",
+      "psnr": 7.847549205648708,
+      "err": 1.6021444486748984
+    },
+    {
+      "cfg": 23,
+      "arch": "siren",
+      "design": "ds_optimal",
+      "psnr": 9.399561365144484,
+      "err": 1.120728596098189
+    },
+    {
+      "cfg": 23,
+      "arch": "siren",
+      "design": "random",
+      "psnr": 6.788063642330244,
+      "err": 2.0447971240449703
+    },
+    {
+      "cfg": 23,
+      "arch": "siren",
+      "design": "jitter",
+      "psnr": 8.8212806430074,
+      "err": 1.2803494686738515
+    },
+    {
+      "cfg": 23,
+      "arch": "siren",
+      "design": "grid",
+      "psnr": 9.176779502663505,
+      "err": 1.1797191782100744
+    },
+    {
+      "cfg": 23,
+      "arch": "siren",
+      "design": "low_discrepancy",
+      "psnr": 8.781409770891656,
+      "err": 1.2921579764075721
+    },
+    {
+      "cfg": 24,
+      "arch": "ffmlp",
+      "design": "aliasguard",
+      "psnr": 14.945308244337994,
+      "err": 0.46999334838604806
+    },
+    {
+      "cfg": 24,
+      "arch": "ffmlp",
+      "design": "ds_optimal",
+      "psnr": 15.088817031624075,
+      "err": 0.4547166250321125
+    },
+    {
+      "cfg": 24,
+      "arch": "ffmlp",
+      "design": "random",
+      "psnr": 13.466320304073973,
+      "err": 0.6606790043418271
+    },
+    {
+      "cfg": 24,
+      "arch": "ffmlp",
+      "design": "jitter",
+      "psnr": 14.156593715917516,
+      "err": 0.5635898517894702
+    },
+    {
+      "cfg": 24,
+      "arch": "ffmlp",
+      "design": "grid",
+      "psnr": 14.537559735144255,
+      "err": 0.5162577241153246
+    },
+    {
+      "cfg": 24,
+      "arch": "ffmlp",
+      "design": "low_discrepancy",
+      "psnr": 14.337274509114375,
+      "err": 0.5406237057584482
+    },
+    {
+      "cfg": 24,
+      "arch": "siren",
+      "design": "aliasguard",
+      "psnr": 14.958597152538871,
+      "err": 0.4685574211745719
+    },
+    {
+      "cfg": 24,
+      "arch": "siren",
+      "design": "ds_optimal",
+      "psnr": 14.184496093342577,
+      "err": 0.559980529278539
+    },
+    {
+      "cfg": 24,
+      "arch": "siren",
+      "design": "random",
+      "psnr": 12.836467402425164,
+      "err": 0.7637932144705061
+    },
+    {
+      "cfg": 24,
+      "arch": "siren",
+      "design": "jitter",
+      "psnr": 12.996863098785497,
+      "err": 0.7360989973121574
+    },
+    {
+      "cfg": 24,
+      "arch": "siren",
+      "design": "grid",
+      "psnr": 13.991139712473164,
+      "err": 0.5854752824472309
+    },
+    {
+      "cfg": 24,
+      "arch": "siren",
+      "design": "low_discrepancy",
+      "psnr": 12.990881944451019,
+      "err": 0.7371134598540763
+    },
+    {
+      "cfg": 25,
+      "arch": "ffmlp",
+      "design": "aliasguard",
+      "psnr": 5.427215834730696,
+      "err": 2.308148681873153
+    },
+    {
+      "cfg": 25,
+      "arch": "ffmlp",
+      "design": "ds_optimal",
+      "psnr": 4.287078574491414,
+      "err": 3.001079546384221
+    },
+    {
+      "cfg": 25,
+      "arch": "ffmlp",
+      "design": "random",
+      "psnr": 4.520283113809677,
+      "err": 2.8441798352368544
+    },
+    {
+      "cfg": 25,
+      "arch": "ffmlp",
+      "design": "jitter",
+      "psnr": 4.990005466970643,
+      "err": 2.5526120655498605
+    },
+    {
+      "cfg": 25,
+      "arch": "ffmlp",
+      "design": "grid",
+      "psnr": 5.560223898266124,
+      "err": 2.238530286348638
+    },
+    {
+      "cfg": 25,
+      "arch": "ffmlp",
+      "design": "low_discrepancy",
+      "psnr": 4.182146921045221,
+      "err": 3.0744729212214983
+    },
+    {
+      "cfg": 25,
+      "arch": "siren",
+      "design": "aliasguard",
+      "psnr": 5.449029735826074,
+      "err": 2.2965842960983682
+    },
+    {
+      "cfg": 25,
+      "arch": "siren",
+      "design": "ds_optimal",
+      "psnr": 4.986091065153847,
+      "err": 2.5549138340664306
+    },
+    {
+      "cfg": 25,
+      "arch": "siren",
+      "design": "random",
+      "psnr": 4.046845020869506,
+      "err": 3.171763976775125
+    },
+    {
+      "cfg": 25,
+      "arch": "siren",
+      "design": "jitter",
+      "psnr": 4.876028611288627,
+      "err": 2.6204899790906655
+    },
+    {
+      "cfg": 25,
+      "arch": "siren",
+      "design": "grid",
+      "psnr": 5.509767529860579,
+      "err": 2.264689212582425
+    },
+    {
+      "cfg": 25,
+      "arch": "siren",
+      "design": "low_discrepancy",
+      "psnr": 5.255938984229007,
+      "err": 2.400996162792605
+    },
+    {
+      "cfg": 26,
+      "arch": "ffmlp",
+      "design": "aliasguard",
+      "psnr": 6.40662197465179,
+      "err": 2.5841825541102112
+    },
+    {
+      "cfg": 26,
+      "arch": "ffmlp",
+      "design": "ds_optimal",
+      "psnr": 6.303265819411916,
+      "err": 2.6464202177412153
+    },
+    {
+      "cfg": 26,
+      "arch": "ffmlp",
+      "design": "random",
+      "psnr": 6.660110217952182,
+      "err": 2.437666931524965
+    },
+    {
+      "cfg": 26,
+      "arch": "ffmlp",
+      "design": "jitter",
+      "psnr": 7.2268823187984115,
+      "err": 2.139425440462211
+    },
+    {
+      "cfg": 26,
+      "arch": "ffmlp",
+      "design": "grid",
+      "psnr": 7.521242707219304,
+      "err": 1.9992224360408466
+    },
+    {
+      "cfg": 26,
+      "arch": "ffmlp",
+      "design": "low_discrepancy",
+      "psnr": 7.171851729480131,
+      "err": 2.1667071413497943
+    },
+    {
+      "cfg": 26,
+      "arch": "siren",
+      "design": "aliasguard",
+      "psnr": 6.724008444942765,
+      "err": 2.4020638270839925
+    },
+    {
+      "cfg": 26,
+      "arch": "siren",
+      "design": "ds_optimal",
+      "psnr": 6.1732072502451105,
+      "err": 2.726871435690592
+    },
+    {
+      "cfg": 26,
+      "arch": "siren",
+      "design": "random",
+      "psnr": 5.051356081826427,
+      "err": 3.5306102645767874
+    },
+    {
+      "cfg": 26,
+      "arch": "siren",
+      "design": "jitter",
+      "psnr": 7.320890065638029,
+      "err": 2.093612878476632
+    },
+    {
+      "cfg": 26,
+      "arch": "siren",
+      "design": "grid",
+      "psnr": 7.158224827324634,
+      "err": 2.1735163174211642
+    },
+    {
+      "cfg": 26,
+      "arch": "siren",
+      "design": "low_discrepancy",
+      "psnr": 7.146263321869228,
+      "err": 2.17951095109419
+    },
+    {
+      "cfg": 27,
+      "arch": "ffmlp",
+      "design": "aliasguard",
+      "psnr": 9.563820766031977,
+      "err": 1.025250608999165
+    },
+    {
+      "cfg": 27,
+      "arch": "ffmlp",
+      "design": "ds_optimal",
+      "psnr": 10.812929113377358,
+      "err": 0.7689873598613118
+    },
+    {
+      "cfg": 27,
+      "arch": "ffmlp",
+      "design": "random",
+      "psnr": 9.779724780141217,
+      "err": 0.9755277648506528
+    },
+    {
+      "cfg": 27,
+      "arch": "ffmlp",
+      "design": "jitter",
+      "psnr": 9.79394466429107,
+      "err": 0.9723388671952932
+    },
+    {
+      "cfg": 27,
+      "arch": "ffmlp",
+      "design": "grid",
+      "psnr": 9.370760221381733,
+      "err": 1.071855128837281
+    },
+    {
+      "cfg": 27,
+      "arch": "ffmlp",
+      "design": "low_discrepancy",
+      "psnr": 8.773876449241326,
+      "err": 1.229771623389913
+    },
+    {
+      "cfg": 27,
+      "arch": "siren",
+      "design": "aliasguard",
+      "psnr": 9.74430068849104,
+      "err": 0.9835173909314442
+    },
+    {
+      "cfg": 27,
+      "arch": "siren",
+      "design": "ds_optimal",
+      "psnr": 9.957558168136357,
+      "err": 0.9363889836856996
+    },
+    {
+      "cfg": 27,
+      "arch": "siren",
+      "design": "random",
+      "psnr": 9.096832453530695,
+      "err": 1.1416391858720802
+    },
+    {
+      "cfg": 27,
+      "arch": "siren",
+      "design": "jitter",
+      "psnr": 9.94576882865887,
+      "err": 0.9389343544891955
+    },
+    {
+      "cfg": 27,
+      "arch": "siren",
+      "design": "grid",
+      "psnr": 9.205537400241685,
+      "err": 1.1134183447933537
+    },
+    {
+      "cfg": 27,
+      "arch": "siren",
+      "design": "low_discrepancy",
+      "psnr": 9.092793142775669,
+      "err": 1.14270150206861
+    },
+    {
+      "cfg": 28,
+      "arch": "ffmlp",
+      "design": "aliasguard",
+      "psnr": 10.204268090773951,
+      "err": 0.9585088757973499
+    },
+    {
+      "cfg": 28,
+      "arch": "ffmlp",
+      "design": "ds_optimal",
+      "psnr": 10.870160573964746,
+      "err": 0.8222556956890916
+    },
+    {
+      "cfg": 28,
+      "arch": "ffmlp",
+      "design": "random",
+      "psnr": 9.465715007896648,
+      "err": 1.1361912675558752
+    },
+    {
+      "cfg": 28,
+      "arch": "ffmlp",
+      "design": "jitter",
+      "psnr": 9.357953612632873,
+      "err": 1.1647362350338104
+    },
+    {
+      "cfg": 28,
+      "arch": "ffmlp",
+      "design": "grid",
+      "psnr": 11.26306226737485,
+      "err": 0.7511327900483287
+    },
+    {
+      "cfg": 28,
+      "arch": "ffmlp",
+      "design": "low_discrepancy",
+      "psnr": 10.720105786252548,
+      "err": 0.8511622800312957
+    },
+    {
+      "cfg": 28,
+      "arch": "siren",
+      "design": "aliasguard",
+      "psnr": 9.848135263535266,
+      "err": 1.0404217475754298
+    },
+    {
+      "cfg": 28,
+      "arch": "siren",
+      "design": "ds_optimal",
+      "psnr": 9.246903658065982,
+      "err": 1.1949028089862446
+    },
+    {
+      "cfg": 28,
+      "arch": "siren",
+      "design": "random",
+      "psnr": 7.739965950058525,
+      "err": 1.6905435102616888
+    },
+    {
+      "cfg": 28,
+      "arch": "siren",
+      "design": "jitter",
+      "psnr": 8.561674006164615,
+      "err": 1.3991218766402358
+    },
+    {
+      "cfg": 28,
+      "arch": "siren",
+      "design": "grid",
+      "psnr": 10.982975243112454,
+      "err": 0.8011713741672628
+    },
+    {
+      "cfg": 28,
+      "arch": "siren",
+      "design": "low_discrepancy",
+      "psnr": 10.318469024853938,
+      "err": 0.9336326809783266
+    },
+    {
+      "cfg": 29,
+      "arch": "ffmlp",
+      "design": "aliasguard",
+      "psnr": 8.222823819140908,
+      "err": 1.1652305779188432
+    },
+    {
+      "cfg": 29,
+      "arch": "ffmlp",
+      "design": "ds_optimal",
+      "psnr": 7.693371342541876,
+      "err": 1.3163067867967448
+    },
+    {
+      "cfg": 29,
+      "arch": "ffmlp",
+      "design": "random",
+      "psnr": 8.737783480021923,
+      "err": 1.0349417495757478
+    },
+    {
+      "cfg": 29,
+      "arch": "ffmlp",
+      "design": "jitter",
+      "psnr": 6.962125671538393,
+      "err": 1.5576923520039123
+    },
+    {
+      "cfg": 29,
+      "arch": "ffmlp",
+      "design": "grid",
+      "psnr": 8.123655965668226,
+      "err": 1.1921438376173987
+    },
+    {
+      "cfg": 29,
+      "arch": "ffmlp",
+      "design": "low_discrepancy",
+      "psnr": 6.7972141515836535,
+      "err": 1.6179788474624466
+    },
+    {
+      "cfg": 29,
+      "arch": "siren",
+      "design": "aliasguard",
+      "psnr": 7.36796150298156,
+      "err": 1.418724616976321
+    },
+    {
+      "cfg": 29,
+      "arch": "siren",
+      "design": "ds_optimal",
+      "psnr": 7.5629080510718225,
+      "err": 1.3564489372770399
+    },
+    {
+      "cfg": 29,
+      "arch": "siren",
+      "design": "random",
+      "psnr": 7.325834540570887,
+      "err": 1.4325533371633905
+    },
+    {
+      "cfg": 29,
+      "arch": "siren",
+      "design": "jitter",
+      "psnr": 7.568609086203147,
+      "err": 1.3546694788956515
+    },
+    {
+      "cfg": 29,
+      "arch": "siren",
+      "design": "grid",
+      "psnr": 8.211866889589439,
+      "err": 1.1681740803071032
+    },
+    {
+      "cfg": 29,
+      "arch": "siren",
+      "design": "low_discrepancy",
+      "psnr": 7.281344737251548,
+      "err": 1.447304062092587
+    },
+    {
+      "cfg": 30,
+      "arch": "ffmlp",
+      "design": "aliasguard",
+      "psnr": 10.61530544561169,
+      "err": 1.3284320133178231
+    },
+    {
+      "cfg": 30,
+      "arch": "ffmlp",
+      "design": "ds_optimal",
+      "psnr": 9.7162312465602,
+      "err": 1.63398006167913
+    },
+    {
+      "cfg": 30,
+      "arch": "ffmlp",
+      "design": "random",
+      "psnr": 9.465334342305631,
+      "err": 1.7311569485345426
+    },
+    {
+      "cfg": 30,
+      "arch": "ffmlp",
+      "design": "jitter",
+      "psnr": 8.885580246291255,
+      "err": 1.97838974806387
+    },
+    {
+      "cfg": 30,
+      "arch": "ffmlp",
+      "design": "grid",
+      "psnr": 13.385402688194594,
+      "err": 0.7019878714046821
+    },
+    {
+      "cfg": 30,
+      "arch": "ffmlp",
+      "design": "low_discrepancy",
+      "psnr": 8.57305766728759,
+      "err": 2.1260041638234886
+    },
+    {
+      "cfg": 30,
+      "arch": "siren",
+      "design": "aliasguard",
+      "psnr": 10.652897711106617,
+      "err": 1.316982810114708
+    },
+    {
+      "cfg": 30,
+      "arch": "siren",
+      "design": "ds_optimal",
+      "psnr": 10.297102087896665,
+      "err": 1.4294193890607811
+    },
+    {
+      "cfg": 30,
+      "arch": "siren",
+      "design": "random",
+      "psnr": 8.597939045924694,
+      "err": 2.113858793406374
+    },
+    {
+      "cfg": 30,
+      "arch": "siren",
+      "design": "jitter",
+      "psnr": 9.600798884023003,
+      "err": 1.6779923984864873
+    },
+    {
+      "cfg": 30,
+      "arch": "siren",
+      "design": "grid",
+      "psnr": 13.761549218862704,
+      "err": 0.6437466108373066
+    },
+    {
+      "cfg": 30,
+      "arch": "siren",
+      "design": "low_discrepancy",
+      "psnr": 9.268104213486053,
+      "err": 1.8115880871770724
+    },
+    {
+      "cfg": 31,
+      "arch": "ffmlp",
+      "design": "aliasguard",
+      "psnr": 8.177021545276103,
+      "err": 1.0251472574277884
+    },
+    {
+      "cfg": 31,
+      "arch": "ffmlp",
+      "design": "ds_optimal",
+      "psnr": 8.315436836551003,
+      "err": 0.9929896573217254
+    },
+    {
+      "cfg": 31,
+      "arch": "ffmlp",
+      "design": "random",
+      "psnr": 8.340923409739322,
+      "err": 0.9871793627038778
+    },
+    {
+      "cfg": 31,
+      "arch": "ffmlp",
+      "design": "jitter",
+      "psnr": 7.9436193536862305,
+      "err": 1.081748927590936
+    },
+    {
+      "cfg": 31,
+      "arch": "ffmlp",
+      "design": "grid",
+      "psnr": 8.27427670616951,
+      "err": 1.0024454248713204
+    },
+    {
+      "cfg": 31,
+      "arch": "ffmlp",
+      "design": "low_discrepancy",
+      "psnr": 6.231166558431673,
+      "err": 1.6046183443753388
+    },
+    {
+      "cfg": 31,
+      "arch": "siren",
+      "design": "aliasguard",
+      "psnr": 8.226226708216387,
+      "err": 1.0135979835070126
+    },
+    {
+      "cfg": 31,
+      "arch": "siren",
+      "design": "ds_optimal",
+      "psnr": 7.4849374367368,
+      "err": 1.2022496658000525
+    },
+    {
+      "cfg": 31,
+      "arch": "siren",
+      "design": "random",
+      "psnr": 6.645608271995121,
+      "err": 1.4585710236146894
+    },
+    {
+      "cfg": 31,
+      "arch": "siren",
+      "design": "jitter",
+      "psnr": 7.295741693731329,
+      "err": 1.2557819583640044
+    },
+    {
+      "cfg": 31,
+      "arch": "siren",
+      "design": "grid",
+      "psnr": 7.97773723713175,
+      "err": 1.0732840737086355
+    },
+    {
+      "cfg": 31,
+      "arch": "siren",
+      "design": "low_discrepancy",
+      "psnr": 5.389517851845364,
+      "err": 1.9477652956282623
+    }
+  ],
+  "note": "Non-lattice fixed-Fourier-feature signal; per-scenario random incommensurate out-of-band threats.  AliasGuard/D_s are threat-aware; random/grid/jitter/low-discrepancy are threat-agnostic.  PRIMARY claim: WITHIN each scenario the cheap linear-core certificate PREDICTS the design ranking by trained held-out error (Spearman>0 in every scenario) for FF-MLP AND SIREN -- rehabilitating the linear theory as a predictor of trained-net quality (incl. the previously negative SIREN).  AliasGuard-DESIGNED samples significantly beat every NON-UNIFORM baseline (random/jitter/low-discrepancy/D_s) on trained PSNR, paired over scenarios, and tie the uniform grid at strong interference.  HONEST SCOPING: for unconstrained 1-D acquisition a uniform grid's even coverage is a strong INR inductive-bias match (orthogonal to aliasing), so it matches/edges AliasGuard here (see crossover vs a_out); AliasGuard's design advantage is in CONSTRAINED / non-uniform acquisition (n-D, k-space masks) where a uniform grid is not available, and as the only CERTIFIED design.",
+  "_meta": {
+    "git_commit": "08d37b3550ed15c08506840600043bbf0c915787",
+    "git_short": "08d37b35",
+    "git_dirty": false,
+    "source_tree_sha256": "106925e6553d1b92",
+    "command": "experiments/run_inr_design.py --jobs 32 --sweep-aout 0.5,1,2,4,8",
+    "timestamp_utc": "2026-07-18T10:25:29.637264+00:00",
+    "hostname": "autodl-container-p48vc3ykfm-7ba3727f",
+    "python": "3.12.3",
+    "platform": "Linux-5.15.0-25-generic-x86_64-with-glibc2.35",
+    "cpu_count": 128,
+    "numpy": "2.4.6",
+    "scipy": "1.18.0",
+    "config_sha256": "403386c9b9acb181",
+    "torch": "2.8.0+cu128",
+    "cuda": "12.8",
+    "gpu": "NVIDIA GeForce RTX 4080 SUPER"
+  }
+}
