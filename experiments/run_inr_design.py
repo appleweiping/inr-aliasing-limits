@@ -45,10 +45,10 @@ M_REF = 1024                   # dense held-out reference grid
 N = 40
 EPOCHS = 3000
 N_CONFIGS = 32                 # paired acquisition scenarios (each: fresh threat + signal)
-# out-of-band threat amplitude relative to the in-band signal.  Default 2.0 = interference-
-# dominated regime (interference 2x the signal), where anti-aliasing matters most; the crossover
-# vs a_out is reported via --sweep-aout.  Overridable with --aout.
-A_OUT = 2.0
+# out-of-band threat amplitude relative to the in-band signal.  Default 1.0 = the canonical
+# EQUAL-AMPLITUDE reference (interference as strong as the signal); the full dependence on
+# interference strength is reported via the --sweep-aout crossover.  Overridable with --aout.
+A_OUT = 1.0
 DESIGNS = ["aliasguard", "ds_optimal", "random", "jitter", "grid", "low_discrepancy"]
 THREAT_AWARE = {"aliasguard", "ds_optimal"}       # designs that use the scenario's threat prior
 ARCHS = ["ffmlp", "siren"]
