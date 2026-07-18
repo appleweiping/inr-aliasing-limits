@@ -76,6 +76,7 @@ __all__ = [
     "e_optimal_design",
     "fixed_jitter",
     "aliasability_certificate",
+    "aliasability_certificate_nd",
     "visibility_certificate",
 ]
 
@@ -296,13 +297,42 @@ def aliasguard_continuous(freqs, out_freqs, N, beta=1.0, n_sweeps=15, grid_res=7
 
 def aliasguard_continuous_nd(freqs, out_freqs, N, d, beta=1.0, n_sweeps=12, grid_res=64,
                              seed=0, t0=None):
-    r"""Continuous AliasGuard in ``d`` dimensions (e.g. 2-D frequency vectors for images).
-    Per-axis coordinate descent on the exact surrogate.  Returns ``(t (N,d), metrics)``."""
+    r"""Continuous AliasGuard in ``d`` dimensions (e.g. 2-D/3-D frequency vectors for images).
+
+    Fast rank-one **per-axis** update (the n-D generalization of :func:`aliasguard_continuous`):
+    holding the other axes of sample $j$ fixed, the surrogate as a function of $t_{j,\rm ax}$ is
+    a single moving-sum scan, using the factorization $e^{i2\pi\langle\delta,t_j\rangle}=
+    e^{i2\pi\delta_{\rm ax}t_{j,\rm ax}}\,c_{j,\delta}$ with the cross-axis factor
+    $c_{j,\delta}=e^{i2\pi\langle\delta_{-\rm ax},t_{j,-\rm ax}\rangle}$.  ~$N\times$ faster than
+    recomputing the full surrogate per grid point, so ``grid_res`` can be raised for statistical
+    separation in the n-D design study.  Returns ``(t (N,d), metrics)``."""
     freqs = np.asarray(freqs, float)
     out_freqs = np.asarray(out_freqs, float)
-    obj = lambda cand: surrogate_objective(freqs, out_freqs, cand, beta)
-    t = _coord_descent(freqs, out_freqs, N, obj, d=d, n_sweeps=n_sweeps,
-                       grid_res=grid_res, seed=seed, t0=t0)
+    F, _ = _as2d(freqs)
+    O, _ = _as2d(out_freqs)
+    deltas, wts = _diff_freqs(F, O, beta)                       # (D,d), (D,)
+    rng = np.random.default_rng(seed)
+    t = rng.uniform(0, 1, (N, d)) if t0 is None else np.asarray(t0, float).reshape(N, d).copy()
+    scan = np.arange(grid_res) / grid_res
+    Escan = [np.exp(1j * 2 * np.pi * np.outer(scan, deltas[:, ax])) for ax in range(d)]  # ax:(G,D)
+    N2, sw = N * N, float(np.sum(wts))
+    S = np.exp(1j * 2 * np.pi * (deltas @ t.T)).sum(axis=1)     # (D,)
+    for _ in range(n_sweeps):
+        moved = 0.0
+        for j in range(N):
+            for ax in range(d):
+                other = [a for a in range(d) if a != ax]
+                cj = (np.exp(1j * 2 * np.pi * (deltas[:, other] @ t[j, other]))
+                      if other else np.ones(deltas.shape[0], complex))
+                B = S - np.exp(1j * 2 * np.pi * deltas[:, ax] * t[j, ax]) * cj
+                base = float(np.sum(wts * np.abs(B) ** 2))
+                Js = (base + 2.0 * np.real(Escan[ax] @ (wts * np.conj(B) * cj)) + sw) / N2
+                gi = int(np.argmin(Js))
+                moved += abs(scan[gi] - t[j, ax])
+                S = B + np.exp(1j * 2 * np.pi * deltas[:, ax] * scan[gi]) * cj
+                t[j, ax] = scan[gi]
+        if moved < 1e-6:
+            break
     return t, design_metrics(freqs, out_freqs, t)
 
 
@@ -569,6 +599,58 @@ def aliasability_certificate(freqs, t, band, n_grid=4000, metric="l2", rcond=1e-
             "lipschitz": L, "lipschitz_slack": float(np.sqrt(max(slack, 0.0))), **base}
 
 
+def _lipschitz_sup_nd(M, dt, box, n_per_axis):
+    r"""n-D explicit Lipschitz grid certificate for the sup of
+    :math:`g(\nu)=\sum_{j,l}M_{jl}e^{i2\pi\langle\nu,t_l-t_j\rangle}` over a box.
+
+    Per-axis bound :math:`|\partial g/\partial\nu_{\rm ax}|\le L_{\rm ax}:=2\pi\sum_{j,l}
+    |M_{jl}||t_{l,\rm ax}-t_{j,\rm ax}|`, so over a tensor-product grid with spacing
+    :math:`h_{\rm ax}` the multivariate slack is :math:`\sum_{\rm ax}L_{\rm ax}h_{\rm ax}/2`."""
+    d = dt.shape[-1]
+    Mf = M.ravel()
+    dtf = dt.reshape(-1, d)
+    L_ax = [float(2 * np.pi * np.sum(np.abs(M) * np.abs(dt[:, :, ax]))) for ax in range(d)]
+    axes = [np.linspace(lo, hi, n_per_axis) for (lo, hi) in box]
+    grids = np.meshgrid(*axes, indexing="ij")
+    pts = np.stack([g.ravel() for g in grids], axis=1)
+    grid_max = -np.inf
+    for lo in range(0, pts.shape[0], 2048):
+        blk = pts[lo:lo + 2048]
+        g = np.real(np.exp(1j * 2 * np.pi * (blk @ dtf.T)) @ Mf)
+        grid_max = max(grid_max, float(np.max(g)))
+    slack = float(sum(L_ax[ax] * (box[ax][1] - box[ax][0]) / (n_per_axis - 1) / 2.0
+                      for ax in range(d)))
+    return grid_max + slack, grid_max, L_ax, slack
+
+
+def aliasability_certificate_nd(freqs, t, box, n_per_axis=48, metric="l2", rcond=1e-10):
+    r"""Deterministic post-hoc certificate on :math:`\max_{\nu\in\text{box}}a(\nu)` over a
+    *continuous n-D box* of frequency vectors, for **any** realized design (the n-D analogue of
+    :func:`aliasability_certificate`).  Reuses the Hermitian-eigendecomposition numerics
+    (vacuous if :math:`\Phi` is rank-deficient) and the tensor-product Lipschitz slack.  This
+    is a certified anti-aliasing guarantee for n-D acquisition (e.g. k-space / image design)."""
+    freqs = np.asarray(freqs, float)
+    F, _ = _as2d(freqs)
+    T, _ = _as2d(t)
+    Phi = _synth(freqs, t)
+    G, evals, evecs, sig_min, cond, tol, full_rank = _gram_factors(Phi, rcond)
+    base = {"sigma_min": sig_min, "condition_number": cond, "rank_tol": tol,
+            "full_rank": bool(full_rank), "metric": metric, "d": int(F.shape[1])}
+    if not full_rank:
+        return {"certified_max_aliasability": float("inf"),
+                "grid_max_aliasability": float("inf"), "lipschitz_slack": float("inf"), **base}
+    PhiGi = _apply_Ginv(evals, evecs, Phi.conj().T, power=1)
+    if metric == "l2":
+        M = PhiGi.conj().T @ _continuous_gram(freqs) @ PhiGi
+    else:
+        M = PhiGi.conj().T @ PhiGi
+    dt = T[None, :, :] - T[:, None, :]                           # (N,N,d)
+    sup_g, grid_g, _L, slack = _lipschitz_sup_nd(M, dt, box, n_per_axis)
+    return {"certified_max_aliasability": float(np.sqrt(max(sup_g, 0.0))),
+            "grid_max_aliasability": float(np.sqrt(max(grid_g, 0.0))),
+            "lipschitz_slack": float(np.sqrt(max(slack, 0.0))), **base}
+
+
 def visibility_certificate(freqs, t, band, n_grid=4000, rcond=1e-10):
     r"""Deterministic post-hoc certified *lower* bound on
     :math:`\min_{\nu\in\text{band}}v_T(\nu)` over a continuous band, for any design.
@@ -591,15 +673,15 @@ def visibility_certificate(freqs, t, band, n_grid=4000, rcond=1e-10):
             "sigma_min": sig_min, "condition_number": cond, "full_rank": True}
 
 
-def e_optimal_design(freqs, N, n_restarts=200, seed=0):
-    r"""E-optimal random-search baseline: among ``n_restarts`` i.i.d. uniform designs,
-    return the one maximizing :math:`\lambda_{\min}(\Phi_\Lambda^{*}\Phi_\Lambda/N)`
-    (classical optimal-design criterion; uses only :math:`\Lambda`, N)."""
+def e_optimal_design(freqs, N, n_restarts=200, seed=0, d=1):
+    r"""E-optimal random-search baseline: among ``n_restarts`` i.i.d. uniform designs (in
+    :math:`[0,1)^d`), return the one maximizing :math:`\lambda_{\min}(\Phi_\Lambda^{*}
+    \Phi_\Lambda/N)` (classical optimal-design criterion; uses only :math:`\Lambda`, N)."""
     freqs = np.asarray(freqs, float)
     rng = np.random.default_rng(seed)
     best_t, best_lam = None, -np.inf
     for _ in range(n_restarts):
-        t = np.sort(rng.uniform(0, 1, N))
+        t = rng.uniform(0, 1, (N, d)) if d > 1 else np.sort(rng.uniform(0, 1, N))
         Phi = _synth(freqs, t)
         lam = float(np.linalg.eigvalsh(Phi.conj().T @ Phi / N)[0])
         if lam > best_lam:
@@ -628,18 +710,18 @@ def ds_optimal_criterion(freqs, out_freqs, t, ridge=1e-8):
     return float(logdet) if sign.real > 0 else -np.inf
 
 
-def ds_optimal_design(freqs, out_freqs, N, n_sweeps=10, grid_res=384, seed=0, t0=None):
+def ds_optimal_design(freqs, out_freqs, N, n_sweeps=10, grid_res=384, seed=0, t0=None, d=1):
     r"""Exact-:math:`D_s` sample design: coordinate descent maximizing
-    :func:`ds_optimal_criterion` (Schur-complement log-det) over continuous times.  This is
-    the *standard* nuisance-parameter optimal design against which the AliasGuard surrogate
-    is compared (they are related but not identical objectives).  Deterministic given
-    ``(seed, t0)``."""
+    :func:`ds_optimal_criterion` (Schur-complement log-det) over continuous times in
+    :math:`[0,1)^d`.  This is the *standard* nuisance-parameter optimal design against which
+    the AliasGuard surrogate is compared (they are related but not identical objectives).
+    Deterministic given ``(seed, t0)``."""
     freqs = np.asarray(freqs, float)
     out_freqs = np.asarray(out_freqs, float)
     neg = lambda cand: -ds_optimal_criterion(freqs, out_freqs, cand)
-    t = _coord_descent(freqs, out_freqs, N, neg, d=1, n_sweeps=n_sweeps,
+    t = _coord_descent(freqs, out_freqs, N, neg, d=d, n_sweeps=n_sweeps,
                        grid_res=grid_res, seed=seed, t0=t0)
-    return np.sort(t.reshape(-1))
+    return np.sort(t.reshape(-1)) if d == 1 else t
 
 
 def annealing_design(freqs, out_freqs, N, maxiter=200, seed=0):
