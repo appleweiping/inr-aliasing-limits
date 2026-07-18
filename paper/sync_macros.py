@@ -126,6 +126,44 @@ lines += [
     f"\\newcommand{{\\NumCoTwoOracle}}{{{r3(co2_ora) if co2_ora is not None else '[pending]'}}}",
     f"\\newcommand{{\\NumSpeechOracle}}{{{r2(spe_ora) if spe_ora is not None else '[pending]'}}}",
 ]
+
+# Program 3: trained-INR sampling-design win + certificate-predicts-winner (never hand-entered).
+# AliasGuard DESIGNS the training samples; we report held-out PSNR, #baselines beaten (paired,
+# significant), and Spearman(certificate, trained error) -- for FF-MLP AND SIREN.
+INR = _load("inr_design.json")
+
+
+def _inr_psnr(arch):
+    return ((INR or {}).get("summary", {}).get(arch, {}) or {}).get("aliasguard", {}).get("psnr_mean")
+
+
+def _inr_wins(arch):
+    p = ((INR or {}).get("paired", {}) or {}).get(arch, {}) or {}
+    return sum(1 for d in p if p[d].get("significant_win")), len(p)
+
+
+def _inr_spear(arch):
+    return (((INR or {}).get("cert_predicts_winner_spearman", {}) or {}).get(arch, {}) or {}).get("rho_within_mean")
+
+
+if INR and "summary" in INR:
+    ffw, ffn = _inr_wins("ffmlp")
+    siw, sin = _inr_wins("siren")
+    lines += [
+        f"\\newcommand{{\\INRffPSNR}}{{{r2(_inr_psnr('ffmlp'))}}}",
+        f"\\newcommand{{\\INRsiPSNR}}{{{r2(_inr_psnr('siren'))}}}",
+        f"\\newcommand{{\\INRffWins}}{{{ffw}}}",
+        f"\\newcommand{{\\INRffBaselines}}{{{ffn}}}",
+        f"\\newcommand{{\\INRsiWins}}{{{siw}}}",
+        f"\\newcommand{{\\INRsiBaselines}}{{{sin}}}",
+        f"\\newcommand{{\\INRffSpear}}{{{r2(_inr_spear('ffmlp'))}}}",
+        f"\\newcommand{{\\INRsiSpear}}{{{r2(_inr_spear('siren'))}}}",
+    ]
+else:
+    lines += ["\\newcommand{\\" + n + "}{\\textrm{[pending]}}" for n in
+              ("INRffPSNR", "INRsiPSNR", "INRffWins", "INRffBaselines", "INRsiWins",
+               "INRsiBaselines", "INRffSpear", "INRsiSpear")]
+
 out = ROOT / "paper" / "macros_ag.tex"
 out.write_text("\n".join(lines) + "\n")
 print("wrote", out)

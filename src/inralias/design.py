@@ -535,7 +535,7 @@ def aliasability_L2_of(freqs, t, nu) -> float:
     return float(np.sqrt(max(np.real(dc.conj() @ G_L2 @ dc), 0.0)))
 
 
-def _lipschitz_sup(M, dt, band, n_grid):
+def _lipschitz_sup(M, dt, band, n_grid, factor=None):
     r"""Explicit Lipschitz grid certificate for the sup of the real finite exponential
     polynomial :math:`g(\nu)=\sum_{j,l}M_{jl}e^{i2\pi\nu(t_l-t_j)}` over a union of intervals.
 
@@ -543,10 +543,20 @@ def _lipschitz_sup(M, dt, band, n_grid):
     *generalized* trigonometric polynomial.  Its derivative obeys the elementary bound
     :math:`|g'|\le L:=2\pi\sum_{j,l}|M_{jl}||t_l-t_j|` (triangle inequality; each exponential
     is unit-modulus), hence :math:`\sup_{[a,b]}g\le\max_{\text{grid}}g+Lh/2` for grid
-    spacing ``h``.  Returns ``(certified_sup, grid_max, L, slack)``.  Sample-only."""
+    spacing ``h``.  Returns ``(certified_sup, grid_max, L, slack)``.  Sample-only.
+
+    When ``factor=(C, A, tvec)`` is supplied with :math:`M=C^{*}AC` (``C`` (m,N), ``A`` (m,m),
+    ``tvec`` the sample times), the grid evaluation uses the **rank-**:math:`m` form
+    :math:`g(\nu)=w^{*}Aw`, :math:`w=C\,a(\nu)`, :math:`a(\nu)_l=e^{i2\pi\nu t_l}` -- cost
+    :math:`O(n_{\rm grid}Nm)` and :math:`O(Nm)` memory instead of :math:`O(n_{\rm grid}N^2)`.
+    Numerically identical; :math:`L` still uses the full (cheap, one-off) :math:`M`."""
     L = float(2 * np.pi * np.sum(np.abs(M) * np.abs(dt)))
-    dtf = dt.ravel()
-    Mf = M.ravel()
+    if factor is None:
+        dtf = dt.ravel()
+        Mf = M.ravel()
+    else:
+        C, A, tvec = factor
+        Ct = C.T                                                     # (N, m); w = a @ Ct
     grid_max, slack = -np.inf, 0.0
     for (a, b) in band:
         n = max(2, int(np.ceil((b - a) * n_grid)))
@@ -554,7 +564,11 @@ def _lipschitz_sup(M, dt, band, n_grid):
         h = (b - a) / (n - 1)
         for lo in range(0, n, 4096):
             blk = nu[lo:lo + 4096]
-            g = np.real(np.exp(1j * 2 * np.pi * np.outer(blk, dtf)) @ Mf)
+            if factor is None:
+                g = np.real(np.exp(1j * 2 * np.pi * np.outer(blk, dtf)) @ Mf)
+            else:
+                w = np.exp(1j * 2 * np.pi * np.outer(blk, tvec)) @ Ct     # (B, m)
+                g = np.real(np.einsum("ni,ij,nj->n", w.conj(), A, w, optimize=True))
             grid_max = max(grid_max, float(np.max(g)))
         slack = max(slack, L * h / 2.0)
     return grid_max + slack, grid_max, L, slack
@@ -588,12 +602,13 @@ def aliasability_certificate(freqs, t, band, n_grid=4000, metric="l2", rcond=1e-
                 "lipschitz": float("inf"), "lipschitz_slack": float("inf"), **base}
     PhiGi = _apply_Ginv(evals, evecs, Phi.conj().T, power=1)      # (Φ*Φ)^{-1} Φ*  (m,N)
     if metric == "l2":
-        Gl2 = _continuous_gram(freqs)
-        M = PhiGi.conj().T @ Gl2 @ PhiGi                          # Φ(Φ*Φ)^{-1}G(Φ*Φ)^{-1}Φ*
+        A = _continuous_gram(freqs)                              # (m,m)
     else:
-        M = PhiGi.conj().T @ PhiGi                               # Φ(Φ*Φ)^{-2}Φ*
+        A = np.eye(PhiGi.shape[0], dtype=complex)                # coeff metric: G_{L2}=I
+    M = PhiGi.conj().T @ A @ PhiGi                               # Φ(Φ*Φ)^{-1}A(Φ*Φ)^{-1}Φ*  (N,N)
     dt = t[None, :] - t[:, None]
-    sup_g, grid_g, L, slack = _lipschitz_sup(M, dt, band, n_grid)
+    # rank-m factor M = C* A C with C = PhiGi: evaluate the grid in coefficient space (O(N m)).
+    sup_g, grid_g, L, slack = _lipschitz_sup(M, dt, band, n_grid, factor=(PhiGi, A, t))
     return {"certified_max_aliasability": float(np.sqrt(max(sup_g, 0.0))),
             "grid_max_aliasability": float(np.sqrt(max(grid_g, 0.0))),
             "lipschitz": L, "lipschitz_slack": float(np.sqrt(max(slack, 0.0))), **base}
@@ -710,18 +725,63 @@ def ds_optimal_criterion(freqs, out_freqs, t, ridge=1e-8):
     return float(logdet) if sign.real > 0 else -np.inf
 
 
+def _ds_optimal_1d_fast(freqs, out_freqs, N, n_sweeps, grid_res, seed, t0, ridge=1e-8):
+    r"""Fast 1-D exact-:math:`D_s` coordinate descent.  Identical objective to the generic
+    :func:`ds_optimal_criterion` path but ~2 orders of magnitude faster: moving one sample is a
+    rank-one down/up-date of the augmented Gram :math:`G=\sum_j v(t_j)v(t_j)^{*}`
+    (:math:`v(x)=e^{i2\pi\,\mathrm{allf}\,x}`), and every grid candidate is scored in ONE batched
+    Schur-complement ``slogdet`` instead of rebuilding :math:`\Phi,\Psi` per candidate."""
+    freqs = np.asarray(freqs, float).reshape(-1)
+    out_freqs = np.asarray(out_freqs, float).reshape(-1)
+    m, n = freqs.size, out_freqs.size
+    allf = np.concatenate([freqs, out_freqs])                            # (p,), block-ordered
+    rng = np.random.default_rng(seed)
+    t = rng.uniform(0, 1, N) if t0 is None else np.asarray(t0, float).reshape(-1).copy()
+    scan = np.arange(grid_res) / grid_res
+    V = np.exp(1j * 2 * np.pi * np.outer(t, allf))                       # (N, p) current rows
+    G = V.conj().T @ V                                                   # (p, p) unnormalized Gram
+    Escan = np.exp(1j * 2 * np.pi * np.outer(scan, allf))               # (Gr, p) candidate rows
+    # Gram contribution of a row v is conj(v) outer v (matches V.conj().T @ V):
+    outerc = np.conj(Escan)[:, :, None] * Escan[:, None, :]              # (Gr, p, p) -- precomputed
+    ridI = ridge * np.eye(n)
+    for _ in range(n_sweeps):
+        moved = 0.0
+        for j in range(N):
+            vold = V[j]
+            Grem = G - np.outer(np.conj(vold), vold)                     # remove sample j
+            M = (Grem[None] + outerc) / N                                # (Gr, p, p) all candidates
+            Mll = M[:, :m, :m]
+            Mlo = M[:, :m, m:]
+            Moo = M[:, m:, m:] + ridI
+            # Schur S = Mll - Mlo Moo^{-1} Mlo^*  (batched);  criterion = log det S
+            S = Mll - Mlo @ np.linalg.solve(Moo, np.conj(np.transpose(Mlo, (0, 2, 1))))
+            sign, logdet = np.linalg.slogdet(S)
+            crit = np.where(sign.real > 0, logdet.real, -np.inf)
+            gi = int(np.argmax(crit))
+            vnew = Escan[gi]
+            G = Grem + np.outer(np.conj(vnew), vnew)
+            V[j] = vnew
+            moved += abs(scan[gi] - t[j])
+            t[j] = scan[gi]
+        if moved < 1e-6:
+            break
+    return np.sort(t)
+
+
 def ds_optimal_design(freqs, out_freqs, N, n_sweeps=10, grid_res=384, seed=0, t0=None, d=1):
     r"""Exact-:math:`D_s` sample design: coordinate descent maximizing
     :func:`ds_optimal_criterion` (Schur-complement log-det) over continuous times in
     :math:`[0,1)^d`.  This is the *standard* nuisance-parameter optimal design against which
     the AliasGuard surrogate is compared (they are related but not identical objectives).
-    Deterministic given ``(seed, t0)``."""
+    Deterministic given ``(seed, t0)``.  The 1-D path uses a fast batched rank-one update."""
     freqs = np.asarray(freqs, float)
     out_freqs = np.asarray(out_freqs, float)
+    if d == 1:
+        return _ds_optimal_1d_fast(freqs, out_freqs, N, n_sweeps, grid_res, seed, t0)
     neg = lambda cand: -ds_optimal_criterion(freqs, out_freqs, cand)
     t = _coord_descent(freqs, out_freqs, N, neg, d=d, n_sweeps=n_sweeps,
                        grid_res=grid_res, seed=seed, t0=t0)
-    return np.sort(t.reshape(-1)) if d == 1 else t
+    return t
 
 
 def annealing_design(freqs, out_freqs, N, maxiter=200, seed=0):
