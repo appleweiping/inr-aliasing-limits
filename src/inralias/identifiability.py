@@ -86,6 +86,9 @@ __all__ = [
     "expected_jitter_coherence",
     "coherence_epsilon",
     "aliasability_concentration_bound",
+    "matrix_chernoff_gram_deviation",
+    "cross_coherence_bernstein_eps",
+    "aliasability_matrix_bound",
     "residual_test_power",
 ]
 
@@ -301,6 +304,86 @@ def aliasability_concentration_bound(
     if m * eps >= lam_min:
         return float("inf")
     return float(np.sqrt(m) * eps / (lam_min - m * eps))
+
+
+def matrix_chernoff_gram_deviation(m: int, N: int, delta: float) -> tuple[float, float]:
+    r"""Two-sided operator-norm deviation of the normalized Gram (Tropp matrix Chernoff).
+
+    Write :math:`\Phi^{*}\Phi=\sum_{j=1}^N\bm\phi_j\bm\phi_j^{*}` with i.i.d. rows
+    :math:`\bm\phi_j=(e^{i2\pi\omega_k t_j})_k\in\C^m`, :math:`\lVert\bm\phi_j\rVert^2=m`, and
+    (uniform density, integer-disjoint :math:`\Lam`) :math:`\mathbb E[\Phi^{*}\Phi/N]=\bm I`.
+    Matrix Chernoff (Tropp 2012, Thm 5.1.1) with per-term
+    :math:`\lambda_{\max}(\bm\phi_j\bm\phi_j^{*})=m` and :math:`\mu_{\min}=\mu_{\max}=N` gives,
+    each with probability :math:`\ge1-\delta/2`,
+
+    .. math:: \lambda_{\min}(\Phi^{*}\Phi/N)\ge 1-\eta_{\mathrm{lo}},\qquad
+              \lambda_{\max}(\Phi^{*}\Phi/N)\le 1+\eta_{\mathrm{hi}},
+
+    with :math:`\eta_{\mathrm{lo}}=\sqrt{2m\log(2m/\delta)/N}` (lower tail,
+    :math:`e^{-\eta^2/2}`) and :math:`\eta_{\mathrm{hi}}=\sqrt{3m\log(2m/\delta)/N}`
+    (upper tail, :math:`e^{-\eta^2/3}`).  This replaces the Frobenius (:math:`\sqrt m`-loose)
+    perturbation step of :func:`aliasability_concentration_bound`.
+    """
+    L = np.log(2.0 * float(m) / float(delta))
+    eta_lo = np.sqrt(2.0 * float(m) * L / float(N))
+    eta_hi = np.sqrt(3.0 * float(m) * L / float(N))
+    return float(eta_lo), float(eta_hi)
+
+
+def cross_coherence_bernstein_eps(m: int, n_candidates: int, N: int, delta: float) -> float:
+    r"""Per-coordinate Bernstein radius for the model--candidate coherences (variance-aware).
+
+    Each entry :math:`b_\nu[k]=\tfrac1N\sum_j e^{i2\pi(\nu-\omega_k)t_j}` is an empirical mean
+    of unit-modulus, mean-zero (integer-disjoint) terms with **variance exactly 1**.  Complex
+    Bernstein on real/imaginary parts, union over the :math:`mK` model--candidate pairs at
+    level :math:`\delta/2`, gives :math:`|b_\nu[k]|\le\varepsilon_c` and hence
+    :math:`\lVert\bm b_\nu\rVert\le\sqrt m\,\varepsilon_c`, with
+    :math:`\varepsilon_c=\sqrt{2\log(8mK/\delta)/N}+\tfrac23\log(8mK/\delta)/N`.
+    Using Bernstein (variance 1) rather than Hoeffding (range 4) removes the constant-4 slack
+    in :func:`coherence_epsilon`.
+    """
+    L = np.log(8.0 * float(m) * float(max(1, n_candidates)) / float(delta))
+    return float(np.sqrt(2.0 * L / float(N)) + (2.0 / 3.0) * L / float(N))
+
+
+def aliasability_matrix_bound(
+    m: int, n_candidates: int, N: int, delta: float,
+    lam_min: float = 1.0, data_lam_min: float | None = None,
+) -> dict:
+    r"""Non-asymptotic aliasability bound via matrix Bernstein/Chernoff (Theorem 1').
+
+    Combining :func:`matrix_chernoff_gram_deviation` (denominator) with
+    :func:`cross_coherence_bernstein_eps` (numerator), with probability :math:`\ge1-\delta`
+
+    .. math:: \max_{\nu\in\Omega}a_T(\nu)\ \le\
+        \frac{\sqrt m\,\varepsilon_c}{\lambda_{\min}-\eta_{\mathrm{lo}}}
+        \qquad(\text{a-priori, provided }\eta_{\mathrm{lo}}<\lambda_{\min}).
+
+    The proviso :math:`\eta_{\mathrm{lo}}<\lambda_{\min}` first holds at
+    :math:`N^{*}=2m\log(2m/\delta)` (vs. :math:`4m^2\log(4(mK+m^2)/\delta)` for the loose
+    union bound of :func:`aliasability_concentration_bound` -- a :math:`\sim(2m)`-fold smaller
+    crossover).  The **data-dependent** form plugs the realized
+    :math:`\hat\lambda_{\min}=\lambda_{\min}(\Phi^{*}\Phi/N)>0` into the denominator (only the
+    numerator is randomized), and is finite for every full-rank realized design -- including
+    :math:`N` far below :math:`N^{*}`.
+
+    Returns a dict ``{apriori, data_dependent?, eta_lo, eta_hi, eps_c, crossover_N}``;
+    ``apriori`` is ``inf`` when :math:`\eta_{\mathrm{lo}}\ge\lambda_{\min}` (vacuous at that N).
+    """
+    eta_lo, eta_hi = matrix_chernoff_gram_deviation(m, N, delta)
+    eps_c = cross_coherence_bernstein_eps(m, n_candidates, N, delta)
+    num = np.sqrt(float(m)) * eps_c
+    apriori = float("inf") if eta_lo >= lam_min else float(num / (lam_min - eta_lo))
+    out = {
+        "apriori": apriori,
+        "eta_lo": float(eta_lo),
+        "eta_hi": float(eta_hi),
+        "eps_c": float(eps_c),
+        "crossover_N": float(2.0 * float(m) * np.log(2.0 * float(m) / float(delta))),
+    }
+    if data_lam_min is not None and data_lam_min > 0:
+        out["data_dependent"] = float(num / float(data_lam_min))
+    return out
 
 
 # --------------------------------------------------------------------------------------

@@ -1,0 +1,64 @@
+% U1 -- matrix-Bernstein/Chernoff aliasability bound (Theorem 1').  Shared fragment; \input
+% into the supplement (ICASSP/T-SP) or the appendix (ML target).  Uses the shared macros
+% \Phimat, \at, \Om, \R, \C, \Z from macros_shared.tex.
+\begin{theorem}[Non-asymptotic aliasability bound]\label{thm:u1}
+Let $\Lam\subset\Z$, $|\Lam|=m$ distinct, and let $t_1,\dots,t_N$ be i.i.d.\ uniform on
+$[0,1)$.  Let $\Om\subset\Z$ be a candidate set integer-disjoint from $\Lam$, $|\Om|=K$, and
+write $\bm G_N=\Phimat^{*}\Phimat/N$ and $\bm b_\nu=\Phimat^{*}\bm\phi_\nu/N$.  Fix
+$\delta\in(0,1)$ and set
+\[
+\eta_N=\sqrt{\tfrac{2m\log(2m/\delta)}{N}},\qquad
+\varepsilon_c=\sqrt{\tfrac{2\log(8mK/\delta)}{N}}+\tfrac23\,\tfrac{\log(8mK/\delta)}{N}.
+\]
+Then with probability at least $1-\delta$, provided $\eta_N<1$,
+\begin{equation}\label{eq:u1-apriori}
+\max_{\nu\in\Om}\at(\nu)\ \le\ \frac{\sqrt m\,\varepsilon_c}{1-\eta_N}.
+\end{equation}
+Moreover, on the same event, with the \emph{realized} $\hat\lambda_{\min}=\lambda_{\min}(\bm
+G_N)$,
+\begin{equation}\label{eq:u1-datadep}
+\max_{\nu\in\Om}\at(\nu)\ \le\ \frac{\sqrt m\,\varepsilon_c}{\hat\lambda_{\min}}
+\qquad\text{(finite for every full-rank realized design, including $N$ below the crossover).}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Since $\at(\nu)=\norm{\bm G_N^{-1}\bm b_\nu}\le\norm{\bm b_\nu}/\lambda_{\min}(\bm G_N)$,
+it suffices to control the denominator and the numerator.
+
+\emph{Denominator (matrix Chernoff).}  Write $\Phimat^{*}\Phimat=\sum_{j=1}^N\bm\phi_j
+\bm\phi_j^{*}$ with i.i.d.\ rows $\bm\phi_j=(e^{i2\pi\omega_k t_j})_k\in\C^m$; each summand is
+PSD with $\lambda_{\max}(\bm\phi_j\bm\phi_j^{*})=\norm{\bm\phi_j}^2=m$, and (uniform density,
+integer $\Lam$) $\mathbb E[\bm\phi_j\bm\phi_j^{*}]=\bm I$ so $\mu_{\min}=\lambda_{\min}(\mathbb
+E\,\Phimat^{*}\Phimat)=N$.  The matrix Chernoff lower tail
+\cite[Thm.~5.1.1]{tropp2012usertail} gives, for $\eta\in(0,1)$,
+$\Pr\{\lambda_{\min}(\Phimat^{*}\Phimat)\le(1-\eta)N\}\le m\,e^{-\eta^2 N/(2m)}$; setting the
+right side to $\delta/2$ yields $\eta=\eta_N$ and $\lambda_{\min}(\bm G_N)\ge1-\eta_N$ w.p.\
+$\ge1-\delta/2$.
+
+\emph{Numerator (variance-aware Bernstein).}  Each coordinate
+$\bm b_\nu[k]=\frac1N\sum_j e^{i2\pi(\nu-\omega_k)t_j}$ is an empirical mean of unit-modulus,
+mean-zero (integer-disjoint $\Rightarrow\int_0^1 e^{i2\pi\delta t}\,dt=0$) terms with variance
+exactly $1$.  Bernstein's inequality on the real and imaginary parts (each variance $\tfrac12$,
+range $1$), with a union bound over the $mK$ pairs at level $\delta/2$, gives $|\bm
+b_\nu[k]|\le\varepsilon_c$ simultaneously for all $\nu\in\Om,k$, hence $\norm{\bm b_\nu}\le\sqrt
+m\,\varepsilon_c$, w.p.\ $\ge1-\delta/2$.
+
+Intersecting the two events (probability $\ge1-\delta$) and dividing gives
+\eqref{eq:u1-apriori}; using the observed $\hat\lambda_{\min}$ in place of its lower bound
+$1-\eta_N$ (only the numerator was randomized) gives \eqref{eq:u1-datadep}.
+\end{proof}
+
+\begin{remark}[The bound now bites at design scale]\label{rmk:u1-crossover}
+The a-priori bound \eqref{eq:u1-apriori} is finite as soon as $\eta_N<1$, i.e.\ at
+$N^{*}=2m\log(2m/\delta)$; for the validated $m=9,\delta=0.05$ this is $N^{*}\approx106$, versus
+$4m^2\log\!\big(4(mK+m^2)/\delta\big)\approx3327$ for the loose union bound of the previous
+section (Prop.~\ref{prop:conc-loose}) --- a $\sim\!30\times$ smaller crossover, driven by the
+operator-norm (rather than Frobenius, $\sqrt m$-loose) Gram control and by variance-$1$
+Bernstein (rather than range-$4$ Hoeffding).  Fig.~\ref{fig:matrix}(b) confirms both bounds
+are sound and that the data-dependent form \eqref{eq:u1-datadep} is finite and non-vacuous at
+the acquisition budgets $N\!\approx\!40$--$512$ where the design is actually used.  This
+answers directly the objection that the finite-$N$ sufficient condition failed to bite at the
+tested $N$.  (The bound stays a high-probability \emph{upper} bound; Thm.~\ref{thm:u3a} shows
+its $N^{-1/2}$ rate is order-optimal.)
+\end{remark}

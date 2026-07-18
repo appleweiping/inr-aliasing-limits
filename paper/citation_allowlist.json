@@ -32,6 +32,7 @@
     "atkinson2007optimum": "Atkinson, Donev & Tobias, Optimum Experimental Designs with SAS, OUP, 2007 -- canonical book",
     "frost1972lcmv": "Frost, Proc. IEEE 60(8):926-935, 1972 -- canonical",
     "vantrees2002optimum": "Van Trees, Optimum Array Processing, Wiley, 2002 -- canonical book",
-    "devore1993constructive": "DeVore & Lorentz, Constructive Approximation, Springer, 1993 -- canonical book"
+    "devore1993constructive": "DeVore & Lorentz, Constructive Approximation, Springer, 1993 -- canonical book",
+    "tropp2012usertail": "Tropp, Found. Comput. Math. 12(4):389-434, 2012; doi 10.1007/s10208-011-9099-z -- canonical (matrix Chernoff/Bernstein)"
   }
 }

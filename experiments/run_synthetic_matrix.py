@@ -39,6 +39,7 @@ from inralias.identifiability import (
     aliasability,
     expected_jitter_coherence,
     aliasability_concentration_bound,
+    aliasability_matrix_bound,
     function_error_decomposition,
     continuous_gram,
 )
@@ -87,21 +88,39 @@ def panel_a_jitter(rng):
 
 
 def panel_b_concentration(rng):
-    """Worst-case aliasability over a candidate set vs N, iid uniform sampling (T3b)."""
+    """Worst-case aliasability over a candidate set vs N, iid uniform sampling (T3b).
+
+    Compares the loose union-bound (``aliasability_concentration_bound``) with the
+    matrix-Bernstein/Chernoff bound (Theorem 1'): both the a-priori bound (finite ~30x
+    sooner) and the data-dependent bound (uses the realized lambda_min -> finite even at
+    design-scale N).  Emits the crossover N of each for the paper macros.
+    """
+    from inralias.sampling import synthesis_matrix
     cands = np.setdiff1d(np.arange(24, 55).astype(float), LAMBDA)
     K = cands.size
-    Ns = [400, 800, 1600, 3200, 6400, 12800, 25600]
-    emp_mean, emp_ci, bound = [], [], []
+    delta = 0.05
+    # design-scale grid (40..) through the crossover into the asymptotic regime
+    Ns = [40, 64, 96, 128, 256, 512, 1024, 3200, 6400, 12800, 25600]
+    emp_mean, emp_ci, bound, mbound_ap, mbound_dd, lam_min_med = [], [], [], [], [], []
     for N in Ns:
-        vals = []
-        for _ in range(10):
+        vals, lmins = [], []
+        for _ in range(20):
             t = np.sort(rng.uniform(0, 1, N))
             vals.append(max(aliasability(LAMBDA, t, nu) for nu in cands))
+            Phi = synthesis_matrix(LAMBDA, t)
+            lmins.append(float(np.linalg.eigvalsh(Phi.conj().T @ Phi / N)[0]))
         mu, ci = _mean_ci(vals)
-        emp_mean.append(mu); emp_ci.append(ci)
-        bound.append(aliasability_concentration_bound(M, K, N, delta=0.05, lam_min=1.0))
+        lmed = float(np.median(lmins))
+        emp_mean.append(mu); emp_ci.append(ci); lam_min_med.append(lmed)
+        bound.append(aliasability_concentration_bound(M, K, N, delta=delta, lam_min=1.0))
+        mb = aliasability_matrix_bound(M, K, N, delta=delta, data_lam_min=lmed)
+        mbound_ap.append(mb["apriori"]); mbound_dd.append(mb.get("data_dependent", float("inf")))
+    old_x = float(4 * M * M * np.log(4 * (M * K + M * M) / delta))     # union-bound crossover
+    new_x = float(aliasability_matrix_bound(M, K, 100, delta=delta)["crossover_N"])
     return {"N": Ns, "K": int(K), "amax_mean": emp_mean, "amax_ci": emp_ci,
-            "bound_delta05": bound}
+            "bound_delta05": bound, "matrix_bound_apriori": mbound_ap,
+            "matrix_bound_data_dependent": mbound_dd, "lam_min_median": lam_min_med,
+            "crossover_N_old": old_x, "crossover_N_new": new_x}
 
 
 def panel_c_fixed_vs_adversarial(rng):
@@ -212,10 +231,15 @@ def main():
     Ns = np.array(B["N"], float)
     mu = np.array(B["amax_mean"]); ci = np.array(B["amax_ci"])
     ax.errorbar(Ns, mu, yerr=ci, fmt="o-", ms=4, color="C0", label="empirical max")
-    bnd = np.array(B["bound_delta05"])
-    ok = np.isfinite(bnd)
-    ax.plot(Ns[ok], bnd[ok], "k--", lw=1.2, label=r"bound ($\delta{=}0.05$)")
-    ax.plot(Ns, mu[0] * np.sqrt(Ns[0] / Ns), color="0.6", ls=":", lw=1.2,
+    bnd = np.array(B["bound_delta05"]); ok = np.isfinite(bnd)
+    ax.plot(Ns[ok], bnd[ok], "k:", lw=1.1, label="union bound (loose)")
+    mb = np.array(B.get("matrix_bound_apriori", [np.inf] * len(Ns))); okm = np.isfinite(mb)
+    if okm.any():
+        ax.plot(Ns[okm], mb[okm], "C1--", lw=1.3, label="matrix-Bernstein (a-priori)")
+    dd = np.array(B.get("matrix_bound_data_dependent", [np.inf] * len(Ns))); okd = np.isfinite(dd)
+    if okd.any():
+        ax.plot(Ns[okd], dd[okd], "C2-", lw=1.3, label="matrix-Bernstein (data-dep.)")
+    ax.plot(Ns, mu[0] * np.sqrt(Ns[0] / Ns), color="0.6", ls=":", lw=1.0,
             label=r"$N^{-1/2}$ slope")
     ax.set_xscale("log"); ax.set_yscale("log")
     ax.set_xlabel("$N$ (i.i.d. samples)")
