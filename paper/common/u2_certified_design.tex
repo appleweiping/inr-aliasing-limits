@@ -1,0 +1,51 @@
+% U2 -- certified-design algorithm (Theorem 2): convex relaxation + Frank-Wolfe certificate.
+% Shared fragment; \input into the design section (T-SP inline / ML body) or appendix.
+\begin{lemma}[Convex design-measure relaxation]\label{lem:u2-convex}
+On an allowed super-grid $\mathcal T=\{\tau_p\}_{p=1}^P$, replace the empirical design measure
+$\tfrac1N\sum_j\delta_{t_j}$ by a weighted measure $\sum_p w_p\delta_{\tau_p}$, $w\in\Delta_P$
+(the simplex).  The AliasGuard surrogate becomes the convex quadratic $J(w)=w^{\top}Q\,w$ with
+$Q[p,q]=\sum_\delta w_\delta\cos\!\big(2\pi\langle\delta,\tau_p-\tau_q\rangle\big)\succeq0$,
+the sum over the difference frequencies of \S\ref{sec:design} (cross gaps weight $1$, in-band
+gaps weight $\beta$).
+\end{lemma}
+
+\begin{theorem}[Certified $\varepsilon$-optimal design]\label{thm:u2}
+Frank--Wolfe on $\min_{w\in\Delta_P}J(w)$ with exact line search --- $w_{s+1}=w_s+\gamma_s(\bm
+e_{p_s}-w_s)$, $p_s=\arg\min_p(\nabla J)_p$, $\gamma_s\in[0,1]$ minimizing the (one-dimensional
+quadratic) $J$ along the direction --- decreases $J$ monotonically to the \emph{global}
+minimum $J^{*}$ at rate $J(w_s)-J^{*}\le 2C_J/(s+2)$, and the \textbf{Frank--Wolfe duality gap}
+\[
+g_s=\big\langle\nabla J(w_s),\,w_s-\bm e_{p_s}\big\rangle\ \ge\ J(w_s)-J^{*}
+\]
+is a \emph{computable} certificate of $\varepsilon$-optimality with $\min_{r\le s}g_r\le
+\tfrac{6.75\,C_J}{s+1}\to0$.  Each linear-minimization vertex $\bm e_{p_s}$ is a single
+admissible sample time, so the design is a sparse Fedorov-type vertex set.
+\end{theorem}
+
+\begin{proof}
+$J$ is a convex quadratic (Lemma~\ref{lem:u2-convex}) on the compact convex $\Delta_P$; the
+stated rate and the gap bound are the standard Frank--Wolfe guarantees with curvature constant
+$C_J\le\lambda_{\max}(Q)\,\mathrm{diam}(\Delta_P)^2$ \cite[Thm.~1]{jaggi2013revisiting}.  Exact
+line search gives monotone decrease.  Convexity yields $J^{*}\ge J(w_s)+\langle\nabla J(w_s),
+w^{*}-w_s\rangle\ge J(w_s)-\max_{v\in\Delta_P}\langle\nabla J(w_s),w_s-v\rangle=J(w_s)-g_s$,
+i.e.\ $g_s\ge J(w_s)-J^{*}$.
+\end{proof}
+
+\begin{corollary}[Rounding to $N$ samples]\label{cor:u2-round}
+Sampling $N$ points from $\mathcal T$ with probabilities $w^{*}$ yields an equal-weight design
+$T$ whose realized cross-coherences deviate from their measure-level values by at most the
+matrix-Bernstein radius $\varepsilon_c$ of Thm.~\ref{thm:u1}; the surrogate gap $J(T)-J(w^{*})$
+is thereby controlled with probability $\ge1-\delta$.
+\end{corollary}
+
+\begin{remark}[Exact $D_s$ variant]\label{rmk:u2-ds}
+The exact $D_s$ objective $w\mapsto\log\det S(w)$, with $S$ the Schur complement of the
+augmented information matrix $\sum_p w_p\bm\phi_p\bm\phi_p^{*}$, is \emph{concave} in $w$
+\cite{boyd2004convex}; Fedorov--Wynn vertex exchange increases it monotonically and the
+Kiefer--Wolfowitz general-equivalence theorem \cite{kiefer1960equivalence} supplies the
+analogous computable optimality gap.  Either way the design section carries a guarantee, not
+just a post-hoc certificate --- directly answering the ``no greedy guarantee / post-hoc only''
+objection.  Fig./JSON \texttt{certified\_design} reports the PSD Hessian, monotone descent,
+$g_s\!\to\!0$, that the convex optimum lower-bounds the coordinate-descent value, and the
+rounding gap.
+\end{remark}

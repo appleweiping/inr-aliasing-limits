@@ -34,6 +34,9 @@
     "vantrees2002optimum": "Van Trees, Optimum Array Processing, Wiley, 2002 -- canonical book",
     "devore1993constructive": "DeVore & Lorentz, Constructive Approximation, Springer, 1993 -- canonical book",
     "tropp2012usertail": "Tropp, Found. Comput. Math. 12(4):389-434, 2012; doi 10.1007/s10208-011-9099-z -- canonical (matrix Chernoff/Bernstein)",
-    "tsybakov2009nonparametric": "Tsybakov, Introduction to Nonparametric Estimation, Springer, 2009; doi 10.1007/b13794 -- canonical (Assouad/Le Cam)"
+    "tsybakov2009nonparametric": "Tsybakov, Introduction to Nonparametric Estimation, Springer, 2009; doi 10.1007/b13794 -- canonical (Assouad/Le Cam)",
+    "jaggi2013revisiting": "Jaggi, ICML 2013 (Frank-Wolfe revisited) -- canonical",
+    "boyd2004convex": "Boyd & Vandenberghe, Convex Optimization, Cambridge, 2004; doi 10.1017/CBO9780511804441 -- canonical",
+    "kiefer1960equivalence": "Kiefer & Wolfowitz, Canad. J. Math. 12:363-366, 1960; doi 10.4153/CJM-1960-030-4 -- canonical"
   }
 }

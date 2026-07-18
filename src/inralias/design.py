@@ -61,6 +61,10 @@ __all__ = [
     "design_metrics",
     "cross_coherence",
     "surrogate_objective",
+    "surrogate_hessian",
+    "aliasguard_frankwolfe",
+    "design_measure_round",
+    "rounding_gap_bound",
     "visibility_of",
     "aliasability_of",
     "aliasability_L2_of",
@@ -344,6 +348,109 @@ def coherence_only_design(freqs, out_freqs, N, n_sweeps=12, grid_res=512, seed=0
     t = _coord_descent(freqs, out_freqs, N, obj, d=1, n_sweeps=n_sweeps,
                        grid_res=grid_res, seed=seed)
     return np.sort(t.reshape(-1))
+
+
+# --------------------------------------------------------------------------------------
+# U2 -- certified-design ALGORITHM: convex relaxation over the design measure + Frank-Wolfe
+# with a computable duality-gap certificate (converts "no greedy guarantee" -> certified
+# epsilon-optimal for the surrogate / D_s objective).
+# --------------------------------------------------------------------------------------
+def surrogate_hessian(freqs, out_freqs, super_grid, beta: float = 1.0) -> np.ndarray:
+    r"""Hessian of the anti-aliasing surrogate over the design MEASURE.
+
+    Replacing the empirical measure :math:`\tfrac1N\sum_j\delta_{t_j}` by a weighted measure
+    :math:`\sum_p w_p\delta_{\tau_p}` on a super-grid :math:`\mathcal T=\{\tau_p\}` turns the
+    surrogate into a convex quadratic :math:`J(w)=w^{\top}Q\,w` with
+
+    .. math:: Q[p,q]=\sum_\delta w_\delta\cos\!\big(2\pi\langle\delta,\tau_p-\tau_q\rangle\big)
+              \ \succeq\ 0 ,
+
+    the sum over the difference frequencies :math:`\delta` (cross gaps weight 1, in-band gaps
+    weight :math:`\beta`) from :func:`_diff_freqs`.  PSD since each term is
+    :math:`w_\delta\,\mathrm{Re}(\bm e_\delta\bm e_\delta^{*})` with
+    :math:`\bm e_\delta=(e^{i2\pi\langle\delta,\tau_p\rangle})_p`.
+    """
+    F, _ = _as2d(freqs)
+    O, _ = _as2d(out_freqs)
+    T, _ = _as2d(super_grid)
+    deltas, wts = _diff_freqs(F, O, beta)
+    E = np.exp(1j * 2 * np.pi * (deltas @ T.T))          # (D, P), E[d,p]=e^{i2pi<delta_d,tau_p>}
+    Q = np.real((wts[:, None] * E).T @ E.conj())         # Q[p,q]=sum_d w_d E[d,p] conj(E[d,q])
+    return 0.5 * (Q + Q.T)
+
+
+def aliasguard_frankwolfe(freqs, out_freqs, super_grid, beta: float = 1.0,
+                          n_iter: int = 400, w0=None):
+    r"""Frank--Wolfe on :math:`\min_{w\in\Delta(\mathcal T)} w^{\top}Q\,w` (convex).
+
+    Iterates :math:`w_{s+1}=(1-\gamma_s)w_s+\gamma_s\bm e_{p_s}`,
+    :math:`p_s=\arg\min_p(\nabla J)_p`, :math:`\gamma_s=2/(s+2)`.  Returns ``(w, info)`` with
+    ``info = {J, gap, support}``: ``J`` monotone-decreasing, and the **Frank--Wolfe duality
+    gap** :math:`g_s=\langle\nabla J(w_s),w_s-\bm e_{p_s}\rangle\ge J(w_s)-J^{*}` is a
+    *computable certificate* of :math:`\varepsilon`-optimality (``min gap`` over iterates).
+    Each LMO vertex :math:`\bm e_{p_s}` is a single admissible sample time, so the design is a
+    sparse Fedorov-type vertex set.  Convergence :math:`J(w_s)-J^{*}\le 2C_J/(s+2)`.
+    """
+    Q = surrogate_hessian(freqs, out_freqs, super_grid, beta)
+    P = Q.shape[0]
+    w = np.full(P, 1.0 / P) if w0 is None else np.asarray(w0, float) / np.sum(w0)
+    Qw = Q @ w
+    Js, gaps = [], []
+    for s in range(n_iter):
+        grad = 2.0 * Qw
+        p = int(np.argmin(grad))
+        gap = float(grad @ w - grad[p])                  # <grad, w - e_p> >= J(w)-J*
+        Js.append(float(w @ Qw)); gaps.append(max(gap, 0.0))
+        if gap <= 1e-12:
+            break
+        # exact line search for the quadratic: d = e_p - w, gamma* = (gap/2)/(d^T Q d)
+        d = -w.copy(); d[p] += 1.0
+        Qd = Q @ d
+        dQd = float(d @ Qd)
+        gamma = 1.0 if dQd <= 0 else min(1.0, max(0.0, (gap / 2.0) / dQd))
+        w = w + gamma * d
+        Qw = Qw + gamma * Qd
+    support = np.where(w > 1e-6)[0]
+    return w, {"J": Js, "gap": gaps, "min_gap": float(min(gaps)) if gaps else 0.0,
+               "support_size": int(support.size), "support": support.tolist()}
+
+
+def design_measure_round(w, super_grid, N: int, seed: int = 0) -> np.ndarray:
+    r"""Round a design measure ``w`` to an equal-weight :math:`N`-point design by sampling
+    :math:`\mathcal T` with probabilities :math:`w` (systematic residual sampling for low
+    variance).  The realized-vs-target coherence gap is bounded by the matrix-Bernstein bound
+    of Theorem 1' (see :func:`rounding_gap_bound`)."""
+    T, _ = _as2d(super_grid)
+    w = np.asarray(w, float); w = w / w.sum()
+    rng = np.random.default_rng(seed)
+    # systematic sampling of N points proportional to w (with replacement on the grid)
+    cum = np.cumsum(w)
+    u = (rng.random() + np.arange(N)) / N
+    idx = np.searchsorted(cum, u)
+    idx = np.clip(idx, 0, T.shape[0] - 1)
+    t = T[idx]
+    return np.sort(t.reshape(-1)) if t.shape[1] == 1 else t
+
+
+def rounding_gap_bound(freqs, out_freqs, w, super_grid, N, beta: float = 1.0,
+                       delta: float = 0.05, seed: int = 0) -> dict:
+    r"""Empirical measure->N rounding gap and its high-probability bound.
+
+    Compares the surrogate at the continuous optimum ``J(w)`` with the realized ``J(t)`` for a
+    rounded :math:`N`-point design, and reports the matrix-Bernstein cross-coherence radius
+    (Theorem 1', :func:`~inralias.identifiability.cross_coherence_bernstein_eps`) that bounds
+    the per-coherence deviation from rounding."""
+    from .identifiability import cross_coherence_bernstein_eps
+    F = np.asarray(freqs, float); O = np.asarray(out_freqs, float)
+    t = design_measure_round(w, super_grid, N, seed=seed)
+    J_meas = float(w @ (surrogate_hessian(F, O, super_grid, beta) @ w))
+    J_round = surrogate_objective(F.reshape(-1, 1) if F.ndim == 1 else F,
+                                  O.reshape(-1, 1) if O.ndim == 1 else O, t, beta)
+    m, K = F.reshape(-1, F.shape[-1] if F.ndim > 1 else 1).shape[0], np.atleast_1d(O).shape[0]
+    eps_c = cross_coherence_bernstein_eps(m, max(1, K), N, delta)
+    return {"J_measure": J_meas, "J_rounded": float(J_round),
+            "rounding_gap": float(J_round - J_meas), "coherence_radius": float(eps_c),
+            "N": int(N)}
 
 
 # --------------------------------------------------------------------------------------

@@ -146,3 +146,24 @@ def test_2d_design_beats_random():
     _t, m2 = aliasguard_continuous_nd(LAM2, O2, N, d=2, n_sweeps=4, grid_res=28, seed=0)
     assert m2["max_aliasability"] < 0.7 * mr["max_aliasability"]
     assert m2["min_visibility"] > mr["min_visibility"]
+
+
+def test_u2_frankwolfe_convex_certificate():
+    """Frank-Wolfe on the convex design-measure surrogate: PSD Hessian, monotone decrease,
+    and a duality gap that -> 0 (certified eps-optimality). Its optimum lower-bounds the
+    coordinate-descent design's surrogate value (global vs local)."""
+    import numpy as np
+    from inralias.design import (aliasguard_frankwolfe, surrogate_hessian,
+                                 aliasguard_continuous, surrogate_objective)
+    Lam = np.array([0, 3, -3, 7, -7], float)
+    Om = np.array([28.5, -28.5, 33.5, -33.5, 40.5, -40.5], float)
+    grid = np.arange(400) / 400.0
+    Q = surrogate_hessian(Lam, Om, grid)
+    assert float(np.linalg.eigvalsh(Q)[0]) >= -1e-8                 # PSD
+    w, info = aliasguard_frankwolfe(Lam, Om, grid, beta=1.0, n_iter=2000)
+    J = info["J"]
+    assert all(J[i] >= J[i + 1] - 1e-10 for i in range(len(J) - 1))  # monotone (line search)
+    assert info["min_gap"] <= 1e-6                                   # certified near-global optimum
+    # the convex-relaxation optimum is <= any realized (coordinate-descent) design's surrogate
+    t_cd, _ = aliasguard_continuous(Lam, Om, 40, n_sweeps=15, grid_res=480, seed=0)
+    assert J[-1] <= surrogate_objective(Lam, Om, t_cd, 1.0) + 1e-9
