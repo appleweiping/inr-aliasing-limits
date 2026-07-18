@@ -1,0 +1,149 @@
+{
+  "config": {
+    "ny": 192,
+    "acs_frac": 0.08,
+    "rates": [
+      4,
+      8
+    ],
+    "W": 88,
+    "tv_lam": 0.02,
+    "tv_iters": 80,
+    "masks": [
+      "equispaced",
+      "random",
+      "vardensity",
+      "lowdisc",
+      "ds",
+      "aliasguard"
+    ],
+    "threat_aware": [
+      "aliasguard",
+      "ds"
+    ],
+    "n_phantoms": 7
+  },
+  "by_rate": {
+    "4": {
+      "summary": {
+        "equispaced": {
+          "cert_muW": 0.6666666666666675,
+          "psnr_mean": 34.98304814747517,
+          "psnr_std": 3.156447278160168,
+          "ssim_mean": 0.8820491099835793,
+          "n_lines": 48
+        },
+        "random": {
+          "cert_muW": 0.32144209001161833,
+          "psnr_mean": 37.63770589190852,
+          "psnr_std": 1.3775290990342925,
+          "ssim_mean": 0.9125048252357979,
+          "n_lines": 48
+        },
+        "vardensity": {
+          "cert_muW": 0.787134155156839,
+          "psnr_mean": 37.94625213999025,
+          "psnr_std": 2.180271136020889,
+          "ssim_mean": 0.9223611688564637,
+          "n_lines": 48
+        },
+        "lowdisc": {
+          "cert_muW": 0.6875,
+          "psnr_mean": 33.93362153684179,
+          "psnr_std": 3.036922186538137,
+          "ssim_mean": 0.8704339672542198,
+          "n_lines": 48
+        },
+        "ds": {
+          "cert_muW": 0.5369944334070774,
+          "psnr_mean": 33.071858785249084,
+          "psnr_std": 2.468158686188314,
+          "ssim_mean": 0.8786901604876343,
+          "n_lines": 48
+        },
+        "aliasguard": {
+          "cert_muW": 0.21716523032722193,
+          "psnr_mean": 34.387697339524394,
+          "psnr_std": 1.98944576315683,
+          "ssim_mean": 0.8859297246253257,
+          "n_lines": 48
+        }
+      },
+      "aliasguard_cert_rank": 1,
+      "aliasguard_psnr_rank": 4,
+      "best_cert_mask": "aliasguard",
+      "best_psnr_mask": "vardensity",
+      "spearman_cert_vs_reconerr": -0.2571428571428572
+    },
+    "8": {
+      "summary": {
+        "equispaced": {
+          "cert_muW": 0.8837274611761052,
+          "psnr_mean": 31.643784820375235,
+          "psnr_std": 3.605124559998957,
+          "ssim_mean": 0.8572376970049742,
+          "n_lines": 24
+        },
+        "random": {
+          "cert_muW": 0.6123477502645666,
+          "psnr_mean": 30.73998527679304,
+          "psnr_std": 4.414839848955202,
+          "ssim_mean": 0.8466756856083879,
+          "n_lines": 24
+        },
+        "vardensity": {
+          "cert_muW": 0.8976369152232421,
+          "psnr_mean": 33.01039492265193,
+          "psnr_std": 3.3518224343300242,
+          "ssim_mean": 0.8788675358606207,
+          "n_lines": 24
+        },
+        "lowdisc": {
+          "cert_muW": 0.6358829715395287,
+          "psnr_mean": 30.87640118944343,
+          "psnr_std": 4.21354084928552,
+          "ssim_mean": 0.8439310578233022,
+          "n_lines": 24
+        },
+        "ds": {
+          "cert_muW": 0.692498513756655,
+          "psnr_mean": 29.498204715567237,
+          "psnr_std": 4.603052142626625,
+          "ssim_mean": 0.8328838966469719,
+          "n_lines": 24
+        },
+        "aliasguard": {
+          "cert_muW": 0.539744151620755,
+          "psnr_mean": 30.03371621962355,
+          "psnr_std": 4.467877087498598,
+          "ssim_mean": 0.8361037314243004,
+          "n_lines": 24
+        }
+      },
+      "aliasguard_cert_rank": 1,
+      "aliasguard_psnr_rank": 5,
+      "best_cert_mask": "aliasguard",
+      "best_psnr_mask": "vardensity",
+      "spearman_cert_vs_reconerr": -0.6571428571428573
+    }
+  },
+  "note": "SCOPING result (honest boundary): AliasGuard attains the lowest certified worst-case coherent aliasing mu_W at every acceleration, but CS-MRI (TV) reconstruction is governed by incoherence + low-frequency energy capture, so variable-density/random masks (worst mu_W) win the recon and Spearman(mu_W, recon-error) is weak.  The certified worst-case aliasability governs LINEAR fixed-Fourier-feature reconstruction (Program 1), NOT sparse CS-MRI -- this experiment delimits the theory's scope.  numpy/scipy only; analytic phantoms.",
+  "_meta": {
+    "git_commit": "3f1376bfb795c34311968ce4f3ce9406e77e48a6",
+    "git_short": "3f1376bf",
+    "git_dirty": false,
+    "source_tree_sha256": "93f869362f776b00",
+    "command": "experiments/run_mri.py",
+    "timestamp_utc": "2026-07-18T10:45:09.926180+00:00",
+    "hostname": "autodl-container-p48vc3ykfm-7ba3727f",
+    "python": "3.12.3",
+    "platform": "Linux-5.15.0-25-generic-x86_64-with-glibc2.35",
+    "cpu_count": 128,
+    "numpy": "2.4.6",
+    "scipy": "1.18.0",
+    "config_sha256": "3e26f3f63131b479",
+    "torch": "2.8.0+cu128",
+    "cuda": "12.8",
+    "gpu": "NVIDIA GeForce RTX 4080 SUPER"
+  }
+}
