@@ -283,22 +283,64 @@ def _budget_task(args):
     return mth, N, float(_worst_L2(LAM, t, np.asarray(sc["held"]["near"], float)))
 
 
-def _twod_task(args):
-    s, quick = args
-    from inralias.design import aliasguard_continuous_nd
-    N2 = 48
-    rng = np.random.default_rng(30_000 + s)
-    LAM2 = np.unique(rng.integers(-3, 4, size=(14, 2)), axis=0).astype(float)[:9]
-    des = rng.integers(-9, 10, size=(8, 2)).astype(float)
-    des = des[np.min(np.linalg.norm(des[:, None] - LAM2[None], axis=2), axis=1) > 1.0]
-    test = rng.integers(-9, 10, size=(8, 2)).astype(float)
-    test = test[np.min(np.linalg.norm(test[:, None] - LAM2[None], axis=2), axis=1) > 1.0]
-    tr = rng.uniform(0, 1, (N2, 2))
-    rd = max((aliasability_L2_of(LAM2, tr, test[i]) for i in range(len(test))), default=0.0)
-    t2, _ = aliasguard_continuous_nd(LAM2, des, N2, d=2, n_sweeps=5 if quick else 8,
-                                     grid_res=32 if quick else 44, seed=s)
-    ag = max((aliasability_L2_of(LAM2, t2, test[i]) for i in range(len(test))), default=0.0)
-    return float(ag), float(rd)
+ND_METHODS = ["aliasguard", "ds_optimal", "e_optimal", "low_discrepancy",
+              "random_jitter", "iid_uniform"]
+
+
+def _make_nd_scenario(s, d):
+    """n-D scenario: integer-lattice dictionary, coherent out-of-band concern set, and a large
+    HELD-OUT vector set (near / shifted / broadband) disjoint from the concern set."""
+    rng = np.random.default_rng(60_000 + 1000 * d + s)
+    lat = int(np.ceil((12 if d == 2 else 16) ** (1.0 / d))) + 1
+    axes = [np.arange(-lat, lat + 1) for _ in range(d)]
+    grid = np.stack(np.meshgrid(*axes, indexing="ij"), -1).reshape(-1, d).astype(float)
+    order = np.argsort(np.linalg.norm(grid, axis=1))
+    LAM = grid[order[: (12 if d == 2 else 16)]]                       # low-freq dictionary
+    dirs = rng.normal(size=(4, d)); dirs /= np.linalg.norm(dirs, axis=1, keepdims=True)
+    R = rng.uniform(8, 12)
+    centers = np.round(dirs * R)                                     # coherent near-grid band
+
+    def clean(V):
+        V = np.atleast_2d(V)
+        return V[np.min(np.linalg.norm(V[:, None] - LAM[None], axis=2), axis=1) > 1.2]
+    Odes = clean(np.concatenate([centers + off for off in
+                                 ([[0, 0], [0.5, 0], [0, 0.5]] if d == 2
+                                  else [[0, 0, 0], [0.5, 0, 0], [0, 0.5, 0.5]])]))
+    near = clean(centers + rng.uniform(-0.4, 0.4, (len(centers), d)))
+    shifted = clean(centers + (3.0 if d == 2 else 2.5))
+    ann = rng.normal(size=(120, d)); ann /= np.linalg.norm(ann, axis=1, keepdims=True)
+    broad = clean(np.round(ann * rng.uniform(6, 16, (120, 1))))
+    held = np.concatenate([near, shifted, broad])[:128]
+    N = 64 if d == 2 else 96
+    return {"LAM": LAM, "Odes": Odes, "held": held, "N": N, "d": d}
+
+
+def _nd_task(args):
+    s, d, quick = args
+    from inralias.design import (aliasguard_continuous_nd, ds_optimal_design, e_optimal_design,
+                                 fixed_jitter, aliasability_certificate_nd)
+    sc = _make_nd_scenario(s, d)
+    LAM, Odes, held, N = sc["LAM"], sc["Odes"], sc["held"], sc["N"]
+    NSW, GR = (6, 40) if quick else (12, 96 if d == 2 else 56)
+    ns = 60 if quick else 200
+    rng = np.random.default_rng(70_000 + 1000 * d + s)
+    designs = {}
+    designs["aliasguard"] = aliasguard_continuous_nd(LAM, Odes, N, d=d, n_sweeps=NSW,
+                                                     grid_res=GR, seed=s)[0]
+    designs["ds_optimal"] = ds_optimal_design(LAM, Odes, N, n_sweeps=NSW, grid_res=GR, seed=s, d=d)
+    designs["e_optimal"] = e_optimal_design(LAM, N, n_restarts=ns, seed=s, d=d)
+    designs["low_discrepancy"] = fixed_jitter(N, d=d)
+    designs["random_jitter"] = (np.floor(rng.uniform(0, 1, (N, d)) * N) + rng.uniform(0, 1, (N, d))) / N % 1.0
+    designs["iid_uniform"] = rng.uniform(0, 1, (N, d))
+    box = [(float(np.min(held[:, ax]) - 0.5), float(np.max(held[:, ax]) + 0.5)) for ax in range(d)]
+    rec = {"s": s, "d": d, "worst": {}, "cert": {}}
+    for m, t in designs.items():
+        rec["worst"][m] = float(max((aliasability_L2_of(LAM, t, held[i]) for i in range(len(held))),
+                                    default=0.0))
+        if m in ("aliasguard", "ds_optimal", "random_jitter"):
+            c = aliasability_certificate_nd(LAM, t, box, n_per_axis=32 if d == 2 else 16, metric="l2")
+            rec["cert"][m] = float(c["certified_max_aliasability"])
+    return rec
 
 
 def _pmap(ex, fn, tasks):
@@ -341,13 +383,38 @@ def section_budget(scenarios, quick, ex=None):
     return curves
 
 
-def section_2d(quick, ex=None):
-    res = _pmap(ex, _twod_task, [(s, quick) for s in range(6 if quick else 12)])
-    ag = [a for a, _ in res]; rd = [r for _, r in res]
-    am, alo, ahi = _paired_bootstrap_ci(ag); rm, rlo, rhi = _paired_bootstrap_ci(rd)
-    return {"aliasguard": {"mean": am, "ci_lo": alo, "ci_hi": ahi},
-            "random": {"mean": rm, "ci_lo": rlo, "ci_hi": rhi},
-            "note": "held-out 2-D frequency VECTORS distinct from the design set"}
+def _paired_diff_ci(a, b, n_boot=4000, seed=11):
+    """Paired-difference bootstrap CI of (a-b) over shared scenarios; significant if hi<0."""
+    d = np.asarray(a, float) - np.asarray(b, float)
+    rng = np.random.default_rng(seed)
+    bs = [d[rng.integers(0, d.size, d.size)].mean() for _ in range(n_boot)]
+    lo, hi = float(np.quantile(bs, 0.025)), float(np.quantile(bs, 0.975))
+    return {"mean": float(d.mean()), "ci_lo": lo, "ci_hi": hi, "significant": bool(hi < 0)}
+
+
+def section_nd(d, quick, ex=None):
+    r"""n-D design study: full baseline suite on a SHARED held-out set over paired scenarios,
+    with paired-difference CIs (the marginal spread hides an effect the paired test separates)
+    and the n-D continuum certificate."""
+    nsc = (4 if quick else (80 if d == 2 else 60))
+    recs = _pmap(ex, _nd_task, [(s, d, quick) for s in range(nsc)])
+    recs = [r for r in recs if r is not None]
+    methods = ND_METHODS
+    worst = {m: np.array([r["worst"][m] for r in recs]) for m in methods}
+    summary = {m: {"mean": float(worst[m].mean()),
+                   "ci": float(1.96 * worst[m].std(ddof=1) / np.sqrt(len(recs)))} for m in methods}
+    paired = {m: _paired_diff_ci(worst["aliasguard"], worst[m])
+              for m in methods if m != "aliasguard"}
+    cert = {}
+    for m in ("aliasguard", "ds_optimal", "random_jitter"):
+        cv = np.array([r["cert"][m] for r in recs if np.isfinite(r["cert"].get(m, np.inf))])
+        cert[m] = float(cv.mean()) if cv.size else float("inf")
+    sep = all(paired[m]["significant"] for m in paired)
+    return {"d": d, "n_scenarios": len(recs), "summary": summary, "paired_diff": paired,
+            "certificate_mean": cert, "all_separated": bool(sep),
+            "note": f"{d}-D held-out frequency VECTORS (near/shifted/broadband), 128/scenario, "
+                    f"disjoint from the concern set; full baseline suite at MATCHED budget; "
+                    f"paired-difference bootstrap CIs (headline) + marginal CIs; n-D certificate."}
 
 
 def make_figure(summ, pareto, decomp, cert):
@@ -413,14 +480,16 @@ def main():
             # serial sections reuse the SAME pool (they were the wall-clock bottleneck)
             print("[AG] pareto ...", flush=True); pareto = section_pareto(scenarios, N, quick, ex)
             print("[AG] budget ...", flush=True); budget = section_budget(scenarios, quick, ex)
-            print("[AG] 2-D ...", flush=True); twod = section_2d(quick, ex)
+            print("[AG] n-D ...", flush=True)
+            nd2 = section_nd(2, quick, ex); nd3 = section_nd(3, quick, ex)
     else:
         records = [process_scenario(t) for t in tasks]
         records.sort(key=lambda r: r["s"])
         summ, decomp, cert = aggregate(records, methods, amps)
         print("[AG] pareto ...", flush=True); pareto = section_pareto(scenarios, N, quick)
         print("[AG] budget ...", flush=True); budget = section_budget(scenarios, quick)
-        print("[AG] 2-D ...", flush=True); twod = section_2d(quick)
+        print("[AG] n-D ...", flush=True)
+        nd2 = section_nd(2, quick); nd3 = section_nd(3, quick)
     make_figure(summ, pareto, decomp, cert)
 
     # paired-difference CIs on the headline 'near' held-out (scenarios are paired across
@@ -441,7 +510,7 @@ def main():
                       "matched_budget": "all coordinate-descent methods at n_sweeps=15, grid_res=480",
                       "metric": "function-space a_{L2,T} worst-case on held-out"},
            "summary": summ, "pareto": pareto, "decomposition": decomp,
-           "certificate": cert, "budget": budget, "twod": twod, "paired": paired,
+           "certificate": cert, "budget": budget, "nd_2d": nd2, "nd_3d": nd3, "paired": paired,
            "scenario_records": records,
            "note": "AliasGuard = Ds-optimal/LCMV-motivated design (credited, not claimed); "
                    "exact Ds baseline included; function-space metric; paired outer "
@@ -456,7 +525,14 @@ def main():
     print("[AG] by type (random):", {ht: round(rj[ht]['mean'], 3) for ht in HELDOUT_TYPES}, flush=True)
     print(f"[AG] certificate band-wide: AliasGuard {cert['aliasguard']['certified_mean']:.3f} "
           f"vs random {cert['random_jitter']['certified_mean']:.3f} vs exact-Ds {cert['ds_optimal']['certified_mean']:.3f}", flush=True)
-    print(f"[AG] 2-D held-out: AliasGuard {twod['aliasguard']['mean']:.3f} vs random {twod['random']['mean']:.3f}", flush=True)
+    for nd in (nd2, nd3):
+        pr = nd["paired_diff"]["random_jitter"]; pd_ = nd["paired_diff"]["ds_optimal"]
+        print(f"[AG] {nd['d']}-D held-out ({nd['n_scenarios']} sc): AliasGuard "
+              f"{nd['summary']['aliasguard']['mean']:.3f} vs random "
+              f"{nd['summary']['random_jitter']['mean']:.3f} (paired {pr['mean']:.3f} "
+              f"sig={pr['significant']}) vs exact-Ds {nd['summary']['ds_optimal']['mean']:.3f} "
+              f"(paired {pd_['mean']:.3f} sig={pd_['significant']}); all_separated={nd['all_separated']}",
+              flush=True)
 
 
 if __name__ == "__main__":
