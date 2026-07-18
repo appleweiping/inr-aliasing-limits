@@ -58,6 +58,27 @@ if lbefore == lafter:
 else:
     fail("claim-ledger.md is stale vs results/*.json -- run paper/gen_claim_ledger.py")
 
+# 1b2. citation integrity (OFFLINE, deterministic): every refs.bib key must carry
+# human-verified evidence in paper/citation_allowlist.json. The live network verifier
+# (paper/check_citations.py) is advisory; this offline gate is the hard one.
+import re as _re
+_bib = (PAPER / "refs.bib").read_text(encoding="utf-8")
+_bib_keys = set(_re.findall(r"@\w+\{([^,\s]+),", _bib))
+_allow_p = PAPER / "citation_allowlist.json"
+if not _allow_p.exists():
+    fail("paper/citation_allowlist.json missing (human-verified citation record)")
+else:
+    _allow = json.loads(_allow_p.read_text(encoding="utf-8")).get("verified", {})
+    _missing = sorted(k for k in _bib_keys if k not in _allow or not str(_allow.get(k, "")).strip())
+    _stale = sorted(k for k in _allow if k not in _bib_keys)
+    if _missing:
+        fail(f"refs.bib keys lack verified allowlist evidence: {_missing}")
+    elif _stale:
+        warn.append(f"citation allowlist has stale keys not in refs.bib: {_stale}")
+        ppass(f"all {len(_bib_keys)} citations carry verified evidence (allowlist has stale keys)")
+    else:
+        ppass(f"all {len(_bib_keys)} citations carry human-verified allowlist evidence")
+
 # 1c. forbidden absolutes must not appear in the paper/ledger (audit: no overclaiming)
 FORBIDDEN = ["No unverified claim remains", "ready to submit", "all claims verified",
              "guarantees optimal", "no analogue"]
