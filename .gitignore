@@ -45,3 +45,4 @@ arc_env.sh
 *.arc_cred
 config.arc.yaml
 arc_runs/
+.researchclaw_cache/
