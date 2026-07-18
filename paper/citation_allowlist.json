@@ -33,6 +33,7 @@
     "frost1972lcmv": "Frost, Proc. IEEE 60(8):926-935, 1972 -- canonical",
     "vantrees2002optimum": "Van Trees, Optimum Array Processing, Wiley, 2002 -- canonical book",
     "devore1993constructive": "DeVore & Lorentz, Constructive Approximation, Springer, 1993 -- canonical book",
-    "tropp2012usertail": "Tropp, Found. Comput. Math. 12(4):389-434, 2012; doi 10.1007/s10208-011-9099-z -- canonical (matrix Chernoff/Bernstein)"
+    "tropp2012usertail": "Tropp, Found. Comput. Math. 12(4):389-434, 2012; doi 10.1007/s10208-011-9099-z -- canonical (matrix Chernoff/Bernstein)",
+    "tsybakov2009nonparametric": "Tsybakov, Introduction to Nonparametric Estimation, Springer, 2009; doi 10.1007/b13794 -- canonical (Assouad/Le Cam)"
   }
 }

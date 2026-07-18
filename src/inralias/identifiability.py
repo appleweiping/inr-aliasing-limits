@@ -89,6 +89,10 @@ __all__ = [
     "matrix_chernoff_gram_deviation",
     "cross_coherence_bernstein_eps",
     "aliasability_matrix_bound",
+    "aliasability_second_moment",
+    "aliasability_rate_bounds",
+    "assouad_grid_floor",
+    "lecam_detection_threshold",
     "residual_test_power",
 ]
 
@@ -384,6 +388,90 @@ def aliasability_matrix_bound(
     if data_lam_min is not None and data_lam_min > 0:
         out["data_dependent"] = float(num / float(data_lam_min))
     return out
+
+
+def aliasability_second_moment(m: int, N: int) -> float:
+    r"""Exact second moment of the model--candidate coherence vector, i.i.d. uniform sampling.
+
+    For an integer-disjoint candidate :math:`\nu`, each coordinate
+    :math:`\bm b_\nu[k]=\tfrac1N\sum_j e^{i2\pi(\nu-\omega_k)t_j}` has mean $0$ and variance
+    $1/N$, and the coordinates are uncorrelated, so :math:`\mathbb E\lVert\bm
+    b_\nu\rVert^2=m/N` \emph{exactly}.  Since $\at(\nu)=\lVert\bm G_N^{-1}\bm b_\nu\rVert$ with
+    $\bm G_N\to\bm I$, $\mathbb E[\at(\nu)^2]\to m/N$; this is the lower half of the matching
+    rate in :func:`aliasability_rate_bounds`.
+    """
+    return float(m) / float(N)
+
+
+def aliasability_rate_bounds(m: int, n_candidates: int, N: int, delta: float) -> dict:
+    r"""Matching $\Theta(\sqrt{m/N})$ rate for aliasability under i.i.d. sampling (Theorem 3a).
+
+    Pairs the exact second moment (:func:`aliasability_second_moment`) with the operator-norm
+    Gram control (:func:`matrix_chernoff_gram_deviation`) and the U1 upper bound:
+
+    * **lower (mean-square, rigorous):** on the event $\lambda_{\max}(\bm G_N)\le1+\eta_{\rm
+      hi}$ (prob.\ $\ge1-\delta$), $\at(\nu)\ge\lVert\bm b_\nu\rVert/(1+\eta_{\rm hi})$, so
+      $\mathbb E[\at(\nu)^2\,\mathbf 1_{\rm good}]\ge(1-\delta)\,(m/N)/(1+\eta_{\rm hi})^2$,
+      i.e.\ $\sqrt{\mathbb E[\at^2]}\ge(1-o(1))\sqrt{m/N}$;
+    * **upper (uniform over $\Om$):** $\max_{\nu\in\Om}\at(\nu)\le\sqrt m\,\varepsilon_c/(1-
+      \eta_{\rm lo})=O(\sqrt{m\log(mK)/N})$.
+
+    The two match up to a $\sqrt{\log(mK)}$ factor -- the $N^{-1/2}$ rate is order-optimal and
+    the paper's disclaimed lower bound is supplied.  Returns
+    ``{second_moment, lower_rms, upper, ratio}``.
+    """
+    _eta_lo, eta_hi = matrix_chernoff_gram_deviation(m, N, delta)
+    sm = aliasability_second_moment(m, N)
+    lower_ms = (1.0 - delta) * sm / (1.0 + eta_hi) ** 2
+    lower = float(np.sqrt(max(lower_ms, 0.0)))
+    upper = aliasability_matrix_bound(m, n_candidates, N, delta)["apriori"]
+    ratio = float(upper / lower) if (np.isfinite(upper) and lower > 0) else float("inf")
+    return {"second_moment": float(sm), "lower_rms": lower, "upper": float(upper), "ratio": ratio}
+
+
+def assouad_grid_floor(freqs, tones, coeffs, Q, t, tol: float = 1e-9) -> dict:
+    r"""Estimator-independent $L^2$ floor for $K$ grid-coherent tones (Theorem 3b, grid).
+
+    Given a rate-$Q$ grid design $t$ and $K$ out-of-band tones $\nu_l$ each congruent mod $Q$
+    to a model atom $\omega_{k_l}$, every $\nu_l$ folds \emph{exactly} onto its atom on $t$
+    (verified via :func:`exactly_indistinguishable`).  An Assouad hypercube over the $2^K$
+    sign patterns then gives, for \emph{any} estimator,
+    :math:`\sup\;\lVert\hat f-f\rVert_{L^2}\ge\tfrac1{\sqrt2}\lVert\bm a\rVert_2`
+    (each coherent tone contributes its full energy; distinct frequencies are $L^2$-orthogonal).
+    This strengthens the single-tone converse (Thm.~1(ii)) to $K$ simultaneous tones.
+
+    Returns ``{floor, all_folds_exact, K}``; ``floor`` is meaningful only when every fold is
+    exact (a genuine grid design)."""
+    freqs = np.asarray(freqs, float)
+    tones = np.asarray(tones, float)
+    coeffs = np.asarray(coeffs)
+    exact = []
+    for nu, om in zip(tones, [round(float(v)) % int(Q) for v in tones]):
+        # match nu (mod Q) to a model atom; verify exact indistinguishability of the pair
+        cls = grid_equivalence_class(nu, Q)
+        atoms = [w for w in freqs if grid_equivalence_class(w, Q) == cls]
+        if not atoms:
+            exact.append(False); continue
+        w = atoms[0]
+        exact.append(exactly_indistinguishable(
+            np.array([nu]), np.array([1.0]), np.array([w]), np.array([1.0]), t, tol=tol))
+    floor = float(np.linalg.norm(coeffs) / np.sqrt(2.0))
+    return {"floor": floor, "all_folds_exact": bool(np.all(exact)), "K": int(tones.size)}
+
+
+def lecam_detection_threshold(freqs, t, nu: float, sigma: float) -> float:
+    r"""Le Cam single-tone detection/identification threshold (Theorem 3b, random).
+
+    Under observations $\bm y=S_T f+\bm\varepsilon$, $\bm\varepsilon\sim\mathcal N(0,\sigma^2\bm
+    I)$, the two laws for an in-band signal with vs.\ without an out-of-band tone of amplitude
+    $a$ at $\nu$ have KL divergence $N\,\vt(\nu)^2 a^2/(2\sigma^2)$.  A tone with
+    :math:`|a|\lesssim\sigma/\big(\vt(\nu)\sqrt N\big)` is therefore not testable, matching the
+    achievable $\sigma/\sqrt N$ resolution up to the visibility.  Returns that threshold.
+    """
+    v = visibility(freqs, t, float(nu))
+    if v <= 0:
+        return float("inf")
+    return float(sigma / (v * np.sqrt(float(t.size))))
 
 
 # --------------------------------------------------------------------------------------
