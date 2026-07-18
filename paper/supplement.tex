@@ -6,12 +6,15 @@
 \newtheorem{lemma}{Lemma~S}
 \newtheorem{proposition}{Proposition~S}
 \newtheorem{remark}{Remark}
+\newtheorem{theorem}{Theorem}       % for the strengthened non-asymptotic theory fragments
+\newtheorem{corollary}{Corollary}
 \DeclareMathOperator{\tr}{tr}
 \DeclareMathOperator{\range}{range}
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\C}{\mathbb{C}}
 \newcommand{\Z}{\mathbb{Z}}
 \newcommand{\Lam}{\Lambda}
+\newcommand{\Om}{\Omega}
 \newcommand{\Phimat}{\bm{\Phi}}
 \newcommand{\Psimat}{\bm{\Psi}}
 \newcommand{\norm}[1]{\lVert#1\rVert}
@@ -57,7 +60,7 @@ $\mathbb E\norm{\Phimat^\dagger\bm\varepsilon}^2=\sigma^2\tr(\Phimat^\dagger\Phi
 =\sigma^2\tr((\Phimat^{*}\Phimat)^{-1})$.
 \end{proof}
 
-\section{Proof of \MThmGrid: structured indistinguishability}\label{sup:grid}
+\section{Proof of \MThmGrid: structured indistinguishability}\label{sup:grid}\label{thm:t1}
 
 \textbf{(i)}  $\vt(\nu)=0$ iff $(\bm I-\bm P_\Lam)\bm\phi_\nu=0$ iff
 $\bm\phi_\nu\in\range\Phimat$, which is precisely the statement that some coefficient
@@ -200,6 +203,12 @@ $O((m\varepsilon)^{1/2})$ fluctuation dominates.
 
 \subsection{Part (b): i.i.d.\ samples}
 
+\begin{proposition}[Loose i.i.d.\ concentration bound]\label{prop:conc-loose}
+Under the Part-(b) hypotheses, with $\varepsilon=2\sqrt{\log(4(mK+m^2)/\delta)/N}$ and
+$m\varepsilon<\lambda_{\min}$, with probability $\ge1-\delta$,
+$\max_{\nu\in\Om}\at(\nu)\le\sqrt m\,\varepsilon/(\lambda_{\min}-m\varepsilon)$.
+\end{proposition}
+\noindent\emph{Proof.}
 Entries of $\bm G_N-\bm G_\infty$ and of $\bm b_\nu=\Phimat^{*}\bm\phi_\nu/N$ (for every
 $\nu\in\Omega$) are empirical means of independent unit-modulus variables; by
 \eqref{eq:hoeffding} and a union bound over the $m^2+mK$ of them, with probability
@@ -219,8 +228,29 @@ $\Omega$,
 The bound is a union bound and is loose by design (Fig.~1b of the main paper); its role
 is the \emph{rate} $N^{-1/2}$ and the uniformity over the candidate set, both matched
 empirically.  It is finite exactly when $m\varepsilon<\lambda_{\min}$ and is reported as
-vacuous otherwise, never silently extrapolated.
+vacuous otherwise, never silently extrapolated.  Prop.~\ref{prop:conc-loose} is superseded,
+at the same $N^{-1/2}$ rate but with a $\sim\!30\times$ smaller crossover budget and a
+data-dependent form that is finite at the tested $N$, by the matrix-Bernstein bound of the
+next section.
 \end{remark}
+
+\section{Strengthened non-asymptotic theory: matrix-Bernstein bound and matching rate}
+\label{sup:strong}
+The union bound of Prop.~\ref{prop:conc-loose} is finite only at $N\!\approx\!3327$
+($m{=}9,\delta{=}0.05$), far above the acquisition budgets $N\!\approx\!40$--$512$ where the
+design is used.  Replacing Frobenius Gram control by an operator-norm matrix Chernoff bound and
+range-$4$ Hoeffding by variance-$1$ Bernstein tightens the sufficient budget by $\sim\!30\times$
+and yields a data-dependent form finite at every full-rank realized design; a matching
+in-expectation lower bound then shows the $N^{-1/2}$ rate is order-optimal.
+\input{common/u1_matrix_bernstein}
+\input{common/u3a_matching_rate}
+
+\begin{figure}[t]\centering\includegraphics[width=\linewidth]{synthetic_matrix.png}
+\caption{Non-asymptotic theory validation (same experiment as main-paper Fig.~1).
+(a)~jitter visibility law; (b)~i.i.d.\ worst-case aliasability decaying $N^{-1/2}$ beneath
+the concentration bound, and $N\,\mathbb E[\at^2]\!\to\!m$ (Thm.~\ref{thm:u3a}); (c)~grid
+persistence vs.\ i.i.d.; (d)~jitter removes aliasing bias, not truncation.}
+\label{fig:matrix}\end{figure}
 
 \section{Detection dichotomy (background; demoted from the main line)}\label{sup:detect}
 
@@ -264,7 +294,7 @@ terms are the stated traces.
 This proposition is retained for completeness only; it is standard omitted-variable
 bias/variance bookkeeping and is not claimed as a contribution.
 
-\section{Sampling design: surrogate and the continuum certificate}\label{sup:design}
+\section{Sampling design: surrogate and the continuum certificate}\label{sup:design}\label{sec:design}
 
 \paragraph{Relation to classical design.}  Write $\Psimat=\Phimat_{\Omega}$ for the atoms
 of the candidate out-of-band set $\Omega$.  The \emph{exact} $D_s$-optimality
@@ -297,6 +327,12 @@ $\mu$--$E$ inequality is $\max\le\ell_2$.  No submodularity is claimed: $\at$ de
 $\Phimat^{\dagger}$ nonlinearly, so the greedy/coordinate procedures are heuristics with
 deterministic outputs, not approximation-ratio algorithms.
 \end{proof}
+
+\paragraph{Certified $\varepsilon$-optimal design.}  The ``no greedy guarantee'' caveat above is
+for the position-space coordinate descent.  Lifting the surrogate to the \emph{design measure}
+convexifies it, and Frank--Wolfe then supplies a \emph{computable} optimality certificate --- so
+the design carries a guarantee, not merely the post-hoc certificate of Prop.~\ref{prop:cert-s}.
+\input{common/u2_certified_design}
 
 \begin{proposition}[continuum certificate; states \MPropCert{} of the main paper]
 \label{prop:cert-s}
@@ -402,4 +438,6 @@ artifact.
 \caption{2-D exact fold (linear) and lattice-vs-random replicas (trained).}
 \label{fig:s-2d}\end{figure}
 
+\bibliographystyle{IEEEbib}
+\bibliography{refs}
 \end{document}

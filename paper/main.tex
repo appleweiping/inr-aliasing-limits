@@ -213,9 +213,12 @@ $\max_{\nu\in\Om}\at(\nu)\le\sqrt m\,\varepsilon/(\lambda_{\min}-m\varepsilon)$.
 \emph{Sketch.}  (a)~the on-grid fold phase is $1$; jitter adds i.i.d.\ unit-modulus
 factors (empirical characteristic function; Hoeffding).  (b)~Hoeffding$+$union over
 $mK{+}m^2$ coherences, then a Neumann/perturbation bound on
-$\at(\nu)=\norm{(\Phimat^{*}\Phimat/N)^{-1}(\Phimat^{*}\bm\phi_\nu/N)}$; the constants are
-loose (a union bound) and the observed order is $N^{-1/2}$ (an upper-bound rate; we claim
-no matching lower bound; Fig.~\ref{fig:matrix}a,b).  Two honest boundaries: on-grid designs
+$\at(\nu)=\norm{(\Phimat^{*}\Phimat/N)^{-1}(\Phimat^{*}\bm\phi_\nu/N)}$.  A variance-aware
+matrix-Bernstein/Chernoff refinement (supplement) tightens the sufficient budget
+$\sim\!30\times$ and, in its data-dependent form, is finite at every full-rank realized
+design---including the acquisition budgets where the design is used---while an
+in-expectation \emph{matching} lower bound shows the $N^{-1/2}$ rate is order-optimal
+(Fig.~\ref{fig:matrix}a,b).  Two honest boundaries: on-grid designs
 never escape Thm.~\ref{thm:t1}; and (b) controls only a \emph{finite} $\Om$---the
 certificate of Sec.~\ref{sec:design} lifts that to a whole band for a given design.
 
@@ -237,7 +240,11 @@ identifiability reading (which cross-terms, and why grid designs fail: Thm.~\ref
 and the certificate.
 
 \emph{Surrogate and trade-off.}  The exact objectives are non-smooth and (via
-$\Phimat^\dagger$) non-submodular---we claim \emph{no} greedy guarantee.  We minimize the
+$\Phimat^\dagger$) non-submodular, so the position-space greedy carries no approximation
+guarantee; but lifting the surrogate to the design \emph{measure} convexifies it, and
+Frank--Wolfe then yields a \emph{computable} $\varepsilon$-optimality certificate
+(the duality gap; supplement)---a guarantee, not merely the post-hoc band certificate.
+We minimize the
 smooth surrogate $J(T)=\tfrac1{N^2}\sum_{k,\nu}|(\Phimat^{*}\Psimat_\Om)_{k\nu}|^2
 +\beta\tfrac1{N^2}\sum_{k\ne l}|(\Phimat^{*}\Phimat)_{kl}|^2$ (difference-frequency sums)
 by coordinate descent over continuous times (a grid-restricted greedy variant inherits
@@ -359,8 +366,9 @@ supplement, with all failing runs released.
 
 \section{Limitations and conclusion}
 The theory covers fixed-feature linear-coefficient models; nonlinear networks are an
-empirical extension that \emph{fails for SIRENs}, and adaptive frequencies are open.  The
-concentration constants are loose (union bound); the design needs a focused concern set.
+empirical extension whose init-NTK fold predictor \emph{fails for SIRENs}, and adaptive
+frequencies are open.  A variance-aware matrix-Bernstein bound with a matching in-expectation
+lower bound now replaces the loose union bound; the design needs a focused concern set.
 Within that scope: irregular-on-a-grid sampling does not break exact aliasing
 (Thm.~\ref{thm:t1}); off-grid randomization does, at an explicit finite-$N$ rate
 (Thm.~\ref{thm:t3}); and a $D_s$-optimal / null-steering design with a continuum
