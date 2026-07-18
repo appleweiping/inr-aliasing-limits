@@ -42,7 +42,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.00043932022754056857,
+          "cal_threshold": 0.00043932022754056824,
           "test_fpr_at_cal": 0.04,
           "test_tpr_at_cal": 1.0
         },
@@ -55,7 +55,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0010060007705667347,
+          "cal_threshold": 0.0010060007705667358,
           "test_fpr_at_cal": 0.066,
           "test_tpr_at_cal": 1.0
         },
@@ -68,7 +68,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.546540365087036,
+          "cal_threshold": 0.5465403650870337,
           "test_fpr_at_cal": 0.04,
           "test_tpr_at_cal": 1.0
         },
@@ -81,7 +81,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0013735919040526853,
+          "cal_threshold": 0.001373591904052698,
           "test_fpr_at_cal": 0.052,
           "test_tpr_at_cal": 1.0
         },
@@ -94,7 +94,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.00035139089539502037,
+          "cal_threshold": 0.0003513908953950221,
           "test_fpr_at_cal": 0.044,
           "test_tpr_at_cal": 1.0
         }
@@ -122,7 +122,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.00042075969951803485,
+          "cal_threshold": 0.0004207596995180346,
           "test_fpr_at_cal": 0.052,
           "test_tpr_at_cal": 1.0
         },
@@ -135,7 +135,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.001012483732143087,
+          "cal_threshold": 0.0010124837321430875,
           "test_fpr_at_cal": 0.044,
           "test_tpr_at_cal": 1.0
         },
@@ -148,7 +148,7 @@
           "pr_auc": 0.9571631316315178,
           "tpr_at_fpr01": 0.536,
           "tpr_at_fpr05": 0.798,
-          "cal_threshold": 0.4792039577131596,
+          "cal_threshold": 0.47920395771315966,
           "test_fpr_at_cal": 0.062,
           "test_tpr_at_cal": 0.816
         },
@@ -161,7 +161,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0012775509642323182,
+          "cal_threshold": 0.001277550964232308,
           "test_fpr_at_cal": 0.074,
           "test_tpr_at_cal": 1.0
         },
@@ -174,7 +174,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.000319654015772001,
+          "cal_threshold": 0.0003196540157720013,
           "test_fpr_at_cal": 0.052,
           "test_tpr_at_cal": 1.0
         }
@@ -202,7 +202,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0004464191889532119,
+          "cal_threshold": 0.00044641918895320983,
           "test_fpr_at_cal": 0.032,
           "test_tpr_at_cal": 1.0
         },
@@ -215,7 +215,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0010294752759511968,
+          "cal_threshold": 0.0010294752759511974,
           "test_fpr_at_cal": 0.04,
           "test_tpr_at_cal": 1.0
         },
@@ -228,7 +228,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.43322510182742935,
+          "cal_threshold": 0.4332251018274307,
           "test_fpr_at_cal": 0.048,
           "test_tpr_at_cal": 1.0
         },
@@ -241,7 +241,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0013485051205203826,
+          "cal_threshold": 0.0013485051205203913,
           "test_fpr_at_cal": 0.042,
           "test_tpr_at_cal": 1.0
         },
@@ -254,7 +254,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.00034996493507750265,
+          "cal_threshold": 0.00034996493507750444,
           "test_fpr_at_cal": 0.036,
           "test_tpr_at_cal": 1.0
         }
@@ -282,7 +282,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0004235954922425205,
+          "cal_threshold": 0.00042359549224252075,
           "test_fpr_at_cal": 0.046,
           "test_tpr_at_cal": 1.0
         },
@@ -295,7 +295,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0010241978579948454,
+          "cal_threshold": 0.0010241978579948472,
           "test_fpr_at_cal": 0.05,
           "test_tpr_at_cal": 1.0
         },
@@ -308,7 +308,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.467150946925459,
+          "cal_threshold": 0.46715094692545817,
           "test_fpr_at_cal": 0.058,
           "test_tpr_at_cal": 1.0
         },
@@ -321,7 +321,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0013091182999916558,
+          "cal_threshold": 0.0013091182999916513,
           "test_fpr_at_cal": 0.054,
           "test_tpr_at_cal": 1.0
         },
@@ -334,7 +334,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.00034373519336348187,
+          "cal_threshold": 0.00034373519336348274,
           "test_fpr_at_cal": 0.058,
           "test_tpr_at_cal": 1.0
         }
@@ -362,7 +362,7 @@
           "pr_auc": 0.5233733155778769,
           "tpr_at_fpr01": 0.012,
           "tpr_at_fpr05": 0.058,
-          "cal_threshold": 0.004980525174659887,
+          "cal_threshold": 0.0049805251746598824,
           "test_fpr_at_cal": 0.04,
           "test_tpr_at_cal": 0.038
         },
@@ -375,7 +375,7 @@
           "pr_auc": 0.5266207940770039,
           "tpr_at_fpr01": 0.008,
           "tpr_at_fpr05": 0.062,
-          "cal_threshold": 0.01127957306157022,
+          "cal_threshold": 0.011279573061570217,
           "test_fpr_at_cal": 0.058,
           "test_tpr_at_cal": 0.068
         },
@@ -388,7 +388,7 @@
           "pr_auc": 0.5064897064645639,
           "tpr_at_fpr01": 0.01,
           "tpr_at_fpr05": 0.06,
-          "cal_threshold": 0.5585690975349458,
+          "cal_threshold": 0.5585690975349419,
           "test_fpr_at_cal": 0.04,
           "test_tpr_at_cal": 0.04
         },
@@ -401,7 +401,7 @@
           "pr_auc": 0.5073544722863745,
           "tpr_at_fpr01": 0.004,
           "tpr_at_fpr05": 0.056,
-          "cal_threshold": 0.015020998245732322,
+          "cal_threshold": 0.015020998245732343,
           "test_fpr_at_cal": 0.044,
           "test_tpr_at_cal": 0.048
         },
@@ -414,7 +414,7 @@
           "pr_auc": 0.5135375531480442,
           "tpr_at_fpr01": 0.01,
           "tpr_at_fpr05": 0.07,
-          "cal_threshold": 0.003927405054913223,
+          "cal_threshold": 0.0039274050549132225,
           "test_fpr_at_cal": 0.048,
           "test_tpr_at_cal": 0.054
         }
@@ -455,7 +455,7 @@
           "pr_auc": 0.6290358732963385,
           "tpr_at_fpr01": 0.034,
           "tpr_at_fpr05": 0.124,
-          "cal_threshold": 0.011215197625327897,
+          "cal_threshold": 0.011215197625327895,
           "test_fpr_at_cal": 0.07,
           "test_tpr_at_cal": 0.142
         },
@@ -468,7 +468,7 @@
           "pr_auc": 0.5250374021211184,
           "tpr_at_fpr01": 0.012,
           "tpr_at_fpr05": 0.04,
-          "cal_threshold": 0.515108931766848,
+          "cal_threshold": 0.5151089317668512,
           "test_fpr_at_cal": 0.06,
           "test_tpr_at_cal": 0.042
         },
@@ -481,7 +481,7 @@
           "pr_auc": 0.5858232717729919,
           "tpr_at_fpr01": 0.042,
           "tpr_at_fpr05": 0.102,
-          "cal_threshold": 0.01514122353319059,
+          "cal_threshold": 0.015141223533190477,
           "test_fpr_at_cal": 0.038,
           "test_tpr_at_cal": 0.086
         },
@@ -494,7 +494,7 @@
           "pr_auc": 0.6216742785346173,
           "tpr_at_fpr01": 0.048,
           "tpr_at_fpr05": 0.132,
-          "cal_threshold": 0.0037681034956482586,
+          "cal_threshold": 0.003768103495648258,
           "test_fpr_at_cal": 0.064,
           "test_tpr_at_cal": 0.142
         }
@@ -522,7 +522,7 @@
           "pr_auc": 0.9750901670454735,
           "tpr_at_fpr01": 0.736,
           "tpr_at_fpr05": 0.88,
-          "cal_threshold": 0.004839844464791246,
+          "cal_threshold": 0.00483984446479125,
           "test_fpr_at_cal": 0.046,
           "test_tpr_at_cal": 0.864
         },
@@ -535,7 +535,7 @@
           "pr_auc": 0.9318252561001263,
           "tpr_at_fpr01": 0.464,
           "tpr_at_fpr05": 0.678,
-          "cal_threshold": 0.011419889446679309,
+          "cal_threshold": 0.01141988944667931,
           "test_fpr_at_cal": 0.034,
           "test_tpr_at_cal": 0.618
         },
@@ -548,7 +548,7 @@
           "pr_auc": 0.6496996925716387,
           "tpr_at_fpr01": 0.066,
           "tpr_at_fpr05": 0.162,
-          "cal_threshold": 0.48227126099673046,
+          "cal_threshold": 0.48227126099673,
           "test_fpr_at_cal": 0.07,
           "test_tpr_at_cal": 0.182
         },
@@ -561,7 +561,7 @@
           "pr_auc": 0.8497009930549231,
           "tpr_at_fpr01": 0.274,
           "tpr_at_fpr05": 0.456,
-          "cal_threshold": 0.015072188114288438,
+          "cal_threshold": 0.015072188114288442,
           "test_fpr_at_cal": 0.026,
           "test_tpr_at_cal": 0.356
         },
@@ -574,7 +574,7 @@
           "pr_auc": 0.9200433886896182,
           "tpr_at_fpr01": 0.418,
           "tpr_at_fpr05": 0.658,
-          "cal_threshold": 0.0039460720843693545,
+          "cal_threshold": 0.003946072084369354,
           "test_fpr_at_cal": 0.034,
           "test_tpr_at_cal": 0.57
         }
@@ -602,7 +602,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.004752109670157121,
+          "cal_threshold": 0.00475210967015712,
           "test_fpr_at_cal": 0.052,
           "test_tpr_at_cal": 1.0
         },
@@ -628,7 +628,7 @@
           "pr_auc": 0.8606414718757851,
           "tpr_at_fpr01": 0.182,
           "tpr_at_fpr05": 0.46,
-          "cal_threshold": 0.4949081622225322,
+          "cal_threshold": 0.49490816222253203,
           "test_fpr_at_cal": 0.068,
           "test_tpr_at_cal": 0.538
         },
@@ -641,7 +641,7 @@
           "pr_auc": 0.998385103230652,
           "tpr_at_fpr01": 0.976,
           "tpr_at_fpr05": 0.992,
-          "cal_threshold": 0.014398987159619155,
+          "cal_threshold": 0.014398987159619193,
           "test_fpr_at_cal": 0.06,
           "test_tpr_at_cal": 0.992
         },
@@ -654,7 +654,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0035321257703587313,
+          "cal_threshold": 0.0035321257703587287,
           "test_fpr_at_cal": 0.062,
           "test_tpr_at_cal": 1.0
         }
@@ -682,7 +682,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.004871072663683868,
+          "cal_threshold": 0.004871072663683866,
           "test_fpr_at_cal": 0.042,
           "test_tpr_at_cal": 1.0
         },
@@ -708,7 +708,7 @@
           "pr_auc": 0.998884334019393,
           "tpr_at_fpr01": 0.984,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.5087515739771786,
+          "cal_threshold": 0.508751573977175,
           "test_fpr_at_cal": 0.062,
           "test_tpr_at_cal": 1.0
         },
@@ -721,7 +721,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.014933947412961427,
+          "cal_threshold": 0.014933947412961418,
           "test_fpr_at_cal": 0.042,
           "test_tpr_at_cal": 1.0
         },
@@ -734,7 +734,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0036141607305858934,
+          "cal_threshold": 0.003614160730585897,
           "test_fpr_at_cal": 0.058,
           "test_tpr_at_cal": 1.0
         }
@@ -762,7 +762,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.004872635861867602,
+          "cal_threshold": 0.004872635861867608,
           "test_fpr_at_cal": 0.034,
           "test_tpr_at_cal": 1.0
         },
@@ -788,7 +788,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.49773263599727585,
+          "cal_threshold": 0.49773263599729073,
           "test_fpr_at_cal": 0.066,
           "test_tpr_at_cal": 1.0
         },
@@ -801,7 +801,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.014628118894206074,
+          "cal_threshold": 0.01462811889420606,
           "test_fpr_at_cal": 0.054,
           "test_tpr_at_cal": 1.0
         },
@@ -814,7 +814,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.003973067673458096,
+          "cal_threshold": 0.003973067673458093,
           "test_fpr_at_cal": 0.036,
           "test_tpr_at_cal": 1.0
         }
@@ -842,7 +842,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 4.688956439141144e-05,
+          "cal_threshold": 4.6889564391412496e-05,
           "test_fpr_at_cal": 0.076,
           "test_tpr_at_cal": 1.0
         },
@@ -855,7 +855,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.00011134479769926161,
+          "cal_threshold": 0.0001113447976992616,
           "test_fpr_at_cal": 0.044,
           "test_tpr_at_cal": 1.0
         },
@@ -868,7 +868,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.4532848057254928,
+          "cal_threshold": 0.45328480572549235,
           "test_fpr_at_cal": 0.044,
           "test_tpr_at_cal": 1.0
         },
@@ -881,7 +881,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0001458134947946046,
+          "cal_threshold": 0.00014581349479460235,
           "test_fpr_at_cal": 0.072,
           "test_tpr_at_cal": 1.0
         },
@@ -894,7 +894,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 3.4829200602092434e-05,
+          "cal_threshold": 3.482920060209253e-05,
           "test_fpr_at_cal": 0.076,
           "test_tpr_at_cal": 1.0
         }
@@ -922,7 +922,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.004788971508457446,
+          "cal_threshold": 0.004788971508457452,
           "test_fpr_at_cal": 0.046,
           "test_tpr_at_cal": 1.0
         },
@@ -935,7 +935,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.011474991485391984,
+          "cal_threshold": 0.011474991485391987,
           "test_fpr_at_cal": 0.042,
           "test_tpr_at_cal": 1.0
         },
@@ -948,7 +948,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.5190734653479272,
+          "cal_threshold": 0.5190734653479292,
           "test_fpr_at_cal": 0.062,
           "test_tpr_at_cal": 1.0
         },
@@ -961,7 +961,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.014838284402091183,
+          "cal_threshold": 0.014838284402091222,
           "test_fpr_at_cal": 0.05,
           "test_tpr_at_cal": 1.0
         },
@@ -974,7 +974,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.003943963792986422,
+          "cal_threshold": 0.003943963792986424,
           "test_fpr_at_cal": 0.038,
           "test_tpr_at_cal": 1.0
         }
@@ -1002,7 +1002,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0007339955812624931,
+          "cal_threshold": 0.0007339955812624937,
           "test_fpr_at_cal": 0.026,
           "test_tpr_at_cal": 1.0
         },
@@ -1015,7 +1015,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0010541768769174009,
+          "cal_threshold": 0.0010541768769174,
           "test_fpr_at_cal": 0.022,
           "test_tpr_at_cal": 1.0
         },
@@ -1028,7 +1028,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 1.0287605452700892,
+          "cal_threshold": 1.0287605452700865,
           "test_fpr_at_cal": 0.042,
           "test_tpr_at_cal": 1.0
         },
@@ -1041,7 +1041,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0014806087753355566,
+          "cal_threshold": 0.0014806087753355718,
           "test_fpr_at_cal": 0.064,
           "test_tpr_at_cal": 1.0
         },
@@ -1054,7 +1054,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.000531133545100389,
+          "cal_threshold": 0.0005311335451003901,
           "test_fpr_at_cal": 0.022,
           "test_tpr_at_cal": 1.0
         }
@@ -1082,7 +1082,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0002127530075209911,
+          "cal_threshold": 0.00021275300752099057,
           "test_fpr_at_cal": 0.038,
           "test_tpr_at_cal": 1.0
         },
@@ -1095,7 +1095,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.000992190265343647,
+          "cal_threshold": 0.0009921902653436466,
           "test_fpr_at_cal": 0.052,
           "test_tpr_at_cal": 1.0
         },
@@ -1108,7 +1108,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.11101996024499709,
+          "cal_threshold": 0.11101996024499783,
           "test_fpr_at_cal": 0.086,
           "test_tpr_at_cal": 1.0
         },
@@ -1121,7 +1121,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.001143278800828897,
+          "cal_threshold": 0.0011432788008289005,
           "test_fpr_at_cal": 0.066,
           "test_tpr_at_cal": 1.0
         },
@@ -1134,7 +1134,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.00018069862178276275,
+          "cal_threshold": 0.00018069862178276264,
           "test_fpr_at_cal": 0.076,
           "test_tpr_at_cal": 1.0
         }
@@ -1162,7 +1162,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0006916807990911613,
+          "cal_threshold": 0.0006916807990911632,
           "test_fpr_at_cal": 0.05,
           "test_tpr_at_cal": 1.0
         },
@@ -1175,7 +1175,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0010281934802174656,
+          "cal_threshold": 0.0010281934802174643,
           "test_fpr_at_cal": 0.032,
           "test_tpr_at_cal": 1.0
         },
@@ -1188,7 +1188,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 1.0220673163714298,
+          "cal_threshold": 1.0220673163714094,
           "test_fpr_at_cal": 0.028,
           "test_tpr_at_cal": 1.0
         },
@@ -1201,7 +1201,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0013440016559392635,
+          "cal_threshold": 0.0013440016559392682,
           "test_fpr_at_cal": 0.052,
           "test_tpr_at_cal": 1.0
         },
@@ -1214,7 +1214,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.00032244239587250826,
+          "cal_threshold": 0.00032244239587250555,
           "test_fpr_at_cal": 0.062,
           "test_tpr_at_cal": 1.0
         }
@@ -1242,7 +1242,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0012520158684728568,
+          "cal_threshold": 0.0012520158684728596,
           "test_fpr_at_cal": 0.038,
           "test_tpr_at_cal": 1.0
         },
@@ -1255,7 +1255,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0010354420234989553,
+          "cal_threshold": 0.0010354420234989549,
           "test_fpr_at_cal": 0.046,
           "test_tpr_at_cal": 1.0
         },
@@ -1268,7 +1268,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 1.4363011078961192,
+          "cal_threshold": 1.436301107896105,
           "test_fpr_at_cal": 0.052,
           "test_tpr_at_cal": 1.0
         },
@@ -1281,7 +1281,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.001408512755871938,
+          "cal_threshold": 0.001408512755871918,
           "test_fpr_at_cal": 0.028,
           "test_tpr_at_cal": 1.0
         },
@@ -1294,7 +1294,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0003687433280827419,
+          "cal_threshold": 0.0003687433280827438,
           "test_fpr_at_cal": 0.04,
           "test_tpr_at_cal": 1.0
         }
@@ -1322,7 +1322,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.000428333541709855,
+          "cal_threshold": 0.00042833354170985805,
           "test_fpr_at_cal": 0.036,
           "test_tpr_at_cal": 1.0
         },
@@ -1335,7 +1335,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.001006214586952521,
+          "cal_threshold": 0.0010062145869525205,
           "test_fpr_at_cal": 0.06,
           "test_tpr_at_cal": 1.0
         },
@@ -1348,7 +1348,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.42166480295458075,
+          "cal_threshold": 0.4216648029545872,
           "test_fpr_at_cal": 0.094,
           "test_tpr_at_cal": 1.0
         },
@@ -1361,7 +1361,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0013516945688938227,
+          "cal_threshold": 0.0013516945688938327,
           "test_fpr_at_cal": 0.034,
           "test_tpr_at_cal": 1.0
         },
@@ -1374,7 +1374,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0003298646214560699,
+          "cal_threshold": 0.0003298646214560703,
           "test_fpr_at_cal": 0.066,
           "test_tpr_at_cal": 1.0
         }
@@ -1402,7 +1402,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0004237064122427223,
+          "cal_threshold": 0.0004237064122427235,
           "test_fpr_at_cal": 0.06,
           "test_tpr_at_cal": 1.0
         },
@@ -1415,7 +1415,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0010262730331153387,
+          "cal_threshold": 0.0010262730331153382,
           "test_fpr_at_cal": 0.032,
           "test_tpr_at_cal": 1.0
         },
@@ -1428,7 +1428,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.49817493741910146,
+          "cal_threshold": 0.4981749374191001,
           "test_fpr_at_cal": 0.046,
           "test_tpr_at_cal": 1.0
         },
@@ -1441,7 +1441,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0013219410987878545,
+          "cal_threshold": 0.0013219410987878656,
           "test_fpr_at_cal": 0.046,
           "test_tpr_at_cal": 1.0
         },
@@ -1454,7 +1454,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0003277407158004461,
+          "cal_threshold": 0.00032774071580044683,
           "test_fpr_at_cal": 0.042,
           "test_tpr_at_cal": 1.0
         }
@@ -1482,7 +1482,7 @@
           "pr_auc": 0.9857661699428355,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.006588570248758767,
+          "cal_threshold": 0.006588570248766313,
           "test_fpr_at_cal": 0.052,
           "test_tpr_at_cal": 1.0
         },
@@ -1495,7 +1495,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0010110175648281828,
+          "cal_threshold": 0.0010110175648281835,
           "test_fpr_at_cal": 0.06,
           "test_tpr_at_cal": 1.0
         },
@@ -1508,7 +1508,7 @@
           "pr_auc": 0.9967389469760488,
           "tpr_at_fpr01": 0.94,
           "tpr_at_fpr05": 0.988,
-          "cal_threshold": 4.665263016412957,
+          "cal_threshold": 4.6652630164130064,
           "test_fpr_at_cal": 0.034,
           "test_tpr_at_cal": 0.982
         },
@@ -1521,7 +1521,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.001316014863049616,
+          "cal_threshold": 0.0013160148630496095,
           "test_fpr_at_cal": 0.08,
           "test_tpr_at_cal": 1.0
         },
@@ -1534,7 +1534,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0003189689913426948,
+          "cal_threshold": 0.0003189689913426938,
           "test_fpr_at_cal": 0.076,
           "test_tpr_at_cal": 1.0
         }
@@ -1562,7 +1562,7 @@
           "pr_auc": 0.9840807480547822,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0033571455155806964,
+          "cal_threshold": 0.0033571455155801404,
           "test_fpr_at_cal": 0.072,
           "test_tpr_at_cal": 1.0
         },
@@ -1575,7 +1575,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0010271934264125028,
+          "cal_threshold": 0.0010271934264125002,
           "test_fpr_at_cal": 0.046,
           "test_tpr_at_cal": 1.0
         },
@@ -1588,7 +1588,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 1.1158985506628838,
+          "cal_threshold": 1.115898550662885,
           "test_fpr_at_cal": 0.056,
           "test_tpr_at_cal": 1.0
         },
@@ -1601,7 +1601,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0015537472545995355,
+          "cal_threshold": 0.0015537472545995607,
           "test_fpr_at_cal": 0.046,
           "test_tpr_at_cal": 1.0
         },
@@ -1614,7 +1614,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0005326437206395832,
+          "cal_threshold": 0.0005326437206395867,
           "test_fpr_at_cal": 0.03,
           "test_tpr_at_cal": 1.0
         }
@@ -1642,7 +1642,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.00041843695381187356,
+          "cal_threshold": 0.0004184369538118742,
           "test_fpr_at_cal": 0.088,
           "test_tpr_at_cal": 1.0
         },
@@ -1655,7 +1655,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0010231361487104775,
+          "cal_threshold": 0.0010231361487104773,
           "test_fpr_at_cal": 0.036,
           "test_tpr_at_cal": 1.0
         },
@@ -1668,7 +1668,7 @@
           "pr_auc": 0.873052618437121,
           "tpr_at_fpr01": 0.274,
           "tpr_at_fpr05": 0.548,
-          "cal_threshold": 0.5035507662699586,
+          "cal_threshold": 0.5035507662699584,
           "test_fpr_at_cal": 0.034,
           "test_tpr_at_cal": 0.398
         },
@@ -1681,7 +1681,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.0013729270169030845,
+          "cal_threshold": 0.0013729270169030798,
           "test_fpr_at_cal": 0.032,
           "test_tpr_at_cal": 1.0
         },
@@ -1694,7 +1694,7 @@
           "pr_auc": 1.0,
           "tpr_at_fpr01": 1.0,
           "tpr_at_fpr05": 1.0,
-          "cal_threshold": 0.00035743387497627914,
+          "cal_threshold": 0.0003574338749762777,
           "test_fpr_at_cal": 0.032,
           "test_tpr_at_cal": 1.0
         }
@@ -1722,7 +1722,7 @@
           "pr_auc": 0.48985796219872896,
           "tpr_at_fpr01": 0.002,
           "tpr_at_fpr05": 0.026,
-          "cal_threshold": 0.0018241656008900844,
+          "cal_threshold": 0.0018241656008900636,
           "test_fpr_at_cal": 0.092,
           "test_tpr_at_cal": 0.046
         },
@@ -1735,7 +1735,7 @@
           "pr_auc": 0.4799988776530864,
           "tpr_at_fpr01": 0.008,
           "tpr_at_fpr05": 0.03,
-          "cal_threshold": 0.001031556638943024,
+          "cal_threshold": 0.0010315566389430219,
           "test_fpr_at_cal": 0.044,
           "test_tpr_at_cal": 0.022
         },
@@ -1748,7 +1748,7 @@
           "pr_auc": 0.49428484979149795,
           "tpr_at_fpr01": 0.016,
           "tpr_at_fpr05": 0.044,
-          "cal_threshold": 2.8416252210061277,
+          "cal_threshold": 2.8416252210061237,
           "test_fpr_at_cal": 0.06,
           "test_tpr_at_cal": 0.048
         },
@@ -1761,7 +1761,7 @@
           "pr_auc": 0.49880488151333746,
           "tpr_at_fpr01": 0.006,
           "tpr_at_fpr05": 0.058,
-          "cal_threshold": 0.001512052201795405,
+          "cal_threshold": 0.001512052201795409,
           "test_fpr_at_cal": 0.062,
           "test_tpr_at_cal": 0.062
         },
@@ -1774,21 +1774,36 @@
           "pr_auc": 0.4871979783755291,
           "tpr_at_fpr01": 0.004,
           "tpr_at_fpr05": 0.046,
-          "cal_threshold": 0.0005558335344133544,
+          "cal_threshold": 0.0005558335344133564,
           "test_fpr_at_cal": 0.03,
           "test_tpr_at_cal": 0.03
         }
       }
     }
   ],
-  "note": "coherent_demo instantiates the T4a two-point pair (H1: tone at nu=111; H0: same-amplitude tone at the in-band twin -17; identical sample laws on grid samples) -- every detector must sit at AUC~0.5, TPR~FPR; it is a demonstration, not an operating characteristic; underdetermined ring fits are flagged",
+  "detector_status": {
+    "residual": "the ONLY detector with a closed-form operating characteristic: its power is the exact noncentral chi-squared curve (T4b); the empirical residual detector is expected to track that curve",
+    "ring": "empirical baseline (no closed-form power)",
+    "lomb": "empirical baseline (no closed-form power)",
+    "heldout": "empirical baseline (no closed-form power)",
+    "crossfit": "empirical baseline (no closed-form power)"
+  },
+  "note": "Exactly ONE detector (residual) has a closed-form power curve -- the exact noncentral chi-squared (T4b) plotted as 'theory'; ring/lomb/heldout/crossfit are alternative EMPIRICAL detectors shown for comparison and are NOT claimed to follow that curve. coherent_demo instantiates the T4a two-point pair (H1: tone at nu=111; H0: same-amplitude tone at the in-band twin -17; identical sample laws on grid samples) -- every detector must sit at AUC~0.5, TPR~FPR; it is a demonstration, not an operating characteristic; underdetermined ring fits are flagged",
   "_meta": {
-    "python": "3.11.2",
-    "platform": "Windows-10-10.0.26200-SP0",
-    "numpy": "2.4.6",
-    "scipy": "1.17.1",
-    "torch": "2.13.0+cpu",
-    "cuda": null,
-    "git_commit": "c9857ef"
+    "git_commit": "3e4df1815503cb5a30a6e55e6bf5fc302884dcdf",
+    "git_short": "3e4df181",
+    "git_dirty": false,
+    "source_tree_sha256": "03a901c5bc5e384f",
+    "command": "experiments/run_diagnostic_roc.py",
+    "timestamp_utc": "2026-07-17T19:21:17.238210+00:00",
+    "hostname": "autodl-container-p48vc3ykfm-7ba3727f",
+    "python": "3.12.3",
+    "platform": "Linux-5.15.0-25-generic-x86_64-with-glibc2.35",
+    "cpu_count": 128,
+    "numpy": "1.26.4",
+    "scipy": "1.11.4",
+    "torch": "2.2.2+cu121",
+    "cuda": "12.1",
+    "gpu": "NVIDIA GeForce RTX 4080 SUPER"
   }
 }

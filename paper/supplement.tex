@@ -3,39 +3,64 @@
 \usepackage[margin=1in]{geometry}
 \usepackage{amsmath,amssymb,amsthm,bm,graphicx}
 \graphicspath{{figures/}{../results/figures/}}
-\newtheorem{theorem}{Theorem}
-\newtheorem{lemma}{Lemma}
+\newtheorem{lemma}{Lemma~S}
 \newtheorem{proposition}{Proposition~S}
 \newtheorem{remark}{Remark}
+\newtheorem{theorem}{Theorem}       % for the strengthened non-asymptotic theory fragments
+\newtheorem{corollary}{Corollary}
 \DeclareMathOperator{\tr}{tr}
 \DeclareMathOperator{\range}{range}
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\C}{\mathbb{C}}
 \newcommand{\Z}{\mathbb{Z}}
 \newcommand{\Lam}{\Lambda}
+\newcommand{\Om}{\Omega}
 \newcommand{\Phimat}{\bm{\Phi}}
 \newcommand{\Psimat}{\bm{\Psi}}
 \newcommand{\norm}[1]{\lVert#1\rVert}
 \newcommand{\vt}{v_T}
 \newcommand{\at}{a_T}
+\input{xref}
+\input{macros_ag.tex}   % auto-generated volatile numbers (shared with main; never hand-typed)
 
-\title{Supplement to ``Silent Aliasing in Fixed Fourier-Feature Coordinate Models'':\\
-Full Proofs}
+\title{Supplement to ``\SharedTitle'':\\ Full Proofs and Additional Results}
 \author{Weiping Yan}
 \date{}
 
 \begin{document}
 \maketitle
 
-Numbering follows the main paper (T1--T4 are Theorems 1--4 there).  Setting and notation
-as in the main paper: $e_\omega(x)=e^{i2\pi\omega x}$ on $[0,1)$, model set
-$\Lam=\{\omega_1,\dots,\omega_m\}$, samples $T=\{t_j\}_{j=1}^N$, synthesis matrix
-$\Phimat_{jk}=e_{\omega_k}(t_j)$, sample atom $\bm\phi_\nu=(e^{i2\pi\nu t_j})_j$,
-visibility $\vt(\nu)=\norm{(\bm I-\bm P_\Lam)\bm\phi_\nu}/\sqrt N$, aliasability
-$\at(\nu)=\norm{\Phimat^\dagger\bm\phi_\nu}$.  Every constant below is also asserted
-numerically in \texttt{tests/test\_identifiability.py}.
+\noindent\textbf{Theorem map (main $\leftrightarrow$ supplement).}
+\MThmGrid{} (structured indistinguishability) is proved in \S\ref{sup:grid};
+\MThmJitter{} (off-grid randomization: jitter law + i.i.d.\ concentration) in
+\S\ref{sup:rand}; \MPropCert{} (the continuum certificate) in \S\ref{sup:design}
+(\SPropCertS).  Supplement items: \SLemLS{} (LS stability), \SPropDecomp{} (Riesz
+conversion + exact error decomposition), \SPropAvg{} (average-case, background),
+\SPropSurr{} (surrogate controls aliasability), \SPropCertS{} (certificate).  The
+detection dichotomy (\S\ref{sup:detect}) is standard and demoted from the main line.
 
-\section{Proof of Theorem 1 (exact equivalence on grid subsets)}
+\medskip\noindent Setting and notation as in the main paper: $e_\omega(x)=e^{i2\pi\omega x}$
+on $[0,1)^d$, model set $\Lam=\{\omega_1,\dots,\omega_m\}$, samples $T=\{t_j\}_{j=1}^N$,
+synthesis matrix $\Phimat_{jk}=e_{\omega_k}(t_j)$, sample atom
+$\bm\phi_\nu=(e^{i2\pi\nu t_j})_j$, visibility
+$\vt(\nu)=\norm{(\bm I-\bm P_\Lam)\bm\phi_\nu}/\sqrt N$, coefficient aliasability
+$\at(\nu)=\norm{\Phimat^\dagger\bm\phi_\nu}$, function-space aliasability
+$a_{L^2,T}(\nu)=(\Delta c^{*}G_{L^2}\Delta c)^{1/2}$ with $\Delta c=\Phimat^\dagger\bm\phi_\nu$.
+Every closed form is also checked against independent simulation in \texttt{tests/}.
+
+\begin{lemma}[LS stability; standard]\label{lem:ls}
+If $\sigma_{\min}(\Phimat)>0$ and $f_{\mathrm{out}}=0$, then
+$\norm{\hat{\bm c}-\bm c^\star}\le\norm{\bm\varepsilon}/\sigma_{\min}(\Phimat)$, and for
+white noise $\mathbb E\norm{\hat{\bm c}-\bm c^\star}^2=\sigma^2\tr((\Phimat^{*}\Phimat)^{-1})$.
+\end{lemma}
+\begin{proof}
+$\hat{\bm c}-\bm c^\star=\Phimat^\dagger\bm\varepsilon$ and
+$\norm{\Phimat^\dagger}=1/\sigma_{\min}(\Phimat)$; the trace identity is
+$\mathbb E\norm{\Phimat^\dagger\bm\varepsilon}^2=\sigma^2\tr(\Phimat^\dagger\Phimat^{\dagger*})
+=\sigma^2\tr((\Phimat^{*}\Phimat)^{-1})$.
+\end{proof}
+
+\section{Proof of \MThmGrid: structured indistinguishability}\label{sup:grid}\label{thm:t1}
 
 \textbf{(i)}  $\vt(\nu)=0$ iff $(\bm I-\bm P_\Lam)\bm\phi_\nu=0$ iff
 $\bm\phi_\nu\in\range\Phimat$, which is precisely the statement that some coefficient
@@ -74,8 +99,16 @@ any grid subset).  ``Any $N$'' claims are always to be read as ``any grid-subset
 $N$ for which this rank condition holds''.
 \end{remark}
 
-\section{Proof of Theorem 2 (Riesz conversion and decomposition)}
-
+\section{\SPropDecomp: Riesz conversion and error decomposition}\label{sup:decomp}
+\begin{proposition}[Riesz conversion and exact decomposition]\label{prop:decomp}
+With $G_{L^2}[k,\ell]=\langle e_{\omega_\ell},e_{\omega_k}\rangle_{L^2}$ and extreme
+eigenvalues $\lambda_{\min},\lambda_{\max}>0$ (distinct frequencies),
+$\lambda_{\min}\norm{\bm c}^2\le\norm{\sum_k c_ke_{\omega_k}}_{L^2}^2\le\lambda_{\max}\norm{\bm c}^2$,
+and $\norm{\hat f-f}_{L^2}^2=\Delta\bm c^{*}G_{\Lam\Lam}\Delta\bm c
+-2\,\mathrm{Re}\,\Delta\bm c^{*}G_{\Lam,\mathrm{out}}\bm a+\bm a^{*}G_{\mathrm{out}}\bm a$
+(modeled-component, cross, truncation).
+\end{proposition}
+\begin{proof}
 \textbf{(i)}  $G_{L^2}$ is the Gram matrix of $\{e_{\omega_k}\}$ in $L^2[0,1)$:
 $\norm{\sum_kc_ke_{\omega_k}}_{L^2}^2=\bm c^{*}G_{L^2}\bm c$, and the Rayleigh quotient
 of the Hermitian PSD matrix $G_{L^2}$ lies in
@@ -90,11 +123,10 @@ $\lambda_{\min}>0$ for distinct frequencies.
 \textbf{(ii)}  Expand
 $\hat f-f=\sum_k\Delta c_k e_{\omega_k}-\sum_l a_le_{\nu_l}$ and evaluate
 $\norm{\hat f-f}_{L^2}^2$ as the quadratic form of the joint Gram matrix of
-$(\{\omega_k\},\{\nu_l\})$ applied to $(\Delta\bm c,-\bm a)$; grouping blocks gives
-Eq.~(3) of the main paper.  For all-integer frequencies the off-diagonal blocks vanish
-(orthonormality), killing the cross term. \hfill$\square$
+$(\{\omega_k\},\{\nu_l\})$ applied to $(\Delta\bm c,-\bm a)$; grouping blocks gives the stated decomposition.  For all-integer frequencies the off-diagonal blocks vanish
+(orthonormality), killing the cross term.\end{proof}
 
-\section{Proof of Theorem 3 (random sampling breaks exact aliasing)}
+\section{Proof of \MThmJitter: off-grid randomization}\label{sup:rand}
 
 We use the following complex Hoeffding bound throughout: if $Z_1,\dots,Z_N$ are
 independent with $|Z_j|\le1$, then for $\bar Z=\frac1N\sum_jZ_j$,
@@ -147,14 +179,36 @@ expansion of $\bm b^{*}\bm G_N^{-1}\bm b$ gives
 \big|\vt(\nu)^2-\big(1-|\chi_\eta(2\pi rQ)|^2\big)\big|
 \ \le\ c\,m\,\varepsilon
 \]
-for an absolute constant $c$ (valid while $m\varepsilon<1/2$), which is the
-$O_P\!\big(m\sqrt{\log(m/\delta)/N}\big)$ term of the theorem.  The small-jitter law
-follows from $1-e^{-2u}\le 2u$ and $1-e^{-2u}\to 2u$ as $u\to0$ with
-$u=(2\pi rQ\sigma_t)^2/2$:
-$\vt(\nu)=\sqrt{1-\chi^2}+O(m\varepsilon)=2\pi|r|Q\sigma_t\,(1+o(1))$.
+for an absolute constant $c$ (valid while $m\varepsilon<1/2$), where
+$A:=1-|\chi_\eta(2\pi rQ)|^2\in[0,1]$.  This is a bound on the \emph{squared} visibility;
+it does not transfer to $\vt$ by a first-order expansion when $A\to0$.  Two correct
+finite-sample statements follow.  \emph{(Uniform.)}  Since $|\sqrt x-\sqrt y|\le\sqrt{|x-y|}$
+for $x,y\ge0$,
+\[
+\big|\vt(\nu)-\sqrt A\big|\ \le\ \sqrt{c\,m\,\varepsilon}\qquad\text{always},
+\]
+so the visibility is within $O\!\big((m\varepsilon)^{1/2}\big)=O\!\big(m^{1/2}(\log/N)^{1/4}\big)$
+of $\sqrt A$.  \emph{(Refined, $A$ bounded below.)}  If $A\ge A_0>0$ then, since $\sqrt\cdot$
+is $\tfrac1{2\sqrt{A_0}}$-Lipschitz on $[A_0,\infty)$,
+$\big|\vt(\nu)-\sqrt A\big|\le c\,m\,\varepsilon/(2\sqrt{A_0})=O(m\varepsilon/\sqrt A)$.
+\emph{Small-jitter linear law.}  For Gaussian jitter,
+$\sqrt A=\sqrt{1-e^{-4(\pi rQ\sigma_t)^2}}=2\pi|r|Q\sigma_t\,(1+o(1))$ as $\sigma_t\to0$
+(from $1-e^{-2u}=2u+O(u^2)$, $u=2(\pi rQ\sigma_t)^2$).  The empirical linear law
+$\vt(\nu)\approx2\pi|r|Q\sigma_t$ therefore holds in the \emph{joint} regime where the
+deterministic signal dominates the finite-$N$ fluctuation,
+$2\pi|r|Q\sigma_t\gg\sqrt{c\,m\,\varepsilon}$, i.e.\
+$\sigma_t\gg(m\varepsilon)^{1/2}/(2\pi|r|Q)$ with $\varepsilon=2\sqrt{\log(4(m+m^2)/\delta)/N}$
+(equivalently, $N$ large enough for the fixed jitter to be resolved); otherwise the
+$O((m\varepsilon)^{1/2})$ fluctuation dominates.
 
 \subsection{Part (b): i.i.d.\ samples}
 
+\begin{proposition}[Loose i.i.d.\ concentration bound]\label{prop:conc-loose}
+Under the Part-(b) hypotheses, with $\varepsilon=2\sqrt{\log(4(mK+m^2)/\delta)/N}$ and
+$m\varepsilon<\lambda_{\min}$, with probability $\ge1-\delta$,
+$\max_{\nu\in\Om}\at(\nu)\le\sqrt m\,\varepsilon/(\lambda_{\min}-m\varepsilon)$.
+\end{proposition}
+\noindent\emph{Proof.}
 Entries of $\bm G_N-\bm G_\infty$ and of $\bm b_\nu=\Phimat^{*}\bm\phi_\nu/N$ (for every
 $\nu\in\Omega$) are empirical means of independent unit-modulus variables; by
 \eqref{eq:hoeffding} and a union bound over the $m^2+mK$ of them, with probability
@@ -174,10 +228,31 @@ $\Omega$,
 The bound is a union bound and is loose by design (Fig.~1b of the main paper); its role
 is the \emph{rate} $N^{-1/2}$ and the uniformity over the candidate set, both matched
 empirically.  It is finite exactly when $m\varepsilon<\lambda_{\min}$ and is reported as
-vacuous otherwise, never silently extrapolated.
+vacuous otherwise, never silently extrapolated.  Prop.~\ref{prop:conc-loose} is superseded,
+at the same $N^{-1/2}$ rate but with a $\sim\!30\times$ smaller crossover budget and a
+data-dependent form that is finite at the tested $N$, by the matrix-Bernstein bound of the
+next section.
 \end{remark}
 
-\section{Proof of Theorem 4 (detection dichotomy)}
+\section{Strengthened non-asymptotic theory: matrix-Bernstein bound and matching rate}
+\label{sup:strong}
+The union bound of Prop.~\ref{prop:conc-loose} is finite only at $N\!\approx\!3327$
+($m{=}9,\delta{=}0.05$), far above the acquisition budgets $N\!\approx\!40$--$512$ where the
+design is used.  Replacing Frobenius Gram control by an operator-norm matrix Chernoff bound and
+range-$4$ Hoeffding by variance-$1$ Bernstein tightens the sufficient budget by $\sim\!30\times$
+and yields a data-dependent form finite at every full-rank realized design; a matching
+in-expectation lower bound then shows the $N^{-1/2}$ rate is order-optimal.
+\input{common/u1_matrix_bernstein}
+\input{common/u3a_matching_rate}
+
+\begin{figure}[t]\centering\includegraphics[width=\linewidth]{synthetic_matrix.png}
+\caption{Non-asymptotic theory validation (same experiment as main-paper Fig.~1).
+(a)~jitter visibility law; (b)~i.i.d.\ worst-case aliasability decaying $N^{-1/2}$ beneath
+the concentration bound, and $N\,\mathbb E[\at^2]\!\to\!m$ (Thm.~\ref{thm:u3a}); (c)~grid
+persistence vs.\ i.i.d.; (d)~jitter removes aliasing bias, not truncation.}
+\label{fig:matrix}\end{figure}
+
+\section{Detection dichotomy (background; demoted from the main line)}\label{sup:detect}
 
 \textbf{(a)}  If $S_Tf_1=S_Tf_2$ and the observation law depends on the signal only
 through $S_Tf$ (as for additive noise $\bm y=S_Tf+\bm\varepsilon$ with
@@ -219,19 +294,22 @@ terms are the stated traces.
 This proposition is retained for completeness only; it is standard omitted-variable
 bias/variance bookkeeping and is not claimed as a contribution.
 
-\section{Sampling design: surrogate and the continuum certificate}
+\section{Sampling design: surrogate and the continuum certificate}\label{sup:design}\label{sec:design}
 
 \paragraph{Relation to classical design.}  Write $\Psimat=\Phimat_{\Omega}$ for the atoms
-of the candidate out-of-band set $\Omega$.  The design goal---keep
-$\tfrac1N\Phimat^{*}\Phimat$ near $\bm I$ while driving $\tfrac1N\Phimat^{*}\Psimat$
-toward $0$, indifferent to $\tfrac1N\Psimat^{*}\Psimat$---is the $D_s$-optimality
-(interest-vs-nuisance) criterion of experimental design and LCMV/MVDR null-steering: the
-information about the interest block is the Schur complement
-$J_{\Lambda\Lambda}-J_{\Lambda\Omega}J_{\Omega\Omega}^{-1}J_{\Omega\Lambda}$, which equals
-the isolated interest block iff the cross-block $J_{\Lambda\Omega}=\Phimat^{*}\Psimat$
-vanishes.  We do not claim this principle; our additions are the identifiability reading
-(Thm.~1 says grid designs \emph{cannot} realize it for coherent folds) and the certificate
-below.
+of the candidate out-of-band set $\Omega$.  The \emph{exact} $D_s$-optimality
+(interest-vs-nuisance) criterion maximizes the log-determinant of the Schur complement
+$S=\tfrac1N(\Phimat^{*}\Phimat-\Phimat^{*}\Psimat(\Psimat^{*}\Psimat)^{-1}\Psimat^{*}\Phimat)$
+of the interest block, treating $\Omega$ as a nuisance parameter block; $S$ equals the
+isolated interest block iff the cross-block $\Phimat^{*}\Psimat=0$, which is also the target
+of LCMV/MVDR null-steering.  Our surrogate $J$ (below) is \emph{related to but not
+identical} to $\log\det S$---it penalizes the squared cross-block and the in-band
+off-diagonal directly---so we call it $D_s$/null-steering-\emph{motivated}, credit the
+classical principle, and compare against the exact $D_s$ design (``\texttt{ds\_optimal}'')
+as a baseline (\S\ref{sup:addl}).  Our own additions are the identifiability reading
+(\MThmGrid{} says grid designs \emph{cannot} realize the target for coherent folds) and
+the certificate below.  The greedy/coordinate procedures are heuristics with deterministic
+outputs; \textbf{no approximation-ratio or submodularity guarantee is claimed}.
 
 \begin{proposition}[surrogate controls aliasability]
 Let $\mu(T)=\max_{k,\nu}|(\Phimat^{*}\Psimat)_{k\nu}|/N$ and let $\lambda_0=\lambda_{\min}
@@ -250,47 +328,62 @@ $\Phimat^{\dagger}$ nonlinearly, so the greedy/coordinate procedures are heurist
 deterministic outputs, not approximation-ratio algorithms.
 \end{proof}
 
-\begin{proposition}[continuum certificate; Prop.~\ref{prop:cert-num} in the paper]
-\label{prop:cert-num}
-Fix $T$ with $\sigma_{\min}(\Phimat)>0$ and let
-$\bm M=\Phimat(\Phimat^{*}\Phimat)^{-2}\Phimat^{*}$ (Hermitian PSD).  Then
-$g(\nu):=\at(\nu)^2=\bm\phi_\nu^{*}\bm M\bm\phi_\nu
-=\sum_{j,l}\bm M_{jl}\,e^{i2\pi\nu(t_l-t_j)}$ is a real trigonometric polynomial in $\nu$,
-$L$-Lipschitz with $L=2\pi\sum_{j,l}|\bm M_{jl}|\,|t_l-t_j|$.  Consequently, for any
-interval $[a,b]$ and any grid on it of spacing $h$,
+\paragraph{Certified $\varepsilon$-optimal design.}  The ``no greedy guarantee'' caveat above is
+for the position-space coordinate descent.  Lifting the surrogate to the \emph{design measure}
+convexifies it, and Frank--Wolfe then supplies a \emph{computable} optimality certificate --- so
+the design carries a guarantee, not merely the post-hoc certificate of Prop.~\ref{prop:cert-s}.
+\input{common/u2_certified_design}
+
+\begin{proposition}[continuum certificate; states \MPropCert{} of the main paper]
+\label{prop:cert-s}
+Fix any design $T$ with $\sigma_{\min}(\Phimat)>0$ and let $\bm M=\Phimat(\Phimat^{*}
+\Phimat)^{-1}G_{L^2}(\Phimat^{*}\Phimat)^{-1}\Phimat^{*}$ (Hermitian PSD; $G_{L^2}=\bm I$
+gives the coefficient norm).  Then $g(\nu):=a_{L^2,T}(\nu)^2=\bm\phi_\nu^{*}\bm M\bm\phi_\nu
+=\sum_{j,l}\bm M_{jl}\,e^{i2\pi\nu(t_l-t_j)}$ is a real \emph{finite exponential polynomial}
+in $\nu$ (the exponents $t_l-t_j$ are generally non-integer, so this is a generalized, not
+periodic, trigonometric polynomial).  Its derivative satisfies the explicit bound
+$|g'(\nu)|\le L:=2\pi\sum_{j,l}|\bm M_{jl}|\,|t_l-t_j|$, so for any interval $[a,b]$ and any
+grid on it of spacing $h$,
 \[
-\max_{\nu\in[a,b]}\at(\nu)\ \le\ \Big(\max_{\text{grid}} g+L\,h/2\Big)^{1/2}.
+\max_{\nu\in[a,b]}a_{L^2,T}(\nu)\ \le\ \Big(\max_{\text{grid}} g+L\,h/2\Big)^{1/2}.
 \]
 The same argument applied to $h(\nu)=\bm\phi_\nu^{*}\bm P\bm\phi_\nu$
 ($\bm P=\Phimat(\Phimat^{*}\Phimat)^{-1}\Phimat^{*}$) gives
 $\min_{\nu\in[a,b]}\vt(\nu)\ge(1-(\max_{\text{grid}}h+L_P h/2)/N)^{1/2}$.
 \end{proposition}
 \begin{proof}
-$\bm\phi_\nu[j]=e^{i2\pi\nu t_j}$, so $\bm\phi_\nu^{*}\bm M\bm\phi_\nu=\sum_{j,l}\bm M_{jl}
-e^{-i2\pi\nu t_j}e^{i2\pi\nu t_l}$, real because $\bm M$ is Hermitian.  Its derivative is
-$g'(\nu)=\sum_{j,l}\bm M_{jl}\,i2\pi(t_l-t_j)e^{i2\pi\nu(t_l-t_j)}$, so
-$|g'|\le2\pi\sum_{j,l}|\bm M_{jl}||t_l-t_j|=L$ (a Bernstein-type bound; each exponential is
-unit-modulus).  On a grid of spacing $h$, any point is within $h/2$ of a grid node, so
-$g(\nu)\le\max_{\text{grid}}g+L(h/2)$; take the sup and the square root (monotone).  The
-visibility bound is identical with $\bm P$ and $\vt(\nu)^2=1-h(\nu)/N$.
+$\Delta c=\Phimat^\dagger\bm\phi_\nu=(\Phimat^{*}\Phimat)^{-1}\Phimat^{*}\bm\phi_\nu$, so
+$a_{L^2,T}(\nu)^2=\Delta c^{*}G_{L^2}\Delta c=\bm\phi_\nu^{*}\bm M\bm\phi_\nu$ with $\bm M$
+as stated (Hermitian since $G_{L^2}$ is).  With $\bm\phi_\nu[j]=e^{i2\pi\nu t_j}$,
+$g(\nu)=\sum_{j,l}\bm M_{jl}e^{i2\pi\nu(t_l-t_j)}$, real because $\bm M$ is Hermitian; then
+$g'(\nu)=\sum_{j,l}\bm M_{jl}i2\pi(t_l-t_j)e^{i2\pi\nu(t_l-t_j)}$ has
+$|g'|\le2\pi\sum_{j,l}|\bm M_{jl}||t_l-t_j|=L$ (triangle inequality; each exponential is
+unit-modulus---an elementary Lipschitz bound, a Bernstein-type inequality).
+Any point is within $h/2$ of a grid node, so $g(\nu)\le\max_{\text{grid}}g+Lh/2$; take the
+sup and the (monotone) square root.  The visibility bound is identical with $\bm P$.
 \end{proof}
-Everything in $\bm M,\bm P,L$ depends only on the sample times, so the certificate is
-sample-only; it is validated in \texttt{tests/test\_design.py::test\_certificate\_is\_sound}
-(certified bound $\ge$ true value on a fine reference grid, and tight: the Lipschitz slack
-is negligible at the grid resolutions used).  This is exactly the guarantee the
-finite-candidate bound of Theorem~3(b) cannot give, and for which random designs have no
-analogue.
+Everything in $\bm M,\bm P,L$ depends only on the sample times, so the certificate is a
+deterministic \emph{post-hoc} guarantee applicable to \emph{any} realized design (random,
+E-optimal, or optimized); it is what \MThmJitter(b), a finite-candidate bound, does not by
+itself provide.  Numerically it is computed via a Hermitian eigendecomposition of
+$\Phimat^{*}\Phimat$ (no explicit inverse) and reported as \emph{vacuous} when $\Phimat$ is
+rank deficient (\texttt{full\_rank=False}); soundness (certified $\ge$ true) and vacuity are
+tested in \texttt{tests/test\_design.py} for random, near-singular, and rank-deficient
+designs.
 
-\section{Additional experimental results}
+\section{Additional experimental results}\label{sup:addl}
 These support the compressed statements in Sec.~6 of the paper.  All figures are
 regenerated from the released \texttt{results/*.json} (seeds and environment stamped
 therein).
 
-\paragraph{Detection (T4).}  Fig.~\ref{fig:s-roc}.  With calibration/test separation,
-five sample-only detectors (extended-dictionary ring test, in-sample residual,
-Lomb--Scargle band test, held-out prediction, cross-fit) track the exact
-noncentral-$\chi^2$ power curve of T4(b); at the calibrated threshold the test-set false
-positive rate holds at its nominal $5\%$.  The indistinguishability demonstration
+\paragraph{Detection (T4).}  Fig.~\ref{fig:s-roc}.  With calibration/test separation, we
+report five sample-only detectors (extended-dictionary ring test, in-sample residual,
+Lomb--Scargle band test, held-out prediction, cross-fit).  \emph{Only} the residual
+detector has a closed-form operating characteristic---the exact noncentral-$\chi^2$ power
+curve of T4(b), which the empirical residual detector tracks; the other four are
+alternative empirical baselines shown for comparison and are \emph{not} claimed to follow
+that curve.  At the calibrated threshold the test-set false positive rate holds at its
+nominal $5\%$.  The indistinguishability demonstration
 instantiates T4(a)'s two-point pair exactly---H1 places a tone at the grid-coherent
 $\nu{=}111$, H0 the \emph{same-amplitude} tone at its in-band twin $\nu-Q=-17$, so the
 grid sample laws are identical---and all five detectors sit at chance (best-of-five
@@ -303,20 +396,37 @@ impossible.
 Fourier-feature MLPs, SIRENs, and a band-limited head, tone attribution (an ablation:
 identical initialization trained with and without the tone) is compared to each network's
 own NTK-linearization prediction---no arbitrary reference band.  Over $\ge20$ sampling
-seeds with label-permutation, amplitude, and weight-seed controls, the linear picture
-extrapolates to \emph{lazy-regime} FF-MLPs (exact fold match $77\%$, top-3 $98\%$, pattern
-correlation median $0.96$, $n{=}60$) and the band-limited head (median $0.98$), but
-\emph{fails for SIRENs} (exact match $20\%$, correlation median $0.49$): trained SIRENs
-leave their initialization NTK, so the theory makes no claim there.  All seed-level
-failures are released.
+scenarios---with feature and weight seeds drawn from independent streams (one triple per
+scenario, so they are decoupled from the sampling index rather than fully factorially
+crossed) plus label-permutation, amplitude-sweep-to-zero (infinitesimal-influence), and a
+weight-seed-stability control that varies only the weight seed at fixed sampling to isolate
+optimizer variance, with cluster-bootstrap CIs over sampling scenario---the linear picture
+extrapolates to \emph{lazy-regime} FF-MLPs (exact fold match $\NLffmatch$, top-3 $\NLfftop$,
+pattern correlation median $\NLffcorr$, $n{=}\NLffn$) and the band-limited head (median
+$\NLblcorr$), but the trained-\emph{SIREN} responses are \emph{inconsistent with the
+initialization-NTK prediction} (exact match $\NLsimatch$, correlation median $\NLsicorr$).
+We measured the init-vs-trained NTK Frobenius drift specifically to test whether this
+mismatch is a lazy-training / kernel-drift artifact, and it is \emph{not}: the SIREN kernel
+drifts \emph{less} than the FF-MLP kernel (median relative drift $\NLsidrift$ vs.\
+$\NLffdrift$), yet the FF-MLP init-NTK prediction matches well while the SIREN one does not.
+The honest conclusion is therefore the negative one---the fixed-feature/init-NTK description
+does not extrapolate to trained SIRENs---and we explicitly do \emph{not} attribute the
+failure to the SIREN ``leaving'' its initialization kernel.  All seed-level failures are
+released.
 
 \paragraph{Two dimensions.}  Fig.~\ref{fig:s-2d}.  The linear model reproduces the
-predicted 2-D frequency-vector fold exactly (planted $(27,3)$ on a rate-$32$ grid subset
-folds to $(-5,3)$, residual $10^{-15}$); trained 2-D networks show the predicted DFT
-replicas under lattice (coherent) masks (replica-energy ratio $40{\pm}32$ at the predicted
-shifts) but not under random masks of equal density ($0.99{\pm}0.09$), and ridge and early
-stopping do not remove them---structured aliasing is a sampling-design property, not an
-overfitting artifact.
+predicted 2-D frequency-vector fold exactly over a \emph{held-out} tone set disjoint from
+the design dictionary (fold-exact rate $\IMfold$; e.g.\ planted $(27,3)$ on a rate-$32$ grid
+subset folds to $(-5,3)$, residual $10^{-15}$).  For trained 2-D networks (anti-aliased
+resize; images degraded with noise) the headline is the \emph{excess} coherent-replica
+energy of lattice masks over matched-density \emph{random} masks (the no-alias control),
+measured on the reconstruction-\emph{error} spectrum so true image content does not inflate
+it: over $\ge20$ paired seeds on the synthetic image (sharp spectral lines) the excess is
+$\IMexcess$ and lattice exceeds random in $\IMrate$ of seeds; the effect also replicates on
+the real \emph{ascent} and \emph{face} images in the per-configuration PSNR table (the
+$\ge20$-seed excess CI is reported only for the synthetic image); ridge and early stopping
+do not remove it---structured aliasing is a sampling-design property, not an overfitting
+artifact.
 
 \begin{figure}[t]\centering\includegraphics[width=0.7\linewidth]{diagnostic_roc.png}
 \caption{Detection power vs.\ tone amplitude; the coherent fold sits at chance.}
@@ -328,4 +438,6 @@ overfitting artifact.
 \caption{2-D exact fold (linear) and lattice-vs-random replicas (trained).}
 \label{fig:s-2d}\end{figure}
 
+\bibliographystyle{IEEEbib}
+\bibliography{refs}
 \end{document}

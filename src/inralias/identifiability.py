@@ -86,6 +86,13 @@ __all__ = [
     "expected_jitter_coherence",
     "coherence_epsilon",
     "aliasability_concentration_bound",
+    "matrix_chernoff_gram_deviation",
+    "cross_coherence_bernstein_eps",
+    "aliasability_matrix_bound",
+    "aliasability_second_moment",
+    "aliasability_rate_bounds",
+    "assouad_grid_floor",
+    "lecam_detection_threshold",
     "residual_test_power",
 ]
 
@@ -252,7 +259,7 @@ def expected_jitter_coherence(k: int, Q: int, scale: float, dist: str = "gaussia
     * ``gaussian`` (std ``scale`` seconds): :math:`e^{-2\pi^2k^2Q^2\,\mathrm{scale}^2}`;
     * ``uniform`` (width ``scale`` seconds): :math:`\mathrm{sinc}(kQ\,\mathrm{scale})`.
 
-    Small-jitter law (T3a): visibility :math:`\approx\sqrt{1-\chi^2}\approx
+    Small-jitter law (T3a): visibility :math:`\approx\sqrt{1-|\chi|^2}\approx
     2\pi|k|Q\sigma_t` -- jitter *continuously breaks* the exact fold.
     """
     x = float(k) * float(Q) * float(scale)
@@ -301,6 +308,170 @@ def aliasability_concentration_bound(
     if m * eps >= lam_min:
         return float("inf")
     return float(np.sqrt(m) * eps / (lam_min - m * eps))
+
+
+def matrix_chernoff_gram_deviation(m: int, N: int, delta: float) -> tuple[float, float]:
+    r"""Two-sided operator-norm deviation of the normalized Gram (Tropp matrix Chernoff).
+
+    Write :math:`\Phi^{*}\Phi=\sum_{j=1}^N\bm\phi_j\bm\phi_j^{*}` with i.i.d. rows
+    :math:`\bm\phi_j=(e^{i2\pi\omega_k t_j})_k\in\C^m`, :math:`\lVert\bm\phi_j\rVert^2=m`, and
+    (uniform density, integer-disjoint :math:`\Lam`) :math:`\mathbb E[\Phi^{*}\Phi/N]=\bm I`.
+    Matrix Chernoff (Tropp 2012, Thm 5.1.1) with per-term
+    :math:`\lambda_{\max}(\bm\phi_j\bm\phi_j^{*})=m` and :math:`\mu_{\min}=\mu_{\max}=N` gives,
+    each with probability :math:`\ge1-\delta/2`,
+
+    .. math:: \lambda_{\min}(\Phi^{*}\Phi/N)\ge 1-\eta_{\mathrm{lo}},\qquad
+              \lambda_{\max}(\Phi^{*}\Phi/N)\le 1+\eta_{\mathrm{hi}},
+
+    with :math:`\eta_{\mathrm{lo}}=\sqrt{2m\log(2m/\delta)/N}` (lower tail,
+    :math:`e^{-\eta^2/2}`) and :math:`\eta_{\mathrm{hi}}=\sqrt{3m\log(2m/\delta)/N}`
+    (upper tail, :math:`e^{-\eta^2/3}`).  This replaces the Frobenius (:math:`\sqrt m`-loose)
+    perturbation step of :func:`aliasability_concentration_bound`.
+    """
+    L = np.log(2.0 * float(m) / float(delta))
+    eta_lo = np.sqrt(2.0 * float(m) * L / float(N))
+    eta_hi = np.sqrt(3.0 * float(m) * L / float(N))
+    return float(eta_lo), float(eta_hi)
+
+
+def cross_coherence_bernstein_eps(m: int, n_candidates: int, N: int, delta: float) -> float:
+    r"""Per-coordinate Bernstein radius for the model--candidate coherences (variance-aware).
+
+    Each entry :math:`b_\nu[k]=\tfrac1N\sum_j e^{i2\pi(\nu-\omega_k)t_j}` is an empirical mean
+    of unit-modulus, mean-zero (integer-disjoint) terms with **variance exactly 1**.  Complex
+    Bernstein on real/imaginary parts, union over the :math:`mK` model--candidate pairs at
+    level :math:`\delta/2`, gives :math:`|b_\nu[k]|\le\varepsilon_c` and hence
+    :math:`\lVert\bm b_\nu\rVert\le\sqrt m\,\varepsilon_c`, with
+    :math:`\varepsilon_c=\sqrt{2\log(8mK/\delta)/N}+\tfrac23\log(8mK/\delta)/N`.
+    Using Bernstein (variance 1) rather than Hoeffding (range 4) removes the constant-4 slack
+    in :func:`coherence_epsilon`.
+    """
+    L = np.log(8.0 * float(m) * float(max(1, n_candidates)) / float(delta))
+    return float(np.sqrt(2.0 * L / float(N)) + (2.0 / 3.0) * L / float(N))
+
+
+def aliasability_matrix_bound(
+    m: int, n_candidates: int, N: int, delta: float,
+    lam_min: float = 1.0, data_lam_min: float | None = None,
+) -> dict:
+    r"""Non-asymptotic aliasability bound via matrix Bernstein/Chernoff (Theorem 1').
+
+    Combining :func:`matrix_chernoff_gram_deviation` (denominator) with
+    :func:`cross_coherence_bernstein_eps` (numerator), with probability :math:`\ge1-\delta`
+
+    .. math:: \max_{\nu\in\Omega}a_T(\nu)\ \le\
+        \frac{\sqrt m\,\varepsilon_c}{\lambda_{\min}-\eta_{\mathrm{lo}}}
+        \qquad(\text{a-priori, provided }\eta_{\mathrm{lo}}<\lambda_{\min}).
+
+    The proviso :math:`\eta_{\mathrm{lo}}<\lambda_{\min}` first holds at
+    :math:`N^{*}=2m\log(2m/\delta)` (vs. :math:`4m^2\log(4(mK+m^2)/\delta)` for the loose
+    union bound of :func:`aliasability_concentration_bound` -- a :math:`\sim(2m)`-fold smaller
+    crossover).  The **data-dependent** form plugs the realized
+    :math:`\hat\lambda_{\min}=\lambda_{\min}(\Phi^{*}\Phi/N)>0` into the denominator (only the
+    numerator is randomized), and is finite for every full-rank realized design -- including
+    :math:`N` far below :math:`N^{*}`.
+
+    Returns a dict ``{apriori, data_dependent?, eta_lo, eta_hi, eps_c, crossover_N}``;
+    ``apriori`` is ``inf`` when :math:`\eta_{\mathrm{lo}}\ge\lambda_{\min}` (vacuous at that N).
+    """
+    eta_lo, eta_hi = matrix_chernoff_gram_deviation(m, N, delta)
+    eps_c = cross_coherence_bernstein_eps(m, n_candidates, N, delta)
+    num = np.sqrt(float(m)) * eps_c
+    apriori = float("inf") if eta_lo >= lam_min else float(num / (lam_min - eta_lo))
+    out = {
+        "apriori": apriori,
+        "eta_lo": float(eta_lo),
+        "eta_hi": float(eta_hi),
+        "eps_c": float(eps_c),
+        "crossover_N": float(2.0 * float(m) * np.log(2.0 * float(m) / float(delta))),
+    }
+    if data_lam_min is not None and data_lam_min > 0:
+        out["data_dependent"] = float(num / float(data_lam_min))
+    return out
+
+
+def aliasability_second_moment(m: int, N: int) -> float:
+    r"""Exact second moment of the model--candidate coherence vector, i.i.d. uniform sampling.
+
+    For an integer-disjoint candidate :math:`\nu`, each coordinate
+    :math:`\bm b_\nu[k]=\tfrac1N\sum_j e^{i2\pi(\nu-\omega_k)t_j}` has mean $0$ and variance
+    $1/N$, and the coordinates are uncorrelated, so :math:`\mathbb E\lVert\bm
+    b_\nu\rVert^2=m/N` \emph{exactly}.  Since $\at(\nu)=\lVert\bm G_N^{-1}\bm b_\nu\rVert$ with
+    $\bm G_N\to\bm I$, $\mathbb E[\at(\nu)^2]\to m/N$; this is the lower half of the matching
+    rate in :func:`aliasability_rate_bounds`.
+    """
+    return float(m) / float(N)
+
+
+def aliasability_rate_bounds(m: int, n_candidates: int, N: int, delta: float) -> dict:
+    r"""Matching $\Theta(\sqrt{m/N})$ rate for aliasability under i.i.d. sampling (Theorem 3a).
+
+    Pairs the exact second moment (:func:`aliasability_second_moment`) with the operator-norm
+    Gram control (:func:`matrix_chernoff_gram_deviation`) and the U1 upper bound:
+
+    * **lower (mean-square, rigorous):** on the event $\lambda_{\max}(\bm G_N)\le1+\eta_{\rm
+      hi}$ (prob.\ $\ge1-\delta$), $\at(\nu)\ge\lVert\bm b_\nu\rVert/(1+\eta_{\rm hi})$, so
+      $\mathbb E[\at(\nu)^2\,\mathbf 1_{\rm good}]\ge(1-\delta)\,(m/N)/(1+\eta_{\rm hi})^2$,
+      i.e.\ $\sqrt{\mathbb E[\at^2]}\ge(1-o(1))\sqrt{m/N}$;
+    * **upper (uniform over $\Om$):** $\max_{\nu\in\Om}\at(\nu)\le\sqrt m\,\varepsilon_c/(1-
+      \eta_{\rm lo})=O(\sqrt{m\log(mK)/N})$.
+
+    The two match up to a $\sqrt{\log(mK)}$ factor -- the $N^{-1/2}$ rate is order-optimal and
+    the paper's disclaimed lower bound is supplied.  Returns
+    ``{second_moment, lower_rms, upper, ratio}``.
+    """
+    _eta_lo, eta_hi = matrix_chernoff_gram_deviation(m, N, delta)
+    sm = aliasability_second_moment(m, N)
+    lower_ms = (1.0 - delta) * sm / (1.0 + eta_hi) ** 2
+    lower = float(np.sqrt(max(lower_ms, 0.0)))
+    upper = aliasability_matrix_bound(m, n_candidates, N, delta)["apriori"]
+    ratio = float(upper / lower) if (np.isfinite(upper) and lower > 0) else float("inf")
+    return {"second_moment": float(sm), "lower_rms": lower, "upper": float(upper), "ratio": ratio}
+
+
+def assouad_grid_floor(freqs, tones, coeffs, Q, t, tol: float = 1e-9) -> dict:
+    r"""Estimator-independent $L^2$ floor for $K$ grid-coherent tones (Theorem 3b, grid).
+
+    Given a rate-$Q$ grid design $t$ and $K$ out-of-band tones $\nu_l$ each congruent mod $Q$
+    to a model atom $\omega_{k_l}$, every $\nu_l$ folds \emph{exactly} onto its atom on $t$
+    (verified via :func:`exactly_indistinguishable`).  An Assouad hypercube over the $2^K$
+    sign patterns then gives, for \emph{any} estimator,
+    :math:`\sup\;\lVert\hat f-f\rVert_{L^2}\ge\tfrac1{\sqrt2}\lVert\bm a\rVert_2`
+    (each coherent tone contributes its full energy; distinct frequencies are $L^2$-orthogonal).
+    This strengthens the single-tone converse (Thm.~1(ii)) to $K$ simultaneous tones.
+
+    Returns ``{floor, all_folds_exact, K}``; ``floor`` is meaningful only when every fold is
+    exact (a genuine grid design)."""
+    freqs = np.asarray(freqs, float)
+    tones = np.asarray(tones, float)
+    coeffs = np.asarray(coeffs)
+    exact = []
+    for nu, om in zip(tones, [round(float(v)) % int(Q) for v in tones]):
+        # match nu (mod Q) to a model atom; verify exact indistinguishability of the pair
+        cls = grid_equivalence_class(nu, Q)
+        atoms = [w for w in freqs if grid_equivalence_class(w, Q) == cls]
+        if not atoms:
+            exact.append(False); continue
+        w = atoms[0]
+        exact.append(exactly_indistinguishable(
+            np.array([nu]), np.array([1.0]), np.array([w]), np.array([1.0]), t, tol=tol))
+    floor = float(np.linalg.norm(coeffs) / np.sqrt(2.0))
+    return {"floor": floor, "all_folds_exact": bool(np.all(exact)), "K": int(tones.size)}
+
+
+def lecam_detection_threshold(freqs, t, nu: float, sigma: float) -> float:
+    r"""Le Cam single-tone detection/identification threshold (Theorem 3b, random).
+
+    Under observations $\bm y=S_T f+\bm\varepsilon$, $\bm\varepsilon\sim\mathcal N(0,\sigma^2\bm
+    I)$, the two laws for an in-band signal with vs.\ without an out-of-band tone of amplitude
+    $a$ at $\nu$ have KL divergence $N\,\vt(\nu)^2 a^2/(2\sigma^2)$.  A tone with
+    :math:`|a|\lesssim\sigma/\big(\vt(\nu)\sqrt N\big)` is therefore not testable, matching the
+    achievable $\sigma/\sqrt N$ resolution up to the visibility.  Returns that threshold.
+    """
+    v = visibility(freqs, t, float(nu))
+    if v <= 0:
+        return float("inf")
+    return float(sigma / (v * np.sqrt(float(t.size))))
 
 
 # --------------------------------------------------------------------------------------

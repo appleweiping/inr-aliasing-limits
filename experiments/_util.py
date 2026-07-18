@@ -34,20 +34,77 @@ def ensure_dirs() -> None:
     FIGDIR.mkdir(parents=True, exist_ok=True)
 
 
-def run_metadata() -> dict:
-    """Environment + provenance stamp attached to every result JSON."""
+def _source_tree_hash() -> str:
+    """SHA-256 fingerprint of the CODE that produces a result: all Python under src/ and
+    experiments/.  This is environment-portable (byte-identical on the local checkout and the
+    server, both LF), so check_consistency.py can recompute it from the committed tree and
+    fail if that tree does not reproduce the stamp a headline result carries.  The dependency
+    environment (torch/numpy/scipy versions, host, GPU) is stamped separately in ``_meta``;
+    it is deliberately NOT folded in here, since the pinned lock describes the CI/local
+    environment, not necessarily the server conda environment that produced a given result."""
+    import hashlib
+
+    h = hashlib.sha256()
+    root = RESULTS.parent
+    files = sorted(list((root / "src").rglob("*.py")) + list((root / "experiments").rglob("*.py")))
+    for f in files:
+        try:
+            h.update(f.relative_to(root).as_posix().encode())
+            h.update(f.read_bytes())
+        except Exception:
+            pass
+    return h.hexdigest()[:16]
+
+
+def run_metadata(config: dict | None = None) -> dict:
+    """Full provenance stamp attached to every result JSON: exact source + environment +
+    git state (with a DIRTY flag) + command + timestamp + host/CPU/GPU.  Dirty-tree or
+    unknown-provenance results must not be used as paper headline (checked by the CI
+    consistency test)."""
     import platform
     import subprocess
+    import datetime
+    import hashlib
+    import os
 
     import numpy
     import scipy
 
+    def _git(args):
+        try:
+            return subprocess.run(["git", *args], capture_output=True, text=True,
+                                  cwd=RESULTS.parent, timeout=10).stdout.strip() or None
+        except Exception:
+            return None
+
+    full = _git(["rev-parse", "HEAD"])
+    porcelain = _git(["status", "--porcelain"])
+    dirty = None if porcelain is None else (porcelain != "")
+    if full is None:
+        # server tarball sync ships GIT_COMMIT as "<full-sha>\n<clean|dirty>"
+        stamp = RESULTS.parent / "GIT_COMMIT"
+        if stamp.exists():
+            parts = stamp.read_text().split()
+            full = parts[0] if parts else None
+            if dirty is None and len(parts) > 1:
+                dirty = (parts[1].strip().lower() == "dirty")
     meta = {
+        "git_commit": full,
+        "git_short": (full[:8] if full else None),
+        "git_dirty": dirty,
+        "source_tree_sha256": _source_tree_hash(),
+        "command": " ".join(sys.argv),
+        "timestamp_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "hostname": platform.node(),
         "python": platform.python_version(),
         "platform": platform.platform(),
+        "cpu_count": os.cpu_count(),
         "numpy": numpy.__version__,
         "scipy": scipy.__version__,
     }
+    if config is not None:
+        meta["config_sha256"] = hashlib.sha256(
+            json.dumps(config, sort_keys=True, default=str).encode()).hexdigest()[:16]
     try:
         import torch  # noqa
 
@@ -57,25 +114,13 @@ def run_metadata() -> dict:
             meta["gpu"] = torch.cuda.get_device_name(0)
     except Exception:
         meta["torch"] = None
-    try:
-        meta["git_commit"] = subprocess.run(
-            ["git", "rev-parse", "--short", "HEAD"],
-            capture_output=True, text=True, cwd=RESULTS.parent, timeout=10,
-        ).stdout.strip() or None
-    except Exception:
-        meta["git_commit"] = None
-    if not meta["git_commit"]:
-        # server checkouts are tarball syncs, not git repos: deploy.sh ships GIT_COMMIT
-        stamp = RESULTS.parent / "GIT_COMMIT"
-        if stamp.exists():
-            meta["git_commit"] = stamp.read_text().strip() or None
     return meta
 
 
 def save_json(name: str, obj: dict) -> Path:
     ensure_dirs()
     if isinstance(obj, dict) and "_meta" not in obj:
-        obj = {**obj, "_meta": run_metadata()}
+        obj = {**obj, "_meta": run_metadata(obj.get("config"))}
     p = RESULTS / name
     p.write_text(json.dumps(obj, indent=2))
     return p

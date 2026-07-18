@@ -1,379 +1,538 @@
-r"""E6 -- AliasGuard: constructive sampling design against structured aliasing.
+r"""E6 -- constructive anti-aliasing sample design, evaluated honestly.
 
-Pre-registered comparison (config, metrics, and seed list fixed at the top of this file;
-no test-set tuning).  Every design uses ONLY the model dictionary ``LAMBDA``, the
-candidate out-of-band set it is given, and the budget ``N`` -- never the signal, the
-noise, or the held-out test frequencies.
+Design principle: choose sample times so the model Gram is well conditioned AND its
+coupling to a specified out-of-band concern set is small.  This is *related to / motivated
+by* Ds-optimal (nuisance-parameter) experimental design and LCMV null-steering (classical;
+credited, not claimed).  The AliasGuard surrogate is NOT identical to the exact Ds
+objective -- ``ds_optimal_design`` is the exact Ds baseline, included for comparison.
 
-Sections
---------
-A. Design-metric comparison across methods (min visibility, max aliasability, condition
-   number) in three regimes -- exact grid-coherent folds, off-grid near-band separated
-   tones, and a broad band -- reported as mean +/- 95% CI.
-B. Ablation: AliasGuard (joint objective) vs coherence-only and condition-only designs,
-   showing the joint objective is necessary (neither single criterion controls both
-   aliasing and conditioning).
-C. Generalization: design on a focused, thickened concern set; evaluate on HELD-OUT
-   frequencies (perturbed, unseen) and under candidate-set MISSPECIFICATION.
-D. Budget sweep: worst-case aliasability vs N/m.
-E. Downstream: LS reconstruction under each design (aliasing-bias part of the error and
-   the in-band noise gain), so the design metric translates to signal-domain gain.
-F. Two-dimensional frequency vectors (images): AliasGuard generalizes.
+Statistical protocol (pre-registered; fixed here; NO test-set tuning):
+* ``N_SCENARIOS`` independent OUTER scenarios, each fixing its own dictionary ``Lambda``
+  (alternating orthonormal/integer and non-orthonormal/non-integer), concern set, noise,
+  and optimizer initialization.  ALL methods run on the SAME scenarios (paired).
+* the reported quantity is the FUNCTION-SPACE worst-case aliasability
+  ``max_nu a_{L2,T}(nu)`` on HELD-OUT frequency sets, of several distinct types.
+* CIs are paired bootstrap over the outer scenarios (the replication unit); every method,
+  even a deterministic one, has a genuine scenario distribution -- no CI=0 artifact.
+* wall-clock per method is recorded (matched-budget context).
 
-Honest scope (reported): AliasGuard needs a FOCUSED concern set (K = O(N)); for a broad
-band densely covered with K >> N no design beats random much (over-constrained), and a
-badly misspecified concern set loses the edge.  The grid-restricted greedy variant
-inherits T1 and cannot break exact grid-coherent folds -- only the continuous (off-grid)
-design can.
+Each design is computed ONCE per scenario and reused across all sections.  Scenarios are
+processed in parallel (ProcessPoolExecutor) when available.
 
-CPU-only.  Usage: python experiments/run_aliasguard.py [--quick]
+CPU-only.  Usage: python experiments/run_aliasguard.py [--quick] [--scenarios N] [--jobs J]
 """
 from __future__ import annotations
 
 import sys
+import time
 
 import numpy as np
 
 from _util import save_json, savefig
-from inralias.signals import evaluate
-from inralias.inr import FixedFeatureINR
-from inralias.identifiability import function_error_decomposition
+from inralias.identifiability import continuous_gram, function_error_decomposition
+from inralias.sampling import synthesis_matrix
 from inralias.design import (
-    design_metrics, visibility_of, aliasability_of, condition_number_of,
-    aliasguard_continuous, aliasguard_greedy, aliasguard_continuous_nd,
-    condition_only_design, coherence_only_design, e_optimal_design, fixed_jitter,
-    aliasability_certificate, visibility_certificate,
+    aliasability_L2_of, visibility_of, condition_number_of,
+    aliasguard_continuous, ds_optimal_design, e_optimal_design,
+    coherence_only_design, condition_only_design, fixed_jitter, annealing_design,
+    aliasability_certificate,
 )
 
 import matplotlib.pyplot as plt
 
-# ---- pre-registered config ----
-LAMBDA = np.array([0.0, 5.0, -5.0, 11.0, -11.0, 17.0, -17.0, 23.0, -23.0])
-M = LAMBDA.size
-Q_GRID = 256
-RANDOM_SEEDS = list(range(12))        # for random baselines and AG restarts
-AG_SEEDS = list(range(3))             # AliasGuard init seeds (near-deterministic)
-CI = 1.96
-CONCERN = np.array([26.5, 33.0, 41.5, -26.5, -33.0, -41.5, 23.0 + 256, -(23.0 + 256)])
+N_DEFAULT = 40
+N_SCENARIOS = 24
+CERT_BAND = [(25.0, 60.0), (-60.0, -25.0)]
+HELDOUT_TYPES = ["near", "omitted_band", "severe_shift", "scale_error", "broadband_ood"]
+METHODS = ["aliasguard", "ds_optimal", "e_optimal", "random_jitter", "iid_uniform",
+           "low_discrepancy", "random_search", "coherence_only", "condition_only", "annealing"]
+DECOMP_DESIGNS = ["aliasguard", "ds_optimal", "random_jitter"]
+CERT_DESIGNS = ["aliasguard", "ds_optimal", "e_optimal", "random_jitter"]
 
 
-def _mean_ci(vals):
-    v = np.asarray(vals, float)
-    if v.size < 2:
-        return float(v.mean()), 0.0
-    return float(v.mean()), float(CI * v.std(ddof=1) / np.sqrt(v.size))
+def make_scenario(s: int):
+    rng = np.random.default_rng(10_000 + s)
+    m_half = 4
+    if s % 2 == 0:
+        pos = np.sort(rng.choice(np.arange(3, 26), size=m_half, replace=False)).astype(float)
+    else:
+        pos = np.sort(rng.uniform(3, 26, size=m_half))
+    LAM = np.concatenate([[0.0], pos, -pos])
+    n_centers = int(rng.integers(3, 5))
+    centers = rng.uniform(28, 52, size=n_centers)
+    Odes = np.sort(np.concatenate([np.concatenate([centers, -centers]) + d for d in (-0.5, 0.0, 0.5)]))
+    Odes = _clean(Odes, LAM, 0.4)
+    held = {}
+    held["near"] = _clean(np.concatenate([centers + 0.27, -centers + 0.27,
+                                          centers - 0.31, -centers - 0.31]), LAM)
+    omit = rng.uniform(28, 52)
+    held["omitted_band"] = _clean(np.concatenate(
+        [omit + np.linspace(-0.4, 0.4, 5), -(omit + np.linspace(-0.4, 0.4, 5))]), LAM)
+    held["severe_shift"] = _clean(np.concatenate([centers + 3.0, -centers - 3.0]), LAM)
+    held["scale_error"] = _clean(np.concatenate([centers * 1.15, -centers * 1.15]), LAM)
+    held["broadband_ood"] = _clean(np.concatenate([np.linspace(27, 55, 20), -np.linspace(27, 55, 20)]), LAM)
+    sigma = float(rng.choice([0.02, 0.05, 0.1]))
+    return {"s": s, "LAMBDA": LAM.tolist(), "Odes": Odes.tolist(),
+            "held": {k: v.tolist() for k, v in held.items()}, "sigma": sigma,
+            "orthonormal": bool(s % 2 == 0)}
 
 
-def _worst(t, out_freqs):
-    vs = [visibility_of(LAMBDA, t, float(n)) for n in out_freqs]
-    az = [aliasability_of(LAMBDA, t, float(n)) for n in out_freqs]
-    return min(vs), max(az), condition_number_of(LAMBDA, t)
+def _clean(freqs, LAM, guard=0.25):
+    f = np.unique(np.round(np.asarray(freqs, float), 6))
+    LAM = np.asarray(LAM, float)
+    return f[np.min(np.abs(f[:, None] - LAM[None, :]), axis=1) > guard]
 
 
-# ---- data-independent design methods (all seeded / deterministic) ----
-def _baselines(out_freqs, N, seed):
+def build_design(method, LAM, Odes, N, seed, quick):
+    ns = 60 if quick else 200
+    t0 = time.perf_counter()
+    # MATCHED BUDGET: every coordinate-descent method (AliasGuard AND the exact-Ds / ablation
+    # baselines) uses the SAME n_sweeps and grid_res, so the comparison is fair -- the
+    # baselines are not budget-starved relative to the flagship.
+    NSW, GR = 15, 480
+    if method == "aliasguard":
+        t, _ = aliasguard_continuous(LAM, Odes, N, n_sweeps=NSW, grid_res=GR, seed=seed)
+    elif method == "ds_optimal":
+        t = ds_optimal_design(LAM, Odes, N, n_sweeps=NSW, grid_res=GR, seed=seed)
+    elif method == "e_optimal":
+        t = e_optimal_design(LAM, N, n_restarts=ns, seed=seed)
+    elif method == "random_jitter":
+        r = np.random.default_rng(seed)
+        t = np.sort((np.arange(N) + 0.5 * r.uniform(-1, 1, N)) / N % 1.0)
+    elif method == "iid_uniform":
+        t = np.sort(np.random.default_rng(seed).uniform(0, 1, N))
+    elif method == "low_discrepancy":
+        t = fixed_jitter(N)
+    elif method == "random_search":
+        t = _random_search(LAM, Odes, N, n=ns, seed=seed)
+    elif method == "coherence_only":
+        t = coherence_only_design(LAM, Odes, N, seed=seed, n_sweeps=NSW, grid_res=GR)
+    elif method == "condition_only":
+        t = condition_only_design(LAM, N, seed=seed, n_sweeps=NSW, grid_res=GR)
+    elif method == "annealing":
+        t = annealing_design(LAM, Odes, N, maxiter=60 if not quick else 40, seed=seed)
+    else:
+        raise ValueError(method)
+    return np.asarray(t, float), time.perf_counter() - t0
+
+
+def _random_search(LAM, Odes, N, n, seed):
     rng = np.random.default_rng(seed)
-    return {
-        "random_grid_subset": np.sort(rng.choice(Q_GRID, N, replace=False)) / Q_GRID,
-        "iid_uniform": np.sort(rng.uniform(0, 1, N)),
-        "random_jitter": np.sort((np.arange(N) + 0.5 * rng.uniform(-1, 1, N)) / N % 1.0),
-    }
-
-
-def _random_search(out_freqs, N, n=200, seed=0):
-    """Best-of-n i.i.d. design by the (sample-only) surrogate/max-aliasability objective."""
-    rng = np.random.default_rng(seed)
+    O = np.atleast_1d(np.asarray(Odes, float))
     best_t, best = None, np.inf
     for _ in range(n):
         t = np.sort(rng.uniform(0, 1, N))
-        a = max(aliasability_of(LAMBDA, t, float(nu)) for nu in out_freqs)
+        a = max(aliasability_L2_of(LAM, t, float(nu)) for nu in O)
         if a < best:
             best, best_t = a, t
     return best_t
 
 
-def _design_bank(out_freqs, N, quick=False):
-    """All methods that produce a single deterministic design (given seeds)."""
+def _worst_L2(LAM, t, freqs):
+    freqs = np.asarray(freqs, float)
+    return max((aliasability_L2_of(LAM, t, float(nu)) for nu in freqs), default=0.0)
+
+
+def _min_vis(LAM, t, freqs):
+    freqs = np.asarray(freqs, float)
+    return min((visibility_of(LAM, t, float(nu)) for nu in freqs), default=1.0)
+
+
+# --------------------------------------------------------------------------------------
+# one scenario -> all metrics (design computed once per method)
+# --------------------------------------------------------------------------------------
+def process_scenario(args):
+    sc, N, quick, methods, amps, cert_ng = args
+    LAM = np.asarray(sc["LAMBDA"], float)
+    Odes = np.asarray(sc["Odes"], float)
+    held = {k: np.asarray(v, float) for k, v in sc["held"].items()}
+    sigma = sc["sigma"]
+    designs = {m: build_design(m, LAM, Odes, N, seed=sc["s"], quick=quick) for m in methods}
+    rec = {"s": sc["s"], "methods": {}}
+    for m, (t, dt) in designs.items():
+        rec["methods"][m] = {
+            "design_set": _worst_L2(LAM, t, Odes),
+            "cond": condition_number_of(LAM, t),
+            "min_vis_near": _min_vis(LAM, t, held["near"]),
+            "time": dt,
+            "heldout": {ht: _worst_L2(LAM, t, held[ht]) for ht in HELDOUT_TYPES},
+        }
+    # signal-domain decomposition (P0-F): paired bias/noise/truncation/total
+    rec["decomp"] = {}
+    G_L2 = continuous_gram(LAM)
+    for d in DECOMP_DESIGNS:
+        t = designs[d][0]
+        Phi = synthesis_matrix(LAM, t)
+        G = Phi.conj().T @ Phi
+        s = np.linalg.svd(Phi, compute_uv=False)
+        entry = {"tr_ginv": float(np.real(np.trace(np.linalg.inv(G)))),
+                 "sigma_min_inv2": float(1.0 / s[-1] ** 2), "cond": float(s[0] / s[-1]),
+                 "by_amp": {}}
+        rng = np.random.default_rng(20_000 + sc["s"])
+        m = LAM.size
+        for a in amps:
+            bias, noise, trunc, total = [], [], [], []
+            for nu in held["near"][:4]:
+                c_star = rng.standard_normal(m) + 1j * rng.standard_normal(m)
+                c_star = c_star / np.linalg.norm(c_star)
+                of = np.array([float(nu), -float(nu)]); oc = np.array([a / 2, a / 2], complex)
+                y_in = Phi @ c_star
+                y_tone = synthesis_matrix(of, t) @ oc
+                eps = (rng.standard_normal(t.size) + 1j * rng.standard_normal(t.size)) * sigma / np.sqrt(2)
+                ch_bias = np.linalg.lstsq(Phi, y_in + y_tone, rcond=None)[0]
+                ch_noise = np.linalg.lstsq(Phi, y_in + eps, rcond=None)[0]
+                ch_total = np.linalg.lstsq(Phi, y_in + y_tone + eps, rcond=None)[0]
+                bias.append(np.sqrt(max(function_error_decomposition(LAM, ch_bias, c_star, of, oc)["modeled_component_sq"], 0.0)))
+                dcn = ch_noise - c_star
+                noise.append(float(np.sqrt(max(np.real(dcn.conj() @ G_L2 @ dcn), 0.0))))
+                trunc.append(float(np.sqrt(max(np.real(oc.conj() @ continuous_gram(of) @ oc), 0.0))))
+                total.append(function_error_decomposition(LAM, ch_total, c_star, of, oc)["total_rmse"])
+            entry["by_amp"][str(a)] = {"bias": float(np.mean(bias)), "noise": float(np.mean(noise)),
+                                       "trunc": float(np.mean(trunc)), "total": float(np.mean(total))}
+        rec["decomp"][d] = entry
+    # continuum certificate (function-space) for the cert designs
+    rec["cert"] = {}
+    for d in CERT_DESIGNS:
+        if d == "aliasguard":
+            band_grid = np.sort(np.concatenate([np.arange(25, 60.01, 0.5), -np.arange(25, 60.01, 0.5)]))
+            t, _ = aliasguard_continuous(LAM, band_grid, N, n_sweeps=12, grid_res=480, seed=sc["s"])
+        else:
+            t = designs[d][0]
+        c = aliasability_certificate(LAM, t, CERT_BAND, n_grid=cert_ng, metric="l2")
+        rec["cert"][d] = {"certified": c["certified_max_aliasability"],
+                          "cond": c["condition_number"], "full_rank": bool(c["full_rank"])}
+    return rec
+
+
+def _paired_bootstrap_ci(vals, n_boot=2000, seed=0):
+    v = np.asarray(vals, float)
+    if v.size < 2:
+        return float(v.mean()) if v.size else 0.0, 0.0, 0.0
+    rng = np.random.default_rng(seed)
+    means = [v[rng.integers(0, v.size, v.size)].mean() for _ in range(n_boot)]
+    return float(v.mean()), float(np.quantile(means, 0.025)), float(np.quantile(means, 0.975))
+
+
+def aggregate(records, methods, amps):
+    summ = {}
+    for m in methods:
+        heldout = {}
+        for ht in HELDOUT_TYPES:
+            vals = [r["methods"][m]["heldout"][ht] for r in records]
+            mean, lo, hi = _paired_bootstrap_ci(vals)
+            heldout[ht] = {"mean": mean, "ci_lo": lo, "ci_hi": hi,
+                           "values": [round(x, 4) for x in vals]}
+        dm, dlo, dhi = _paired_bootstrap_ci([r["methods"][m]["design_set"] for r in records])
+        cm, clo, chi = _paired_bootstrap_ci([r["methods"][m]["cond"] for r in records])
+        times = [r["methods"][m]["time"] for r in records]
+        summ[m] = {"heldout": heldout, "design_set": {"mean": dm, "ci_lo": dlo, "ci_hi": dhi},
+                   "condition_number": {"mean": cm, "ci_lo": clo, "ci_hi": chi},
+                   "min_visibility_near": float(np.mean([r["methods"][m]["min_vis_near"] for r in records])),
+                   "wall_clock_s": {"mean": float(np.mean(times)), "total": float(np.sum(times))}}
+    # decomposition
+    decomp = {"amps": amps, "designs": DECOMP_DESIGNS, "agg": {}}
+    for d in DECOMP_DESIGNS:
+        by_amp = {}
+        for a in amps:
+            for k in ("bias", "noise", "trunc", "total"):
+                vals = [r["decomp"][d]["by_amp"][str(a)][k] for r in records]
+                by_amp.setdefault(str(a), {})[k] = {"mean": float(np.mean(vals)),
+                    "ci": float(1.96 * np.std(vals, ddof=1) / np.sqrt(len(vals)) if len(vals) > 1 else 0.0)}
+        decomp["agg"][d] = {"by_amp": by_amp,
+                            "tr_ginv": float(np.mean([r["decomp"][d]["tr_ginv"] for r in records])),
+                            "sigma_min_inv2": float(np.mean([r["decomp"][d]["sigma_min_inv2"] for r in records])),
+                            "cond": float(np.mean([r["decomp"][d]["cond"] for r in records]))}
+    # certificate
+    cert = {}
+    for d in CERT_DESIGNS:
+        cvals = [r["cert"][d]["certified"] for r in records if np.isfinite(r["cert"][d]["certified"])]
+        cert[d] = {"certified_mean": float(np.mean(cvals)) if cvals else float("inf"),
+                   "certified_values": [round(r["cert"][d]["certified"], 4)
+                                        if np.isfinite(r["cert"][d]["certified"]) else None for r in records],
+                   "cond_mean": float(np.mean([r["cert"][d]["cond"] for r in records])),
+                   "all_full_rank": bool(all(r["cert"][d]["full_rank"] for r in records))}
+    return summ, decomp, cert
+
+
+# --- module-level task workers so the serial sections can run on the shared pool ----------
+def _pareto_ag_task(args):
+    b, sc, N = args
+    LAM = np.asarray(sc["LAMBDA"], float)
+    t, _ = aliasguard_continuous(LAM, np.asarray(sc["Odes"], float), N, beta=b,
+                                 n_sweeps=12, grid_res=480, seed=sc["s"])
+    return float(_worst_L2(LAM, t, np.asarray(sc["held"]["near"], float))), \
+        float(condition_number_of(LAM, t))
+
+
+def _pareto_ref_task(args):
+    ref, sc, N, quick = args
+    LAM = np.asarray(sc["LAMBDA"], float)
+    if ref == "ds_optimal":
+        t = ds_optimal_design(LAM, np.asarray(sc["Odes"], float), N, n_sweeps=12,
+                              grid_res=480, seed=sc["s"])
+    else:
+        t = e_optimal_design(LAM, N, n_restarts=120 if quick else 200, seed=sc["s"])
+    return ref, float(_worst_L2(LAM, t, np.asarray(sc["held"]["near"], float))), \
+        float(condition_number_of(LAM, t))
+
+
+def _budget_task(args):
+    mth, N, sc, quick = args
+    LAM = np.asarray(sc["LAMBDA"], float)
+    t, _ = build_design(mth, LAM, np.asarray(sc["Odes"], float), N, seed=sc["s"], quick=quick)
+    return mth, N, float(_worst_L2(LAM, t, np.asarray(sc["held"]["near"], float)))
+
+
+ND_METHODS = ["aliasguard", "ds_optimal", "e_optimal", "low_discrepancy",
+              "random_jitter", "iid_uniform"]
+
+
+def _make_nd_scenario(s, d):
+    """n-D scenario: integer-lattice dictionary, coherent out-of-band concern set, and a large
+    HELD-OUT vector set (near / shifted / broadband) disjoint from the concern set."""
+    rng = np.random.default_rng(60_000 + 1000 * d + s)
+    lat = int(np.ceil((12 if d == 2 else 16) ** (1.0 / d))) + 1
+    axes = [np.arange(-lat, lat + 1) for _ in range(d)]
+    grid = np.stack(np.meshgrid(*axes, indexing="ij"), -1).reshape(-1, d).astype(float)
+    order = np.argsort(np.linalg.norm(grid, axis=1))
+    LAM = grid[order[: (12 if d == 2 else 16)]]                       # low-freq dictionary
+    dirs = rng.normal(size=(4, d)); dirs /= np.linalg.norm(dirs, axis=1, keepdims=True)
+    R = rng.uniform(8, 12)
+    centers = np.round(dirs * R)                                     # coherent near-grid band
+
+    def clean(V):
+        V = np.atleast_2d(V)
+        return V[np.min(np.linalg.norm(V[:, None] - LAM[None], axis=2), axis=1) > 1.2]
+    Odes = clean(np.concatenate([centers + off for off in
+                                 ([[0, 0], [0.5, 0], [0, 0.5]] if d == 2
+                                  else [[0, 0, 0], [0.5, 0, 0], [0, 0.5, 0.5]])]))
+    near = clean(centers + rng.uniform(-0.4, 0.4, (len(centers), d)))
+    shifted = clean(centers + (3.0 if d == 2 else 2.5))
+    ann = rng.normal(size=(120, d)); ann /= np.linalg.norm(ann, axis=1, keepdims=True)
+    broad = clean(np.round(ann * rng.uniform(6, 16, (120, 1))))
+    held = np.concatenate([near, shifted, broad])[:128]
+    N = 64 if d == 2 else 96
+    return {"LAM": LAM, "Odes": Odes, "held": held, "N": N, "d": d}
+
+
+def _nd_task(args):
+    s, d, quick = args
+    from inralias.design import (aliasguard_continuous_nd, ds_optimal_design, e_optimal_design,
+                                 fixed_jitter, aliasability_certificate_nd)
+    sc = _make_nd_scenario(s, d)
+    LAM, Odes, held, N = sc["LAM"], sc["Odes"], sc["held"], sc["N"]
+    NSW, GR = (6, 40) if quick else (12, 96 if d == 2 else 56)
     ns = 60 if quick else 200
-    cd_kw = dict(n_sweeps=8, grid_res=320)
-    bank = {
-        "full_grid": np.arange(N) / max(N, Q_GRID) if N <= Q_GRID else np.arange(N) / N,
-        "fixed_jitter": fixed_jitter(N),
-        "condition_only": condition_only_design(LAMBDA, N, seed=0, **cd_kw),
-        "coherence_only": coherence_only_design(LAMBDA, out_freqs, N, seed=0, **cd_kw),
-        "e_optimal": e_optimal_design(LAMBDA, N, n_restarts=ns, seed=0),
-        "random_search": _random_search(out_freqs, N, n=ns, seed=0),
-        "aliasguard_greedy": aliasguard_greedy(LAMBDA, out_freqs, N, Q=Q_GRID, seed=0)[0],
-        "aliasguard": aliasguard_continuous(LAMBDA, out_freqs, N, seed=0)[0],
-    }
-    return bank
+    rng = np.random.default_rng(70_000 + 1000 * d + s)
+    designs = {}
+    designs["aliasguard"] = aliasguard_continuous_nd(LAM, Odes, N, d=d, n_sweeps=NSW,
+                                                     grid_res=GR, seed=s)[0]
+    designs["ds_optimal"] = ds_optimal_design(LAM, Odes, N, n_sweeps=NSW, grid_res=GR, seed=s, d=d)
+    designs["e_optimal"] = e_optimal_design(LAM, N, n_restarts=ns, seed=s, d=d)
+    designs["low_discrepancy"] = fixed_jitter(N, d=d)
+    designs["random_jitter"] = (np.floor(rng.uniform(0, 1, (N, d)) * N) + rng.uniform(0, 1, (N, d))) / N % 1.0
+    designs["iid_uniform"] = rng.uniform(0, 1, (N, d))
+    box = [(float(np.min(held[:, ax]) - 0.5), float(np.max(held[:, ax]) + 0.5)) for ax in range(d)]
+    rec = {"s": s, "d": d, "worst": {}, "cert": {}}
+    for m, t in designs.items():
+        rec["worst"][m] = float(max((aliasability_L2_of(LAM, t, held[i]) for i in range(len(held))),
+                                    default=0.0))
+        if m in ("aliasguard", "ds_optimal", "random_jitter"):
+            c = aliasability_certificate_nd(LAM, t, box, n_per_axis=32 if d == 2 else 16, metric="l2")
+            rec["cert"][m] = float(c["certified_max_aliasability"])
+    return rec
 
 
-# ======================================================================================
-def section_A_regimes(quick):
-    """Design metrics per method across three regimes, with CI over seeds (randoms) or
-    over AG init seeds; evaluated on the design's OWN candidate set."""
-    regimes = {
-        "coherent_folds": np.array([w + Q_GRID for w in LAMBDA if w != 0]
-                                   + [w - Q_GRID for w in LAMBDA if w != 0]),
-        "near_band": _near_band_set(),
-        "broad_band": np.sort(np.concatenate([np.linspace(24, 52, 15), -np.linspace(24, 52, 15)])),
-    }
-    N = 40
-    out = {}
-    for rname, OUT in regimes.items():
-        methods = {}
-        # randomized baselines: CI over seeds
-        for label in ("random_grid_subset", "iid_uniform", "random_jitter"):
-            rows = [_worst(_baselines(OUT, N, s)[label], OUT) for s in RANDOM_SEEDS]
-            methods[label] = _summarize(rows)
-        # deterministic / optimized designs
-        bank = _design_bank(OUT, N, quick)
-        for label, t in bank.items():
-            methods[label] = _summarize([_worst(t, OUT)])
-        # AliasGuard CI over init seeds
-        ag_rows = [_worst(aliasguard_continuous(LAMBDA, OUT, N, seed=s)[0], OUT) for s in AG_SEEDS]
-        methods["aliasguard"] = _summarize(ag_rows)
-        out[rname] = {"N": N, "K": int(OUT.size), "methods": methods}
-    return out
+def _pmap(ex, fn, tasks):
+    """Map via the shared executor if present, else serially."""
+    return list(ex.map(fn, tasks)) if ex is not None else [fn(t) for t in tasks]
 
 
-def _near_band_set():
-    pos = LAMBDA[LAMBDA > 0]
-    O = np.sort(np.concatenate([pos + 1.3, pos - 1.3, -(pos + 1.3), -(pos - 1.3)]))
-    return O[np.min(np.abs(O[:, None] - LAMBDA[None, :]), axis=1) > 0.5]
+def section_pareto(scenarios, N, quick, ex=None):
+    betas = [0.05, 0.2, 0.5, 1.0, 2.0, 5.0] if not quick else [0.2, 1.0, 5.0]
+    pts = {"beta": betas, "aliasguard": [], "aliasguard_cond": []}
+    sub = scenarios[: (4 if quick else 8)]
+    ag_res = _pmap(ex, _pareto_ag_task, [(b, sc, N) for b in betas for sc in sub])
+    ag_res = [ag_res[i * len(sub):(i + 1) * len(sub)] for i in range(len(betas))]
+    for block in ag_res:
+        pts["aliasguard"].append(float(np.mean([a for a, _ in block])))
+        pts["aliasguard_cond"].append(float(np.mean([c for _, c in block])))
+    ref_res = _pmap(ex, _pareto_ref_task,
+                    [(ref, sc, N, quick) for ref in ("ds_optimal", "e_optimal") for sc in sub])
+    for ref in ("ds_optimal", "e_optimal"):
+        block = [r for r in ref_res if r[0] == ref]
+        pts[ref] = [float(np.mean([al for _, al, _ in block])),
+                    float(np.mean([cn for _, _, cn in block]))]
+    return pts
 
 
-def _summarize(rows):
-    mv = _mean_ci([r[0] for r in rows]); ma = _mean_ci([r[1] for r in rows])
-    cn = _mean_ci([r[2] for r in rows])
-    return {"min_visibility": mv[0], "min_visibility_ci": mv[1],
-            "max_aliasability": ma[0], "max_aliasability_ci": ma[1],
-            "condition_number": cn[0], "condition_number_ci": cn[1]}
-
-
-def section_C_heldout(quick):
-    """Design on a focused, thickened concern set; test on held-out perturbed frequencies
-    and under misspecification.  This is the deployable claim."""
-    N = 40
-    Odes = np.sort(np.concatenate([CONCERN + d for d in (-0.5, 0.0, 0.5)]))
-    Odes = Odes[np.min(np.abs(Odes[:, None] - LAMBDA[None, :]), axis=1) > 0.3]
-    Otest = np.sort(np.concatenate([CONCERN + 0.27, CONCERN - 0.31]))
-    Otest = Otest[np.min(np.abs(Otest[:, None] - LAMBDA[None, :]), axis=1) > 0.2]
-    Owrong = Odes + 0.5     # misspecified design set (shift), test on true Otest
-
-    res = {"K_design": int(Odes.size), "K_test": int(Otest.size), "N": N, "methods": {}}
-    # baselines: agnostic, CI over seeds on the held-out test set
-    for label in ("random_jitter", "iid_uniform"):
-        rows = [_worst(_baselines(Otest, N, s)[label], Otest) for s in RANDOM_SEEDS]
-        res["methods"][label] = _summarize(rows)
-    res["methods"]["random_search"] = _summarize([_worst(_random_search(Odes, N, 200 if not quick else 60), Otest)])
-    res["methods"]["e_optimal"] = _summarize([_worst(e_optimal_design(LAMBDA, N, 200 if not quick else 60), Otest)])
-    # AliasGuard designed on Odes, evaluated on held-out Otest; CI over init seeds
-    ag = [_worst(aliasguard_continuous(LAMBDA, Odes, N, seed=s)[0], Otest) for s in AG_SEEDS]
-    res["methods"]["aliasguard_heldout"] = _summarize(ag)
-    # misspecified design
-    agm = [_worst(aliasguard_continuous(LAMBDA, Owrong, N, seed=s)[0], Otest) for s in AG_SEEDS]
-    res["methods"]["aliasguard_misspecified"] = _summarize(agm)
-    return res
-
-
-def section_D_budget(quick):
-    """Worst-case aliasability vs N (held-out concern)."""
-    Odes = np.sort(np.concatenate([CONCERN + d for d in (-0.5, 0.0, 0.5)]))
-    Odes = Odes[np.min(np.abs(Odes[:, None] - LAMBDA[None, :]), axis=1) > 0.3]
-    Otest = np.sort(np.concatenate([CONCERN + 0.27, CONCERN - 0.31]))
-    Otest = Otest[np.min(np.abs(Otest[:, None] - LAMBDA[None, :]), axis=1) > 0.2]
+def section_budget(scenarios, quick, ex=None):
     Ns = [16, 24, 32, 48, 64] if not quick else [24, 40]
-    curves = {"aliasguard": [], "aliasguard_ci": [], "random_jitter": [],
-              "random_jitter_ci": [], "e_optimal": [], "N": Ns}
-    for N in Ns:
-        ag = [_worst(aliasguard_continuous(LAMBDA, Odes, N, seed=s)[0], Otest)[1] for s in AG_SEEDS]
-        rj = [_worst(_baselines(Otest, N, s)["random_jitter"], Otest)[1] for s in RANDOM_SEEDS]
-        eo = _worst(e_optimal_design(LAMBDA, N, 120 if quick else 200), Otest)[1]
-        m, c = _mean_ci(ag); curves["aliasguard"].append(m); curves["aliasguard_ci"].append(c)
-        m, c = _mean_ci(rj); curves["random_jitter"].append(m); curves["random_jitter_ci"].append(c)
-        curves["e_optimal"].append(eo)
+    sub = scenarios[: (6 if quick else 12)]
+    curves = {"N": Ns}
+    methods = ("aliasguard", "ds_optimal", "random_jitter")
+    tasks = [(mth, N, sc, quick) for mth in methods for N in Ns for sc in sub]
+    res = _pmap(ex, _budget_task, tasks)
+    for mth in methods:
+        means, cis = [], []
+        for N in Ns:
+            vals = [v for (m, n, v) in res if m == mth and n == N]
+            m_, lo, hi = _paired_bootstrap_ci(vals)
+            means.append(m_); cis.append((hi - lo) / 2)
+        curves[mth] = means; curves[mth + "_ci"] = cis
     return curves
 
 
-def section_E_downstream(quick):
-    """Signal-domain payoff: LS reconstruction under each design.  Plant f_in + a e_nu for
-    nu in the held-out concern set, fit LS on LAMBDA with noise, and split the error into
-    the aliasing-bias (modeled-component) part and report the in-band noise gain."""
-    N, sigma = 40, 0.03
-    Odes = np.sort(np.concatenate([CONCERN + d for d in (-0.5, 0.0, 0.5)]))
-    Odes = Odes[np.min(np.abs(Odes[:, None] - LAMBDA[None, :]), axis=1) > 0.3]
-    Otest = np.sort(np.concatenate([CONCERN + 0.27, CONCERN - 0.31]))
-    Otest = Otest[np.min(np.abs(Otest[:, None] - LAMBDA[None, :]), axis=1) > 0.2]
-    amps = [0.25, 0.5, 1.0] if not quick else [0.5]
-    designs = {
-        "random_jitter": _baselines(Otest, N, 0)["random_jitter"],
-        "e_optimal": e_optimal_design(LAMBDA, N, 120 if quick else 200),
-        "aliasguard": aliasguard_continuous(LAMBDA, Odes, N, seed=0)[0],
-    }
-    rng = np.random.default_rng(0)
-    # random Hermitian in-band signal
-    def in_signal():
-        c = rng.standard_normal(M) + 1j * rng.standard_normal(M)
-        return c / np.linalg.norm(c)
-    out = {"amps": amps, "sigma": sigma, "N": N, "methods": {}}
-    for label, t in designs.items():
-        cn = condition_number_of(LAMBDA, t)
-        by_amp = {}
-        for a in amps:
-            biases, totals = [], []
-            for nu in Otest:
-                for _ in range(6):
-                    c_star = in_signal()
-                    of = np.array([float(nu), -float(nu)])
-                    oc = np.array([a / 2, a / 2], complex)
-                    y = (evaluate(LAMBDA, c_star, t, real=False)
-                         + evaluate(of, oc, t, real=False)
-                         + (rng.standard_normal(t.size) + 1j * rng.standard_normal(t.size)) * sigma / np.sqrt(2))
-                    model = FixedFeatureINR(LAMBDA, real=False).fit(t, y)
-                    dec = function_error_decomposition(LAMBDA, model.coeffs_, c_star, of, oc)
-                    biases.append(np.sqrt(max(dec["modeled_component_sq"], 0.0)))
-                    totals.append(dec["total_rmse"])
-            mb, cb = _mean_ci(biases); mt, ct = _mean_ci(totals)
-            by_amp[str(a)] = {"aliasing_bias_rmse": mb, "aliasing_bias_ci": cb,
-                              "total_rmse": mt, "total_ci": ct}
-        out["methods"][label] = {"condition_number": cn, "by_amp": by_amp}
-    return out
+def _paired_diff_ci(a, b, n_boot=4000, seed=11):
+    """Paired-difference bootstrap CI of (a-b) over shared scenarios; significant if hi<0."""
+    d = np.asarray(a, float) - np.asarray(b, float)
+    rng = np.random.default_rng(seed)
+    bs = [d[rng.integers(0, d.size, d.size)].mean() for _ in range(n_boot)]
+    lo, hi = float(np.quantile(bs, 0.025)), float(np.quantile(bs, 0.975))
+    return {"mean": float(d.mean()), "ci_lo": lo, "ci_hi": hi, "significant": bool(hi < 0)}
 
 
-def section_G_certificate(quick):
-    """Continuum certificate: design against a fine grid over an out-of-band BAND, then
-    CERTIFY worst-case aliasability over the whole (continuous) band -- a guarantee the
-    finite-candidate concentration bound and random designs do not provide."""
-    N = 48
-    band = [(25.0, 60.0), (-60.0, -25.0)]
-    band_grid = np.sort(np.concatenate([np.arange(25, 60.001, 1.0), -np.arange(25, 60.001, 1.0)]))
-    designs = {
-        "random_jitter": _baselines(band_grid, N, 0)["random_jitter"],
-        "e_optimal": e_optimal_design(LAMBDA, N, 120 if quick else 200),
-        "aliasguard": aliasguard_continuous(LAMBDA, band_grid, N, n_sweeps=18, seed=0)[0],
-    }
-    ng = 600 if quick else 900   # points per unit frequency; Lipschitz slack ~L/(2*ng)
-    out = {"band": band, "N": N, "methods": {}}
-    for label, t in designs.items():
-        ca = aliasability_certificate(LAMBDA, t, band, n_grid=ng)
-        cv = visibility_certificate(LAMBDA, t, band, n_grid=ng)
-        out["methods"][label] = {
-            "certified_max_aliasability": ca["certified_max_aliasability"],
-            "grid_max_aliasability": ca["grid_max_aliasability"],
-            "certified_min_visibility": cv["certified_min_visibility"],
-            "condition_number": condition_number_of(LAMBDA, t)}
-    return out
+def section_nd(d, quick, ex=None):
+    r"""n-D design study: full baseline suite on a SHARED held-out set over paired scenarios,
+    with paired-difference CIs (the marginal spread hides an effect the paired test separates)
+    and the n-D continuum certificate."""
+    nsc = (4 if quick else (80 if d == 2 else 60))
+    recs = _pmap(ex, _nd_task, [(s, d, quick) for s in range(nsc)])
+    recs = [r for r in recs if r is not None]
+    methods = ND_METHODS
+    worst = {m: np.array([r["worst"][m] for r in recs]) for m in methods}
+    summary = {m: {"mean": float(worst[m].mean()),
+                   "ci": float(1.96 * worst[m].std(ddof=1) / np.sqrt(len(recs)))} for m in methods}
+    paired = {m: _paired_diff_ci(worst["aliasguard"], worst[m])
+              for m in methods if m != "aliasguard"}
+    cert = {}
+    for m in ("aliasguard", "ds_optimal", "random_jitter"):
+        cv = np.array([r["cert"][m] for r in recs if np.isfinite(r["cert"].get(m, np.inf))])
+        cert[m] = float(cv.mean()) if cv.size else float("inf")
+    sep = all(paired[m]["significant"] for m in paired)
+    return {"d": d, "n_scenarios": len(recs), "summary": summary, "paired_diff": paired,
+            "certificate_mean": cert, "all_separated": bool(sep),
+            "note": f"{d}-D held-out frequency VECTORS (near/shifted/broadband), 128/scenario, "
+                    f"disjoint from the concern set; full baseline suite at MATCHED budget; "
+                    f"paired-difference bootstrap CIs (headline) + marginal CIs; n-D certificate."}
 
 
-def section_F_2d(quick):
-    """AliasGuard in 2-D frequency vectors (images)."""
-    LAM2 = np.array([[0, 0], [1, 0], [0, 1], [1, 1], [-1, 0], [0, -1], [2, 1], [-2, -1],
-                     [1, -2], [-1, 2]], float)
-    O2 = np.array([[8, 0], [0, 8], [8, 8], [-8, 0], [0, -8], [6, 3], [-6, -3], [4, 7]], float)
-    N2 = 48
-    rows = {"random": [], "aliasguard": []}
-    for s in AG_SEEDS:
-        tr = np.random.default_rng(s).uniform(0, 1, (N2, 2))
-        mr = design_metrics(LAM2, O2, tr)
-        rows["random"].append((mr["min_visibility"], mr["max_aliasability"], mr["condition_number"]))
-        _t, m2 = aliasguard_continuous_nd(LAM2, O2, N2, d=2, n_sweeps=6 if quick else 10,
-                                          grid_res=40 if quick else 56, seed=s)
-        rows["aliasguard"].append((m2["min_visibility"], m2["max_aliasability"], m2["condition_number"]))
-    return {"m": int(LAM2.shape[0]), "K": int(O2.shape[0]), "N": N2,
-            "random": _summarize(rows["random"]), "aliasguard": _summarize(rows["aliasguard"])}
-
-
-# ======================================================================================
-def make_figure(A, C, D, E, F):
-    fig, axes = plt.subplots(1, 4, figsize=(14.4, 3.2), layout="constrained")
-
-    # (a) ablation on the near-band regime: the joint objective is necessary
+def make_figure(summ, pareto, decomp, cert):
+    fig, axes = plt.subplots(1, 4, figsize=(14.6, 3.3), layout="constrained")
     ax = axes[0]
-    reg = A["near_band"]["methods"]
-    order = ["random_jitter", "e_optimal", "condition_only", "coherence_only", "aliasguard"]
-    labs = ["rand\njitter", "E-opt", "cond\nonly", "coh\nonly", "Alias\nGuard"]
-    ma = [reg[k]["max_aliasability"] for k in order]
-    cn = [reg[k]["condition_number"] for k in order]
-    x = np.arange(len(order))
-    ax.bar(x - 0.2, ma, 0.4, label="max aliasability", color="C3")
-    ax2 = ax.twinx()
-    ax2.bar(x + 0.2, cn, 0.4, label="cond. number", color="C0", alpha=0.8)
-    ax.set_xticks(x); ax.set_xticklabels(labs, fontsize=8)
-    ax.set_ylabel("max aliasability", color="C3"); ax2.set_ylabel("cond. number", color="C0")
-    ax.set_title("(a) joint objective needed\n(near-band, N=40)", fontsize=9)
-    ax.axhline(0, color="k", lw=0.5)
-
-    # (b) held-out generalization
+    ax.plot(pareto["aliasguard_cond"], pareto["aliasguard"], "o-", color="C2", ms=4, label="AliasGuard ($\\beta$)")
+    ax.plot(pareto["ds_optimal"][1], pareto["ds_optimal"][0], "s", color="C0", ms=8, label="exact $D_s$")
+    ax.plot(pareto["e_optimal"][1], pareto["e_optimal"][0], "^", color="C3", ms=8, label="E-optimal")
+    ax.set_xlabel("condition number"); ax.set_ylabel("held-out max $a_{L^2}$")
+    ax.set_title("(a) aliasability--conditioning\nPareto", fontsize=9); ax.legend(fontsize=7.5)
     ax = axes[1]
-    hm = C["methods"]
-    order = ["random_jitter", "e_optimal", "random_search", "aliasguard_misspecified", "aliasguard_heldout"]
-    labs = ["rand\njitter", "E-opt", "rand\nsearch", "AG\n(misspec)", "AG\n(held-out)"]
-    ma = [hm[k]["max_aliasability"] for k in order]
-    ci = [hm[k]["max_aliasability_ci"] for k in order]
-    cols = ["0.6", "0.6", "0.6", "C1", "C2"]
-    ax.bar(np.arange(len(order)), ma, yerr=ci, color=cols, capsize=3)
-    ax.set_xticks(np.arange(len(order))); ax.set_xticklabels(labs, fontsize=8)
-    ax.set_ylabel("max aliasability (held-out)")
-    ax.set_title("(b) generalization to\nunseen frequencies", fontsize=9)
-
-    # (c) budget sweep
+    x = np.arange(len(HELDOUT_TYPES))
+    for i, mth in enumerate(["aliasguard", "ds_optimal", "random_jitter"]):
+        y = [summ[mth]["heldout"][ht]["mean"] for ht in HELDOUT_TYPES]
+        lo = [max(0, summ[mth]["heldout"][ht]["mean"] - summ[mth]["heldout"][ht]["ci_lo"]) for ht in HELDOUT_TYPES]
+        hi = [max(0, summ[mth]["heldout"][ht]["ci_hi"] - summ[mth]["heldout"][ht]["mean"]) for ht in HELDOUT_TYPES]
+        ax.errorbar(x + (i - 1) * 0.22, y, yerr=[lo, hi], fmt="o", ms=4, capsize=2, label=mth.replace("_", " "))
+    ax.set_xticks(x); ax.set_xticklabels([t.replace("_", "\n") for t in HELDOUT_TYPES], fontsize=7)
+    ax.set_ylabel("held-out max $a_{L^2}$"); ax.set_title("(b) held-out by type\n(paired bootstrap CI)", fontsize=9)
+    ax.legend(fontsize=7.5)
     ax = axes[2]
-    Ns = np.array(D["N"], float)
-    for key, col, mk in (("aliasguard", "C2", "o"), ("random_jitter", "0.5", "s"), ("e_optimal", "C0", "^")):
-        y = np.array(D[key]); ax.plot(Ns, y, mk + "-", color=col, ms=4, label=key.replace("_", " "))
-        if key + "_ci" in D:
-            c = np.array(D[key + "_ci"]); ax.fill_between(Ns, y - c, y + c, color=col, alpha=0.2)
-    ax.set_xlabel("budget N"); ax.set_ylabel("max aliasability (held-out)")
-    ax.set_title("(c) vs sample budget", fontsize=9); ax.legend(fontsize=8)
-
-    # (d) downstream aliasing-bias reduction
+    ds = CERT_DESIGNS
+    ax.bar(range(len(ds)), [cert[d]["certified_mean"] for d in ds], color=["C2", "C0", "C3", "0.6"])
+    ax.set_xticks(range(len(ds))); ax.set_xticklabels([d.replace("_", "\n") for d in ds], fontsize=7.5)
+    ax.set_ylabel("certified band-wide $a_{L^2}$"); ax.set_title("(c) continuum certificate\n(any design)", fontsize=9)
     ax = axes[3]
-    amps = np.array(E["amps"], float)
-    for key, col, mk in (("aliasguard", "C2", "o"), ("random_jitter", "0.5", "s"), ("e_optimal", "C0", "^")):
-        y = [E["methods"][key]["by_amp"][str(a)]["aliasing_bias_rmse"] for a in amps]
-        c = [E["methods"][key]["by_amp"][str(a)]["aliasing_bias_ci"] for a in amps]
-        ax.errorbar(amps, y, yerr=c, fmt=mk + "-", color=col, ms=4,
-                    label=f"{key.replace('_',' ')} (κ={E['methods'][key]['condition_number']:.2f})")
-    ax.set_xlabel("out-of-band amplitude"); ax.set_ylabel("aliasing-bias RMSE")
-    ax.set_title("(d) signal-domain payoff", fontsize=9); ax.legend(fontsize=7.5)
+    amps = np.array(decomp["amps"], float)
+    for d, col in (("aliasguard", "C2"), ("random_jitter", "0.5")):
+        ba = decomp["agg"][d]["by_amp"]
+        ax.plot(amps, [ba[str(a)]["bias"]["mean"] for a in amps], "o-", color=col, label=f"{d.replace('_',' ')}: alias bias")
+    d0 = decomp["agg"]["aliasguard"]["by_amp"]
+    ax.axhline(d0[str(amps[-1])]["trunc"]["mean"], color="k", ls="--", lw=1, label="truncation")
+    ax.axhline(d0[str(amps[-1])]["noise"]["mean"], color="C1", ls=":", lw=1, label="noise")
+    ax.set_xlabel("out-of-band amplitude"); ax.set_ylabel("$L^2$ error component")
+    ax.set_title("(d) bias/noise/truncation\nseparated", fontsize=9); ax.legend(fontsize=7)
     savefig(fig, "aliasguard.png")
 
 
 def main():
     quick = "--quick" in sys.argv
-    print("[AG] section A: regimes ...", flush=True); A = section_A_regimes(quick)
-    print("[AG] section C: held-out ...", flush=True); C = section_C_heldout(quick)
-    print("[AG] section D: budget sweep ...", flush=True); D = section_D_budget(quick)
-    print("[AG] section E: downstream ...", flush=True); E = section_E_downstream(quick)
-    print("[AG] section G: continuum certificate ...", flush=True); G = section_G_certificate(quick)
-    print("[AG] section F: 2-D ...", flush=True); F = section_F_2d(quick)
-    make_figure(A, C, D, E, F)
-    out = {"config": {"LAMBDA": LAMBDA.tolist(), "m": M, "Q_grid": Q_GRID,
-                      "random_seeds": RANDOM_SEEDS, "ag_seeds": AG_SEEDS,
-                      "concern": CONCERN.tolist()},
-           "A_regimes": A, "C_heldout": C, "D_budget": D, "E_downstream": E,
-           "G_certificate": G, "F_2d": F,
-           "note": "AliasGuard constructive sampling design; all designs use only "
-                   "LAMBDA/Omega/N; held-out and misspecification reported; ablation shows "
-                   "the joint objective is necessary; grid-greedy inherits T1 (cannot "
-                   "break exact grid folds), continuous design can."}
+    nsc = N_SCENARIOS
+    if "--scenarios" in sys.argv:
+        nsc = int(sys.argv[sys.argv.index("--scenarios") + 1])
+    if quick:
+        nsc = min(nsc, 6)
+    jobs = 1
+    if "--jobs" in sys.argv:
+        jobs = int(sys.argv[sys.argv.index("--jobs") + 1])
+    N = N_DEFAULT
+    amps = [0.5, 1.0] if quick else [0.25, 0.5, 1.0]
+    cert_ng = 2500 if quick else 3000
+    methods = [m for m in METHODS if not (quick and m == "annealing")]
+    scenarios = [make_scenario(s) for s in range(nsc)]
+
+    print(f"[AG] scenarios={nsc} methods={len(methods)} jobs={jobs} ...", flush=True)
+    tasks = [(sc, N, quick, methods, amps, cert_ng) for sc in scenarios]
+    if jobs > 1:
+        from concurrent.futures import ProcessPoolExecutor
+        with ProcessPoolExecutor(max_workers=jobs) as ex:
+            records = list(ex.map(process_scenario, tasks))
+            records.sort(key=lambda r: r["s"])
+            summ, decomp, cert = aggregate(records, methods, amps)
+            # serial sections reuse the SAME pool (they were the wall-clock bottleneck)
+            print("[AG] pareto ...", flush=True); pareto = section_pareto(scenarios, N, quick, ex)
+            print("[AG] budget ...", flush=True); budget = section_budget(scenarios, quick, ex)
+            print("[AG] n-D ...", flush=True)
+            nd2 = section_nd(2, quick, ex); nd3 = section_nd(3, quick, ex)
+    else:
+        records = [process_scenario(t) for t in tasks]
+        records.sort(key=lambda r: r["s"])
+        summ, decomp, cert = aggregate(records, methods, amps)
+        print("[AG] pareto ...", flush=True); pareto = section_pareto(scenarios, N, quick)
+        print("[AG] budget ...", flush=True); budget = section_budget(scenarios, quick)
+        print("[AG] n-D ...", flush=True)
+        nd2 = section_nd(2, quick); nd3 = section_nd(3, quick)
+    make_figure(summ, pareto, decomp, cert)
+
+    # paired-difference CIs on the headline 'near' held-out (scenarios are paired across
+    # methods); the comparison is now at MATCHED optimization budget (see build_design).
+    def _paired(m1, m2, ht="near"):
+        dif = np.array([r["methods"][m1]["heldout"][ht] - r["methods"][m2]["heldout"][ht]
+                        for r in records])
+        prng = np.random.default_rng(7)
+        bs = [dif[prng.integers(0, dif.size, dif.size)].mean() for _ in range(4000)]
+        return {"mean": float(dif.mean()), "ci_lo": float(np.quantile(bs, 0.025)),
+                "ci_hi": float(np.quantile(bs, 0.975)),
+                "significant": bool(np.quantile(bs, 0.975) < 0)}
+    paired = {"aliasguard_minus_ds_optimal": _paired("aliasguard", "ds_optimal"),
+              "aliasguard_minus_random_jitter": _paired("aliasguard", "random_jitter")}
+
+    out = {"config": {"N": N, "n_scenarios": nsc, "methods": methods,
+                      "heldout_types": HELDOUT_TYPES, "cert_band": CERT_BAND,
+                      "matched_budget": "all coordinate-descent methods at n_sweeps=15, grid_res=480",
+                      "metric": "function-space a_{L2,T} worst-case on held-out"},
+           "summary": summ, "pareto": pareto, "decomposition": decomp,
+           "certificate": cert, "budget": budget, "nd_2d": nd2, "nd_3d": nd3, "paired": paired,
+           "scenario_records": records,
+           "note": "AliasGuard = Ds-optimal/LCMV-motivated design (credited, not claimed); "
+                   "exact Ds baseline included; function-space metric; paired outer "
+                   "scenarios; diverse held-out incl. out-of-target degradation; the "
+                   "certificate is a post-hoc guarantee for ANY design."}
     save_json("aliasguard.json", out)
-    # headline print
-    hm = C["methods"]
-    print(f"[AG] HELD-OUT maxAliasability: AliasGuard {hm['aliasguard_heldout']['max_aliasability']:.3f}"
-          f"+-{hm['aliasguard_heldout']['max_aliasability_ci']:.3f} vs "
-          f"random_jitter {hm['random_jitter']['max_aliasability']:.3f}, "
-          f"E-opt {hm['e_optimal']['max_aliasability']:.3f}; "
-          f"misspec {hm['aliasguard_misspecified']['max_aliasability']:.3f}", flush=True)
-    print(f"[AG] 2-D: AliasGuard maxAlias {F['aliasguard']['max_aliasability']:.3f} vs "
-          f"random {F['random']['max_aliasability']:.3f}", flush=True)
-    gm = G["methods"]
-    print(f"[AG] CONTINUUM certificate (band-wide certified max-aliasability): "
-          f"AliasGuard {gm['aliasguard']['certified_max_aliasability']:.3f} vs "
-          f"random_jitter {gm['random_jitter']['certified_max_aliasability']:.3f}, "
-          f"E-opt {gm['e_optimal']['certified_max_aliasability']:.3f}", flush=True)
+    ag, rj, ds = summ["aliasguard"]["heldout"], summ["random_jitter"]["heldout"], summ["ds_optimal"]["heldout"]
+    print(f"[AG] HELD-OUT 'near' max a_L2: AliasGuard {ag['near']['mean']:.3f}"
+          f"[{ag['near']['ci_lo']:.3f},{ag['near']['ci_hi']:.3f}] vs random {rj['near']['mean']:.3f} "
+          f"vs exact-Ds {ds['near']['mean']:.3f}", flush=True)
+    print("[AG] by type (AliasGuard):", {ht: round(ag[ht]['mean'], 3) for ht in HELDOUT_TYPES}, flush=True)
+    print("[AG] by type (random):", {ht: round(rj[ht]['mean'], 3) for ht in HELDOUT_TYPES}, flush=True)
+    print(f"[AG] certificate band-wide: AliasGuard {cert['aliasguard']['certified_mean']:.3f} "
+          f"vs random {cert['random_jitter']['certified_mean']:.3f} vs exact-Ds {cert['ds_optimal']['certified_mean']:.3f}", flush=True)
+    for nd in (nd2, nd3):
+        pr = nd["paired_diff"]["random_jitter"]; pd_ = nd["paired_diff"]["ds_optimal"]
+        print(f"[AG] {nd['d']}-D held-out ({nd['n_scenarios']} sc): AliasGuard "
+              f"{nd['summary']['aliasguard']['mean']:.3f} vs random "
+              f"{nd['summary']['random_jitter']['mean']:.3f} (paired {pr['mean']:.3f} "
+              f"sig={pr['significant']}) vs exact-Ds {nd['summary']['ds_optimal']['mean']:.3f} "
+              f"(paired {pd_['mean']:.3f} sig={pd_['significant']}); all_separated={nd['all_separated']}",
+              flush=True)
 
 
 if __name__ == "__main__":

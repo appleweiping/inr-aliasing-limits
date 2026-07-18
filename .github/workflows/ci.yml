@@ -1,8 +1,7 @@
 name: tests
 
 on:
-  push:
-    branches: [main]
+  push:              # every branch, so the paper's "on every push" claim is literally true
   pull_request:
 
 jobs:
@@ -20,3 +19,24 @@ jobs:
           uv pip install -e . --no-deps
       - name: Theorem <-> Monte Carlo test suite (CPU)
         run: uv run python -m pytest -q
+
+  consistency:
+    # NOTE: this GitHub Actions "CI" (continuous integration) is distinct from the
+    # statistical confidence intervals reported in the paper. This job enforces that the
+    # paper macros, the claim ledger, and the README agree with the committed results/*.json
+    # and that no forbidden absolute/overclaim phrasing has crept in.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.11"
+      - name: Install (locked)
+        run: |
+          uv venv
+          uv pip install -r requirements.lock
+          uv pip install -e . --no-deps
+      - name: paper macros / claim ledger / README == results JSON
+        # --allow-dirty downgrades provenance-dirty results to a warning here (WIP pushes);
+        # the final pre-submission gate runs the same script WITHOUT the flag, locally.
+        run: uv run python paper/check_consistency.py --allow-dirty

@@ -1,0 +1,59 @@
+% U3a -- matching rate / lower bound (Theorem 3a) + Assouad grid floor + Le Cam threshold.
+% Shared fragment; \input into the supplement/appendix. Depends on Theorem 1' (\ref{thm:u1}).
+\begin{theorem}[Matching $\sqrt{m/N}$ rate]\label{thm:u3a}
+Under the hypotheses of Thm.~\ref{thm:u1}, fix an integer-disjoint $\nu$.  Each coordinate of
+$\bm b_\nu$ has mean $0$ and variance $1/N$, so
+\begin{equation}\label{eq:u3a-sm}
+\mathbb E\lVert\bm b_\nu\rVert^2=\frac mN\quad\text{exactly},\qquad\text{hence}\qquad
+N\,\mathbb E[\at(\nu)^2]\xrightarrow[N\to\infty]{}m .
+\end{equation}
+More precisely, with probability $\ge1-\delta$ one has $\lambda_{\max}(\bm G_N)\le1+\eta_{\rm
+hi}$ (Thm.~\ref{thm:u1}), on which $\at(\nu)\ge\lVert\bm b_\nu\rVert/(1+\eta_{\rm hi})$, giving
+the mean-square \emph{lower} bound $\sqrt{\mathbb E[\at(\nu)^2]}\ge(1-o(1))\sqrt{m/N}$.  Together
+with the uniform \emph{upper} bound $\max_{\nu\in\Om}\at(\nu)\le\sqrt m\,\varepsilon_c/(1-\eta_{\rm
+lo})=O\!\big(\sqrt{m\log(mK)/N}\big)$ of Thm.~\ref{thm:u1}, the worst-case aliasability is
+$\Theta(\sqrt{m/N})$ up to a $\sqrt{\log(mK)}$ factor: the $N^{-1/2}$ rate is order-optimal and
+no design-independent improvement of the rate is possible.
+\end{theorem}
+
+\begin{proof}
+$\bm b_\nu[k]=\frac1N\sum_j Z_j^{(k)}$ with $Z_j^{(k)}=e^{i2\pi(\nu-\omega_k)t_j}$ unit-modulus,
+independent across $j$, and $\mathbb E Z_j^{(k)}=\int_0^1 e^{i2\pi(\nu-\omega_k)t}\,dt=0$ since
+$\nu-\omega_k\in\Z\setminus\{0\}$; thus $\operatorname{Var}(\bm b_\nu[k])=\frac1{N^2}\sum_j\mathbb
+E|Z_j^{(k)}|^2=\frac1N$ and $\mathbb E\lVert\bm b_\nu\rVert^2=\sum_{k=1}^m\frac1N=\frac mN$,
+which is \eqref{eq:u3a-sm}.  As $\at(\nu)=\lVert\bm G_N^{-1}\bm b_\nu\rVert$ and $\bm G_N\to\bm
+I$ a.s., $N\,\mathbb E[\at^2]\to m$.  The finite-$N$ lower bound uses
+$\lVert\bm G_N^{-1}\bm b_\nu\rVert\ge\lVert\bm b_\nu\rVert/\lambda_{\max}(\bm G_N)$ and the
+$\lambda_{\max}$ tail from Thm.~\ref{thm:u1}; the upper bound is Thm.~\ref{thm:u1} itself.
+\end{proof}
+
+\begin{proposition}[Assouad $K$-tone grid floor]\label{prop:u3a-assouad}
+Let $t$ be any rate-$Q$ grid subset and $\nu_1,\dots,\nu_K\in\Z$ with $\nu_l\equiv\omega_{k_l}
+\pmod Q$, $\nu_l\ne\omega_{k_l}$.  For $\bm a\in\{0,1\}^K$ let $f_{\bm a}=f_{\rm in}+\sum_l a_l
+c_l e_{\nu_l}$.  On $t$ each $e_{\nu_l}$ folds exactly onto $e_{\omega_{k_l}}$
+(Thm.~\ref{thm:t1}(i)), so the observation law $S_T f_{\bm a}$ is invariant to $\bm a$; Assouad's
+lemma over the hypercube then gives, for \emph{any} estimator,
+\[
+\sup_{\bm a\in\{0,1\}^K}\ \lVert\hat f-f_{\bm a}\rVert_{L^2}\ \ge\ \tfrac1{\sqrt2}\,\lVert\bm
+c\rVert_2 ,
+\]
+the $K$-tone strengthening of the single-tone converse Thm.~\ref{thm:t1}(ii).
+\end{proposition}
+
+\begin{proof}
+The $K$ coordinates are $L^2$-orthogonal ($\{e_{\nu_l}\}$ distinct frequencies) and each is an
+exactly-indistinguishable two-point pair on $t$; Assouad's lemma
+\cite[Ch.~2]{tsybakov2009nonparametric} bounds the worst-case $L^2$ risk below by the sum of the
+per-coordinate two-point risks, each $\tfrac{|c_l|}{\sqrt2}$ (from $\lVert e_{\nu_l}-e_{\omega_{k_l}}
+\rVert_{L^2}=\sqrt2$).  Orthogonality gives $\sqrt{\sum_l(|c_l|/\sqrt2)^2}=\lVert\bm c\rVert_2/
+\sqrt2$.
+\end{proof}
+
+\begin{remark}[Off-grid detection threshold]\label{rmk:u3a-lecam}
+For an off-grid design and Gaussian noise $\sigma$, the laws with and without an out-of-band tone
+of amplitude $a$ at $\nu$ have $\mathrm{KL}=N\,\vt(\nu)^2a^2/(2\sigma^2)$, so a tone with
+$|a|\lesssim\sigma/(\vt(\nu)\sqrt N)$ is not testable (Le Cam) --- matching the achievable
+$\sigma/\sqrt N$ resolution up to the visibility.  Fig.~\ref{fig:matrix}(b) shows
+$N\,\mathbb E[\at^2]\!\to\!m$ empirically; Table/JSON \texttt{aliasability\_rate} reports the
+bracketing and the Assouad floor.
+\end{remark}

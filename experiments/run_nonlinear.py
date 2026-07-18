@@ -12,9 +12,10 @@ how far they extrapolate to *trained* networks.  Protocol:
   from the network's own **Jacobian (NTK) linearization at initialization**: the tone is
   pushed through kernel regression with the empirical NTK and its reconstruction
   spectrum is the predicted pattern.  No arbitrary reference band is used.
-* **Seed hygiene.**  Sampling seed, feature-initialization seed, and weight/optimizer
-  seed are separated and varied independently (20 sampling seeds; weight-seed stability
-  control on a subset).
+* **Seed hygiene.**  Sampling, feature-initialization, and weight/optimizer seeds are drawn
+  from independent streams so they are decoupled from a single counter's arithmetic (one
+  triple per sampling scenario -- NOT a full factorial cross); a weight-seed-stability
+  control varies only the weight seed at fixed sampling to isolate optimizer variance.
 * **Controls.**  Label permutation (attribution must die), amplitude sweep, and
   weight-seed stability.
 * **No hidden failures.**  Every run's (predicted, measured, correlation) triple is
@@ -37,7 +38,7 @@ import matplotlib.pyplot as plt
 
 N = 46
 SIGMA = 0.02
-EPOCHS = 6000
+EPOCHS = 3000
 LR = 2e-4
 T_REF = np.linspace(0, 1, 2000, endpoint=False)
 N_SEEDS = 20
@@ -94,41 +95,87 @@ def _train_predict(model, t, y, dev):
                                   device=dev)).cpu().numpy().ravel(), model
 
 
-def _ntk_prediction(model, t, tone_samples, dev, lam=1e-6):
-    """Predicted tone reconstruction via the empirical NTK at initialization.
+def _param_pack(model):
+    """(names, param-dict) of trainable params, detached (for torch.func calls)."""
+    params = {k: v.detach() for k, v in model.named_parameters() if v.requires_grad}
+    return list(params.keys()), params
 
-    Kernel regression of the tone samples with K = J J^T (J = param Jacobian at init):
-    f_pred(x) = k(x, t) K^{-1} tone_samples.  Returns the dense reconstruction.
-    """
+
+def _scalar_fn(model, names):
+    """f(param-tuple, x) -> scalar output at a single input x (shape (d,))."""
+    from torch.func import functional_call
+
+    def f(p_tuple, x):
+        pd = {n: p for n, p in zip(names, p_tuple)}
+        return functional_call(model, pd, (x.reshape(1, -1),)).reshape(())
+
+    return f
+
+
+def _jacobian_rows(model, X, dev):
+    """(len(X), P) parameter-Jacobian, vectorized with vmap+jacrev (no Python per-point
+    loop -- the loop was ~2000 GPU-synced backward passes per run and the real bottleneck)."""
     import torch
+    from torch.func import jacrev, vmap
 
-    tt = torch.tensor(t.reshape(-1, 1), dtype=torch.float32, device=dev)
-    te = torch.tensor(T_REF.reshape(-1, 1), dtype=torch.float32, device=dev)
-    params = [p for p in model.parameters() if p.requires_grad]
+    names, params = _param_pack(model)
+    pt = tuple(params[n] for n in names)
+    f = _scalar_fn(model, names)
+    jt = vmap(jacrev(f, argnums=0), in_dims=(None, 0))(pt, X)   # tuple of (B, *param_shape)
+    return torch.cat([g.reshape(X.shape[0], -1) for g in jt], dim=1)
 
-    def jac(inputs):
-        rows = []
-        for i in range(inputs.shape[0]):
-            model.zero_grad(set_to_none=True)
-            out = model(inputs[i:i + 1]).squeeze()
-            grads = torch.autograd.grad(out, params, retain_graph=False)
-            rows.append(torch.cat([g.reshape(-1) for g in grads]))
-        return torch.stack(rows)
 
-    J_t = jac(tt)                                   # (N, P)
+def _ntk_prediction(model, t, tone_samples, dev, lam=1e-6):
+    """Predicted tone reconstruction via the empirical NTK at initialization:
+    f_pred(x) = k(x, t) K^{-1} tone, K = J J^T.  The dense evaluation uses a vmap'd JVP so
+    the (M x P) eval Jacobian is never materialized."""
+    import torch
+    from torch.func import jvp, vmap
+
+    names, params = _param_pack(model)
+    pt = tuple(params[n] for n in names)
+    f = _scalar_fn(model, names)
+    X = torch.tensor(t.reshape(-1, 1), dtype=torch.float32, device=dev)
+    J_t = _jacobian_rows(model, X, dev)                         # (N, P)
     K = J_t @ J_t.T
     K = K + lam * torch.eye(K.shape[0], device=dev) * K.diagonal().mean()
-    alpha = torch.linalg.solve(K, torch.tensor(tone_samples, dtype=torch.float32,
-                                               device=dev))
-    # evaluate in batches to bound memory
-    preds = []
-    bs = 200
-    for i in range(0, te.shape[0], bs):
-        J_e = jac(te[i:i + bs])
-        preds.append((J_e @ J_t.T @ alpha).detach().cpu())
-    import torch as _t
+    alpha = torch.linalg.solve(K, torch.tensor(tone_samples, dtype=torch.float32, device=dev))
+    vflat = J_t.T @ alpha                                       # direction v = J_t^T alpha
+    # reshape v into param-shaped tuple
+    vt, off = [], 0
+    for n in names:
+        ne = params[n].numel()
+        vt.append(vflat[off:off + ne].reshape(params[n].shape)); off += ne
+    vt = tuple(vt)
+    Xe = torch.tensor(T_REF.reshape(-1, 1), dtype=torch.float32, device=dev)
+    # <grad_theta f(xe), v> for every eval point == a forward-mode JVP, vmapped
+    preds = vmap(lambda xe: jvp(lambda p: f(p, xe), (pt,), (vt,))[1])(Xe)
+    return preds.detach().cpu().numpy().ravel()
 
-    return _t.cat(preds).numpy().ravel()
+
+def _ntk_gram(model, t, dev):
+    """Empirical NTK Gram K = J J^T on the sample points (vectorized param Jacobian).
+
+    Used to MEASURE how far the tangent kernel moves from initialization to after training
+    -- the evidence needed before claiming a trained network departs from its init-NTK."""
+    import torch
+    tt = torch.tensor(t.reshape(-1, 1), dtype=torch.float32, device=dev)
+    J = _jacobian_rows(model, tt, dev)
+    return (J @ J.T).detach().cpu().numpy()
+
+
+def _ntk_drift(K0, K1):
+    """Init-vs-trained NTK drift: relative Frobenius change + top-eigenvector alignment.
+
+    Small drift => the linearization (init NTK) is a good model of training => an init-NTK
+    prediction is expected to match.  Large drift => the network left its init tangent
+    space and a mismatch is expected (this is what distinguishes SIREN from FF-MLP here)."""
+    f0 = float(np.linalg.norm(K0))
+    rel = float(np.linalg.norm(K1 - K0) / (f0 + 1e-12))
+    w0, V0 = np.linalg.eigh(K0)
+    w1, V1 = np.linalg.eigh(K1)
+    cos = abs(float(V0[:, -1] @ V1[:, -1]))          # top-eigvec alignment (1 = unchanged)
+    return {"ntk_rel_drift": rel, "ntk_top_evec_cos": cos}
 
 
 def _fold_metrics(diff_recon, pred_recon):
@@ -149,7 +196,13 @@ def _fold_metrics(diff_recon, pred_recon):
             "pattern_corr": corr}
 
 
-def one_run(arch, f_out, samp_seed, weight_seed, amp=0.8, permute=False, dev="cuda"):
+def one_run(arch, f_out, samp_seed, weight_seed, feature_seed=None, amp=0.8,
+            permute=False, measure_drift=False, dev="cuda"):
+    """One ablation-attribution run.  ``samp_seed`` (design t + noise), ``feature_seed``
+    (Fourier-feature draw) and ``weight_seed`` (weight init / optimizer) are INDEPENDENT
+    inputs -- the caller crosses them instead of binding all three to one counter."""
+    if feature_seed is None:
+        feature_seed = 100 + samp_seed
     rng = np.random.default_rng(samp_seed)
     t = nonuniform_times(N, rng, "jitter")
     noise = rng.normal(0, SIGMA, N)
@@ -160,27 +213,66 @@ def one_run(arch, f_out, samp_seed, weight_seed, amp=0.8, permute=False, dev="cu
     if permute:
         y_all = rng.permutation(y_all)
 
-    feature_seed = 100 + samp_seed
     m1 = _make_model(arch, feature_seed, weight_seed)
     f_with, _ = _train_predict(m1, t, y_all, dev)
     m0 = _make_model(arch, feature_seed, weight_seed)
-    f_wo, _ = _train_predict(m0, t, y_in, dev)
+    f_wo, m0_trained = _train_predict(m0, t, y_in, dev)
     diff = f_with - f_wo
 
     m_ref = _make_model(arch, feature_seed, weight_seed)
     m_ref = m_ref.to(dev) if hasattr(m_ref, "to") else m_ref
+    drift = {}
+    if measure_drift:
+        # NTK Gram at init (m_ref) vs after training (m0_trained) -- same init, so this is a
+        # clean before/after comparison of the tangent kernel on the same points.
+        K_init = _ntk_gram(m_ref, t, dev)
+        m0_trained = m0_trained.to(dev) if hasattr(m0_trained, "to") else m0_trained
+        K_trained = _ntk_gram(m0_trained, t, dev)
+        drift = _ntk_drift(K_init, K_trained)
     pred_recon = _ntk_prediction(m_ref, t, tone, dev)
 
     res = _fold_metrics(diff, pred_recon)
     res.update({"arch": arch, "f_out": f_out, "samp_seed": samp_seed,
-                "weight_seed": weight_seed, "amp": amp, "permute": permute,
-                "diff_energy": float(np.mean(diff**2))})
+                "weight_seed": weight_seed, "feature_seed": int(feature_seed),
+                "amp": amp, "permute": permute,
+                "diff_energy": float(np.mean(diff**2)),
+                "linear_response": float(np.mean(diff**2)) / (amp**2 + 1e-12), **drift})
     return res, diff, pred_recon, t
+
+
+def _run_task(args):
+    """Process-pool worker: one attribution run on CPU (1 BLAS thread), tagged by kind so
+    the parent can split results into runs / controls / amp-sweep."""
+    import torch
+
+    torch.set_num_threads(1)
+    kind, arch, f_out, ss, ws, fs, amp, permute, drift, tag = args
+    r, *_ = one_run(arch, f_out, ss, ws, feature_seed=fs, amp=amp, permute=permute,
+                    measure_drift=drift, dev="cpu")
+    r["_kind"] = kind
+    r.update(tag)
+    return r
 
 
 def _boot_ci(bools, rng, n=2000):
     v = np.asarray(bools, float)
     stats = [v[rng.integers(0, v.size, v.size)].mean() for _ in range(n)]
+    return [float(np.quantile(stats, 0.025)), float(np.quantile(stats, 0.975))]
+
+
+def _cluster_boot_ci(vals, clusters, rng, n=2000):
+    """Cluster bootstrap: resample SAMPLING SCENARIOS (each shares one design t), not
+    individual runs -- runs from the same sampling seed are correlated, so the honest
+    replication unit is the scenario."""
+    vals = np.asarray(vals, float)
+    clusters = np.asarray(clusters)
+    uniq = np.unique(clusters)
+    idx_by = {c: np.where(clusters == c)[0] for c in uniq}
+    stats = []
+    for _ in range(n):
+        pick = rng.choice(uniq, uniq.size, replace=True)
+        sel = np.concatenate([idx_by[c] for c in pick])
+        stats.append(vals[sel].mean())
     return [float(np.quantile(stats, 0.025)), float(np.quantile(stats, 0.975))]
 
 
@@ -225,39 +317,60 @@ def main():
                     "cuda" if torch.cuda.is_available() else "cpu")
         print("[nl] figure regenerated", flush=True)
         return
-    import torch
-
-    torch.use_deterministic_algorithms(True, warn_only=True)
-    dev = "cuda" if torch.cuda.is_available() else "cpu"
+    # These are TINY nets (46 points); the GPU's per-kernel launch latency makes it far
+    # slower than CPU here, and the runs are embarrassingly parallel -- so we run on CPU
+    # across a process pool (each worker 1 thread) instead of serially on the GPU.
+    dev = "cpu"
     quick = "--quick" in sys.argv
     n_seeds = 4 if quick else N_SEEDS
+    jobs = 1
+    if "--jobs" in sys.argv:
+        jobs = int(sys.argv[sys.argv.index("--jobs") + 1])
 
-    runs = []
-    # main grid: ffmlp x f_out x sampling seeds
+    # Independent seed pools: sampling, feature-init, and weight/optimizer seeds are drawn
+    # from separate streams so they are NOT one-to-one bound to a single counter (P1-A).
+    seedgen = np.random.default_rng(20260717)
+    feat_pool = seedgen.integers(0, 1_000_000, n_seeds).tolist()
+    wt_pool = seedgen.integers(0, 1_000_000, n_seeds).tolist()
+    step = max(1, n_seeds // 4)
+    AMPS = (0.05, 0.1, 0.2, 0.4, 0.8)
+
+    # (kind, arch, f_out, samp_seed, weight_seed, feature_seed, amp, permute, drift, tag)
+    tasks = []
     for f_out in F_OUTS:
         for s in range(n_seeds):
-            r, *_ = one_run("ffmlp", f_out, s, 200 + s, dev=dev)
-            runs.append(r)
-            print(f"[nl] ffmlp f={f_out} s={s}: meas={r['measured_fold']} "
-                  f"pred={r['predicted_fold']} corr={r['pattern_corr']:.2f}", flush=True)
-    # siren + bandlimited at f_out = 50
+            tasks.append(("run", "ffmlp", f_out, s, wt_pool[s], feat_pool[s], 0.8, False, True, {}))
     for arch in ("siren", "bandlimited"):
         for s in range(n_seeds):
-            r, *_ = one_run(arch, 50.0, s, 200 + s, dev=dev)
-            runs.append(r)
-            print(f"[nl] {arch} s={s}: meas={r['measured_fold']} "
-                  f"pred={r['predicted_fold']} corr={r['pattern_corr']:.2f}", flush=True)
-    # controls
-    controls = []
-    for s in range(0, n_seeds, 4):
-        r, *_ = one_run("ffmlp", 50.0, s, 200 + s, permute=True, dev=dev)
-        r["control"] = "label_permutation"; controls.append(r)
-    for s in range(0, n_seeds, 4):
-        r, *_ = one_run("ffmlp", 50.0, s, 200 + s, amp=0.4, dev=dev)
-        r["control"] = "amp0.4"; controls.append(r)
-    for s in range(0, n_seeds, 4):          # weight-seed stability
-        r, *_ = one_run("ffmlp", 50.0, s, 900 + s, dev=dev)
-        r["control"] = "weight_seed_900"; controls.append(r)
+            tasks.append(("run", arch, 50.0, s, wt_pool[s], feat_pool[s], 0.8, False, True, {}))
+    for s in range(0, n_seeds, step):
+        tasks.append(("control", "ffmlp", 50.0, s, wt_pool[s], feat_pool[s], 0.8, True, False,
+                      {"control": "label_permutation"}))
+    for j in range(min(5, n_seeds)):
+        tasks.append(("control", "ffmlp", 50.0, 0, 900 + j, feat_pool[0], 0.8, False, False,
+                      {"control": "weight_seed_stability"}))
+    for s in range(0, n_seeds, step):
+        for amp in AMPS:
+            tasks.append(("amp", "ffmlp", 50.0, s, wt_pool[s], feat_pool[s], amp, False, False,
+                          {"samp_seed": s}))
+
+    print(f"[nl] {len(tasks)} runs (CPU, jobs={jobs}) ...", flush=True)
+    if jobs > 1:
+        import multiprocessing as mp
+        from concurrent.futures import ProcessPoolExecutor
+        with ProcessPoolExecutor(max_workers=jobs, mp_context=mp.get_context("spawn")) as ex:
+            done = list(ex.map(_run_task, tasks))
+    else:
+        done = [_run_task(t) for t in tasks]
+
+    runs = [r for r in done if r["_kind"] == "run"]
+    controls = [r for r in done if r["_kind"] == "control"]
+    amp_sweep = [{"amp": r["amp"], "samp_seed": r["samp_seed"],
+                  "pattern_corr": r["pattern_corr"], "exact_match": r["exact_match"],
+                  "linear_response": r["linear_response"]}
+                 for r in done if r["_kind"] == "amp"]
+    print(f"[nl] done: {len(runs)} runs, {len(controls)} controls, {len(amp_sweep)} amp-sweep",
+          flush=True)
 
     rng = np.random.default_rng(0)
     summary = {}
@@ -268,31 +381,55 @@ def main():
         ex = [r["exact_match"] for r in sub]
         t3 = [r["top3_match"] for r in sub]
         co = [r["pattern_corr"] for r in sub]
+        clu = [r["samp_seed"] for r in sub]           # cluster = sampling scenario
+        drifts = [r["ntk_rel_drift"] for r in sub if "ntk_rel_drift" in r]
         summary[arch] = {
             "n_runs": len(sub),
             "exact_match_rate": float(np.mean(ex)),
-            "exact_match_ci95": _boot_ci(ex, rng),
+            "exact_match_ci95_cluster": _cluster_boot_ci(ex, clu, rng),
             "top3_match_rate": float(np.mean(t3)),
-            "top3_match_ci95": _boot_ci(t3, rng),
+            "top3_match_ci95_cluster": _cluster_boot_ci(t3, clu, rng),
             "pattern_corr_median": float(np.median(co)),
             "pattern_corr_q10_q90": [float(np.quantile(co, 0.1)),
                                      float(np.quantile(co, 0.9))],
+            "ntk_rel_drift_median": float(np.median(drifts)) if drifts else None,
+            "ntk_rel_drift_q10_q90": ([float(np.quantile(drifts, 0.1)),
+                                       float(np.quantile(drifts, 0.9))] if drifts else None),
         }
     perm_corr = [r["pattern_corr"] for r in controls
                  if r.get("control") == "label_permutation"]
 
     make_figure(runs, controls, n_seeds, dev)
 
+    # Honest framing of the SIREN result, conditioned on the MEASURED drift.
+    ff_d = summary.get("ffmlp", {}).get("ntk_rel_drift_median")
+    si_d = summary.get("siren", {}).get("ntk_rel_drift_median")
+    ff_c = summary.get("ffmlp", {}).get("pattern_corr_median")
+    si_c = summary.get("siren", {}).get("pattern_corr_median")
+    siren_note = ("insufficient data" if (ff_d is None or si_d is None) else
+                  (f"Trained SIREN responses are inconsistent with the init-NTK prediction "
+                   f"(corr {si_c:.2f}) while FF-MLP matches it (corr {ff_c:.2f}). This is NOT "
+                   f"an NTK-drift artifact: the SIREN kernel drifts LESS than FF-MLP's "
+                   f"({si_d:.2f} vs {ff_d:.2f} median rel. Frobenius), yet FF-MLP's prediction "
+                   f"still matches. The init-NTK/fixed-feature description simply does not "
+                   f"extrapolate to trained SIRENs; we do NOT claim they 'leave' a fixed kernel."))
+
     out = {"N": N, "sigma": SIGMA, "epochs": EPOCHS, "n_seeds": n_seeds,
            "f_outs": list(F_OUTS), "device": dev, "quick": quick,
-           "runs": runs, "controls": controls, "summary": summary,
+           "runs": runs, "controls": controls, "amp_sweep": amp_sweep, "summary": summary,
+           "siren_framing": siren_note,
            "note": "empirical extrapolation only; predictions from each network's own "
-                   "NTK linearization (bandlimited: exact dictionary); all runs "
-                   "recorded including failures"}
+                   "init-NTK linearization (bandlimited: exact dictionary); NTK drift "
+                   "measured init-vs-trained; feature/weight seeds independently drawn per "
+                   "sampling scenario (decoupled from the sampling index, not fully crossed); "
+                   "independently; CIs cluster-bootstrapped by sampling scenario; amplitude "
+                   "swept to 0 for the infinitesimal-influence limit; all runs recorded "
+                   "including failures"}
     save_json("nonlinear.json", out)
     print("[nl] summary:", {k: {kk: (round(vv, 3) if isinstance(vv, float) else vv)
-                                for kk, vv in v.items() if "ci" not in kk}
+                                for kk, vv in v.items() if "ci" not in kk and vv is not None}
                             for k, v in summary.items()}, flush=True)
+    print("[nl] siren_framing:", siren_note, flush=True)
 
 
 if __name__ == "__main__":

@@ -1,89 +1,105 @@
 {
   "name": "sunspots",
-  "n_segments": 1,
-  "n_seeds": 10,
+  "n_blocks": 6,
+  "n_seeds": 6,
   "snr_db": 30.0,
   "sample_frac": 0.5,
-  "M": 2000,
-  "fs_eff_hz": 0.5,
-  "duration_s": 4000.0,
-  "segments": [
-    "sunspots"
+  "block_len": 666,
+  "rate": 1.0,
+  "rate_unit": "1/month",
+  "duration": 666.0,
+  "time_unit": "month",
+  "blocks": [
+    "sunspots_blk0",
+    "sunspots_blk1",
+    "sunspots_blk2",
+    "sunspots_blk3",
+    "sunspots_blk4",
+    "sunspots_blk5"
   ],
   "methods": {
     "oracle": {
-      "rmse_mean": 0.4437944841126528,
-      "rmse_ci95": 0.025918607468438458,
+      "rmse_mean": 0.39440005165706893,
+      "rmse_ci95": 0.045765026282009846,
       "paired_diff_vs_oracle_mean": 0.0,
       "paired_diff_ci95": 0.0,
-      "band_mean": 203.3,
-      "n": 10,
-      "n_clusters": 1
+      "band_mean": 76.38888888888889,
+      "n": 36,
+      "n_clusters": 6
     },
     "ls_periodogram": {
-      "rmse_mean": 0.49618902456323716,
-      "rmse_ci95": 0.03470239639747604,
-      "paired_diff_vs_oracle_mean": 0.05239454045058441,
-      "paired_diff_ci95": 0.030998209903133005,
-      "band_mean": 214.8,
-      "n": 10,
-      "n_clusters": 1
+      "rmse_mean": 0.5941326965496431,
+      "rmse_ci95": 0.40798287823987556,
+      "paired_diff_vs_oracle_mean": 0.1997326448925741,
+      "paired_diff_ci95": 0.4017808882537599,
+      "band_mean": 70.19444444444444,
+      "n": 36,
+      "n_clusters": 6
     },
     "corr_periodogram": {
-      "rmse_mean": 0.4991706002988819,
-      "rmse_ci95": 0.0369127752297328,
-      "paired_diff_vs_oracle_mean": 0.05537611618622904,
-      "paired_diff_ci95": 0.03499745546932151,
-      "band_mean": 214.7,
-      "n": 10,
-      "n_clusters": 1
+      "rmse_mean": 0.5935970486359678,
+      "rmse_ci95": 0.40838077138105583,
+      "paired_diff_vs_oracle_mean": 0.19919699697889892,
+      "paired_diff_ci95": 0.4020776889442594,
+      "band_mean": 70.30555555555556,
+      "n": 36,
+      "n_clusters": 6
     },
     "cv": {
-      "rmse_mean": 0.5800429763739342,
-      "rmse_ci95": 0.016093167984812695,
-      "paired_diff_vs_oracle_mean": 0.1362484922612813,
-      "paired_diff_ci95": 0.03166322070823694,
-      "band_mean": 49.3,
-      "n": 10,
-      "n_clusters": 1
+      "rmse_mean": 0.5016131688430969,
+      "rmse_ci95": 0.06572263441367332,
+      "paired_diff_vs_oracle_mean": 0.10721311718602791,
+      "paired_diff_ci95": 0.041750723274168705,
+      "band_mean": 44.916666666666664,
+      "n": 36,
+      "n_clusters": 6
     },
     "fixed_narrow": {
-      "rmse_mean": 0.6699064544124903,
-      "rmse_ci95": 0.000663662891889172,
-      "paired_diff_vs_oracle_mean": 0.22611197029983746,
-      "paired_diff_ci95": 0.025805323705691215,
+      "rmse_mean": 0.884821569056208,
+      "rmse_ci95": 0.1024693080191157,
+      "paired_diff_vs_oracle_mean": 0.4904215173991391,
+      "paired_diff_ci95": 0.08938605815752063,
       "band_mean": 8.0,
-      "n": 10,
-      "n_clusters": 1
+      "n": 36,
+      "n_clusters": 6
     },
     "fixed_wide": {
-      "rmse_mean": 0.6730505354066395,
-      "rmse_ci95": 0.17550760016253725,
-      "paired_diff_vs_oracle_mean": 0.22925605129398666,
-      "paired_diff_ci95": 0.17491428912317064,
-      "band_mean": 250.0,
-      "n": 10,
-      "n_clusters": 1
+      "rmse_mean": 1.4891817702200043,
+      "rmse_ci95": 2.4293493594446534,
+      "paired_diff_vs_oracle_mean": 1.0947817185629356,
+      "paired_diff_ci95": 2.42675847286356,
+      "band_mean": 83.0,
+      "n": 36,
+      "n_clusters": 6
     },
     "ridge_wide": {
-      "rmse_mean": 0.47881826709518194,
-      "rmse_ci95": 0.049421757741236125,
-      "paired_diff_vs_oracle_mean": 0.035023782982529,
-      "paired_diff_ci95": 0.042221735904837875,
-      "band_mean": 333.0,
-      "n": 10,
-      "n_clusters": 1
+      "rmse_mean": 0.46548645159240387,
+      "rmse_ci95": 0.0445048196905198,
+      "paired_diff_vs_oracle_mean": 0.07108639993533496,
+      "paired_diff_ci95": 0.02543707452865771,
+      "band_mean": 111.0,
+      "n": 36,
+      "n_clusters": 6
     }
   },
   "lowpass_proxy": false,
-  "note": "oracle sees the full reference (upper bound only); all other methods are sample-only; anti-aliased resample_poly decimation; full records, no energy-based window selection",
+  "degradation": "50% uniform-random missing samples + AWGN at 30 dB SNR",
+  "note": "oracle = best (B,ridge) in the family by TRUE error (evaluation upper bound only, dominates every selector per draw); all other methods are sample-only with detrend/standardization estimated from the training samples of each draw (no full-record leakage); CIs cluster on disjoint time blocks, not mask seeds; anti-aliased decimation (speech only).",
   "_meta": {
-    "python": "3.11.2",
-    "platform": "Windows-10-10.0.26200-SP0",
-    "numpy": "2.4.6",
-    "scipy": "1.17.1",
-    "torch": "2.13.0+cpu",
-    "cuda": null,
-    "git_commit": "c9857ef"
+    "git_commit": "3e4df1815503cb5a30a6e55e6bf5fc302884dcdf",
+    "git_short": "3e4df181",
+    "git_dirty": false,
+    "source_tree_sha256": "03a901c5bc5e384f",
+    "command": "experiments/run_real_signal.py",
+    "timestamp_utc": "2026-07-17T19:24:07.244134+00:00",
+    "hostname": "autodl-container-p48vc3ykfm-7ba3727f",
+    "python": "3.12.3",
+    "platform": "Linux-5.15.0-25-generic-x86_64-with-glibc2.35",
+    "cpu_count": 128,
+    "numpy": "1.26.4",
+    "scipy": "1.11.4",
+    "torch": "2.2.2+cu121",
+    "cuda": "12.1",
+    "gpu": "NVIDIA GeForce RTX 4080 SUPER"
   }
 }

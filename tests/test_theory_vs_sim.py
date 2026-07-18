@@ -332,3 +332,82 @@ def test_thm3_joint_decomposition_matches_montecarlo():
         acc += np.linalg.norm(dc) ** 2
     empirical = acc / trials
     assert empirical == pytest.approx(predicted, rel=0.07)
+
+
+# --------------------------------------------------------------------------------------
+# U1 -- matrix-Bernstein/Chernoff aliasability bound (Theorem 1'): soundness + crossover
+# --------------------------------------------------------------------------------------
+def test_u1_matrix_bound_is_sound_and_bites_sooner():
+    """The matrix-Bernstein bound (a-priori where finite, and data-dependent everywhere)
+    upper-bounds the empirical worst-case aliasability in >= (1-delta) of i.i.d. draws, and
+    its crossover N is >20x smaller than the loose union bound's."""
+    from inralias.identifiability import (
+        aliasability, aliasability_matrix_bound, aliasability_concentration_bound)
+    Lam = np.array([0, 1, -1, 2, -2, 3, -3, 4, -4], float)
+    m = Lam.size
+    Om = np.array([v for v in range(6, 45) if v not in set(np.abs(Lam).astype(int))], float)
+    K = Om.size
+    delta = 0.05
+    rng = np.random.default_rng(1)
+    for N in (40, 128, 512):
+        ap = aliasability_matrix_bound(m, K, N, delta)["apriori"]
+        viol_ap, viol_dd, dd_finite = 0, 0, 0
+        trials = 300
+        for _ in range(trials):
+            t = np.sort(rng.uniform(0, 1, N))
+            Phi = synthesis_matrix(Lam, t)
+            lmin = float(np.linalg.eigvalsh(Phi.conj().T @ Phi / N)[0])
+            w = max(aliasability(Lam, t, float(nu)) for nu in Om)
+            dd = aliasability_matrix_bound(m, K, N, delta, data_lam_min=lmin).get(
+                "data_dependent", np.inf)
+            dd_finite += np.isfinite(dd)
+            if np.isfinite(ap) and w > ap:
+                viol_ap += 1
+            if w > dd:
+                viol_dd += 1
+        # high-probability soundness: violations well under delta (bound is conservative)
+        assert viol_ap / trials <= delta
+        assert viol_dd / trials <= delta
+        assert dd_finite == trials          # data-dependent bound finite for every full-rank draw (incl. N=40)
+    old_x = 4 * m * m * np.log(4 * (m * K + m * m) / delta)
+    new_x = aliasability_matrix_bound(m, K, 100, delta)["crossover_N"]
+    assert new_x < old_x / 20.0
+
+
+# --------------------------------------------------------------------------------------
+# U3a -- matching rate / lower bound (Theorem 3a) + Assouad grid floor + Le Cam threshold
+# --------------------------------------------------------------------------------------
+def test_u3a_exact_second_moment_and_bracketing():
+    """N*E[a_T^2] -> m (exact rate; the matching mean-square lower bound), and the empirical
+    RMS aliasability lies between the rigorous lower_rms and the U1 upper (rate matched up to
+    sqrt(log))."""
+    from inralias.identifiability import aliasability, aliasability_rate_bounds
+    Lam = np.array([0, 1, -1, 2, -2, 3, -3, 4, -4], float)
+    m, K, delta, nu = Lam.size, 31, 0.05, 12.0
+    rng = np.random.default_rng(5)
+    for N in (512, 2048):
+        vals = [aliasability(Lam, np.sort(rng.uniform(0, 1, N)), nu) ** 2 for _ in range(3000)]
+        assert N * np.mean(vals) == pytest.approx(m, rel=0.06)          # exact second moment
+        rb = aliasability_rate_bounds(m, K, N, delta)
+        rms = float(np.sqrt(np.mean(vals)))
+        assert rb["lower_rms"] <= rms                                   # rigorous lower bound holds
+        assert rb["ratio"] < 30.0 and np.isfinite(rb["ratio"])         # matched up to a modest sqrt(log) factor
+
+
+def test_u3a_assouad_grid_floor_and_lecam():
+    """Assouad K-tone grid floor equals ||a||/sqrt2 with every fold certified exact; the Le Cam
+    threshold equals sigma/(v*sqrt(N))."""
+    from inralias.identifiability import assouad_grid_floor, lecam_detection_threshold, visibility
+    Lam = np.array([0, 1, -1, 2, -2, 3, -3, 4, -4], float)
+    Q = 64
+    rng = np.random.default_rng(7)
+    t = np.sort(rng.choice(Q, size=40, replace=False)) / Q             # grid subset design
+    tones = np.array([-1 + Q, 2 + Q, -3 + Q, 4 + Q], float)            # coherent with in-band atoms
+    coeffs = np.array([0.5, 0.6, 0.4, 0.5])
+    af = assouad_grid_floor(Lam, tones, coeffs, Q, t)
+    assert af["all_folds_exact"] and af["K"] == 4
+    assert af["floor"] == pytest.approx(np.linalg.norm(coeffs) / np.sqrt(2))
+    t2 = np.sort(rng.uniform(0, 1, 100))                               # off-grid design
+    nu, sigma = 12.0, 0.1
+    thr = lecam_detection_threshold(Lam, t2, nu, sigma)
+    assert thr == pytest.approx(sigma / (visibility(Lam, t2, nu) * np.sqrt(t2.size)))
